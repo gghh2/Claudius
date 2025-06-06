@@ -12,15 +12,15 @@ cd /d "%PROJECT_PATH%"
 :: Verifie s’il y a des changements
 git status --porcelain > nul
 if not errorlevel 1 (
-    echo [%date% %time%] 🔍 Modifications detectees, enregistrement en cours...
+    echo [%date% %time%] Modifications detectees, enregistrement en cours...
 
     git add -A
-    git commit -m "⏱️ Commit automatique le %date% %time%"
+    git commit -m "Commit automatique le %date% %time%"
     git push origin %BRANCH%
 
-    echo [%date% %time%] ✅ Push effectue.
+    echo [%date% %time%] >>>>>>>>>>>>>>>>>> Push effectue.
 ) else (
-    echo [%date% %time%] 🟢 Aucun changement detecte.
+    echo [%date% %time%] Aucun changement detecte.
 )
 
 :: Pause INTERVAL secondes

@@ -70,9 +70,6 @@ public class CameraFollow : MonoBehaviour
     
 
 
-
-
-    
     void HandleZoomInput()
 	{
 	    if (!enableZoom) return;

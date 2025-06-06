@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using System.Text;
 using System.Collections.Generic;
-using System.Linq; // AJOUTÉ POUR LE SYSTÈME DE QUÊTE UNIQUE
+using System.Linq;
 
 // Classes pour l'historique des conversations
 [System.Serializable]
@@ -47,11 +47,17 @@ public class OpenAIChoice
 public class AIConfig
 {
     [Header("API Configuration")]
+    [HideInInspector] // Cache le champ API Key dans l'Inspector
     public string apiKey = "";
+    
+    [Header("Model Settings")]
     public string model = "gpt-3.5-turbo";
     [Range(0f, 1f)]
     public float temperature = 0.8f;
     public int maxTokens = 150;
+    
+    [Header("Debug")]
+    public bool showApiStatus = true;
 }
 
 public class AIDialogueManager : MonoBehaviour
@@ -62,6 +68,10 @@ public class AIDialogueManager : MonoBehaviour
     [Header("Context")]
     [TextArea(3, 6)]
     public string gameContext = "Vous êtes dans un univers de space opera. Le joueur explore une station spatiale et rencontre différents personnages. Répondez en français et gardez vos réponses courtes (1-3 phrases maximum).";
+    
+    [Header("API Status")]
+    [SerializeField] private bool apiKeyLoaded = false;
+    [SerializeField] private string apiKeySource = "Non chargée";
     
     [Header("Conversation History")]
     private Dictionary<string, ConversationHistory> conversationHistories = new Dictionary<string, ConversationHistory>();
@@ -86,9 +96,74 @@ public class AIDialogueManager : MonoBehaviour
     
     void Start()
     {
-        if (string.IsNullOrEmpty(aiConfig.apiKey))
+        LoadAPIKey();
+    }
+    
+    void LoadAPIKey()
+    {
+        // Réinitialise
+        apiKeyLoaded = false;
+        apiKeySource = "Non chargée";
+        
+        // Tentative 1 : Charge depuis APIConfig
+        try
         {
-            Debug.LogWarning("Clé API OpenAI non configurée ! Mode fallback activé.");
+            string configKey = APIConfig.OPENAI_API_KEY;
+            
+            if (!string.IsNullOrEmpty(configKey) && 
+                configKey != "sk-REMPLACEZ_MOI" && 
+                configKey != "sk-VOTRE_CLE_API_ICI")
+            {
+                aiConfig.apiKey = configKey;
+                apiKeyLoaded = true;
+                apiKeySource = "APIConfig.cs";
+                
+                if (aiConfig.showApiStatus)
+                {
+                    Debug.Log($"✅ Clé API OpenAI chargée depuis {apiKeySource}");
+                    
+                    // Affiche les premiers caractères pour vérification (sans révéler la clé complète)
+                    string maskedKey = configKey.Substring(0, 7) + "..." + configKey.Substring(configKey.Length - 4);
+                    Debug.Log($"🔑 Clé masquée: {maskedKey}");
+                }
+            }
+            else
+            {
+                Debug.LogError("❌ APIConfig.cs trouvé mais clé non configurée ! Remplacez 'sk-REMPLACEZ_MOI' par votre vraie clé.");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"❌ Impossible de charger APIConfig.cs : {e.Message}");
+            Debug.LogError("📋 Instructions :");
+            Debug.LogError("1. Créez le dossier Assets/Scripts/Config/");
+            Debug.LogError("2. Copiez APIConfig.cs.template vers APIConfig.cs");
+            Debug.LogError("3. Remplacez 'sk-REMPLACEZ_MOI' par votre clé API OpenAI");
+            Debug.LogError("4. Assurez-vous que APIConfig.cs est dans .gitignore");
+        }
+        
+        // Tentative 2 : Variable d'environnement (optionnel)
+        if (!apiKeyLoaded)
+        {
+            string envKey = System.Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+            if (!string.IsNullOrEmpty(envKey))
+            {
+                aiConfig.apiKey = envKey;
+                apiKeyLoaded = true;
+                apiKeySource = "Variable d'environnement";
+                
+                if (aiConfig.showApiStatus)
+                {
+                    Debug.Log($"✅ Clé API OpenAI chargée depuis {apiKeySource}");
+                }
+            }
+        }
+        
+        // Affichage final du statut
+        if (!apiKeyLoaded)
+        {
+            Debug.LogWarning("⚠️ Clé API OpenAI non configurée ! Mode fallback activé.");
+            Debug.LogWarning("💡 L'IA utilisera des réponses prédéfinies au lieu de GPT.");
         }
     }
     
@@ -533,7 +608,7 @@ Vous: ""Vérifiez ce terminal de sécurité [QUEST:INTERACT:console_securite:sec
     
     public bool IsConfigured()
     {
-        return !string.IsNullOrEmpty(aiConfig.apiKey);
+        return apiKeyLoaded && !string.IsNullOrEmpty(aiConfig.apiKey);
     }
     
     public void ResetConversation()
@@ -546,5 +621,27 @@ Vous: ""Vérifiez ce terminal de sécurité [QUEST:INTERACT:console_securite:sec
     {
         conversationHistories.Clear();
         Debug.Log("Historique des conversations effacé");
+    }
+    
+    // Méthodes de debug
+    [ContextMenu("Reload API Key")]
+    public void ReloadAPIKey()
+    {
+        LoadAPIKey();
+    }
+    
+    [ContextMenu("Show API Status")]
+    public void ShowAPIStatus()
+    {
+        Debug.Log($"=== API STATUS ===");
+        Debug.Log($"Clé chargée: {(apiKeyLoaded ? "✅" : "❌")}");
+        Debug.Log($"Source: {apiKeySource}");
+        Debug.Log($"Longueur clé: {aiConfig.apiKey?.Length ?? 0} caractères");
+        
+        if (apiKeyLoaded && !string.IsNullOrEmpty(aiConfig.apiKey))
+        {
+            string maskedKey = aiConfig.apiKey.Substring(0, 7) + "..." + aiConfig.apiKey.Substring(aiConfig.apiKey.Length - 4);
+            Debug.Log($"Clé masquée: {maskedKey}");
+        }
     }
 }

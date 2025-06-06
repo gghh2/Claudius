@@ -17,6 +17,10 @@
 # Recordings can get excessive in size
 /[Rr]ecordings/
 
+
+#APIKey
+/[Aa]ssets/Scripts/APIConfig
+
 # Uncomment this line if you wish to ignore the asset store tools plugin
 # /[Aa]ssets/AssetStoreTools*
 
@@ -60,15 +64,21 @@ sysinfo.txt
 *.aab
 *.unitypackage
 *.app
+/Compile
 
 # Crashlytics generated file
 crashlytics-build.properties
 
 # Packed Addressables
 /[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/*/*.bin*
+/[Aa]ssets/Materials/BauerVision
 
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 auto-push.bat
 git_autopush.bat
+Assets/Scripts/APIConfig.cs
+Assets/Scripts/APIConfig.cs.meta
+Assets/Scripts/Config/APIConfig.cs
+Assets/Scripts/Config/APIConfig.cs.meta

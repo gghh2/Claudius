@@ -463,15 +463,115 @@ public class FootstepSystem : MonoBehaviour
     
     void DetectSurface(RaycastHit hit)
     {
-        string newSurface = hit.collider.gameObject.name.ToLower();
+        string detectedSurface = "default";
         
-        if (newSurface != currentSurface)
+        // MÉTHODE 1: Essaie d'ABORD le nom du Material (priorité haute)
+        Renderer renderer = hit.collider.GetComponent<Renderer>();
+        if (renderer != null && renderer.material != null)
         {
-            currentSurface = newSurface;
+            string materialName = renderer.material.name.ToLower()
+                .Replace(" (instance)", "") // Unity ajoute souvent ceci
+                .Replace("_mat", "")        // Suffixe commun
+                .Replace("material", "");   // Mot "material"
             
-            if (debugMode)
-                Debug.Log($"🦶 Surface: {currentSurface}");
+            if (IsSurfaceNameRecognized(materialName))
+            {
+                detectedSurface = materialName;
+                if (debugMode)
+                    Debug.Log($"🦶 Surface détectée par matériel: '{materialName}' (priorité haute)");
+            }
+            else
+            {
+                // Recherche par mots-clés dans le nom du matériel
+                string keywordSurface = FindSurfaceByKeywords(materialName);
+                if (!string.IsNullOrEmpty(keywordSurface))
+                {
+                    detectedSurface = keywordSurface;
+                    if (debugMode)
+                        Debug.Log($"🦶 Surface détectée par mot-clé matériel: '{keywordSurface}' depuis '{materialName}'");
+                }
+            }
         }
+        
+        // MÉTHODE 2: Si pas trouvé par matériel, essaie le nom du GameObject (priorité basse)
+        if (detectedSurface == "default")
+        {
+            string objectName = hit.collider.gameObject.name.ToLower();
+            if (IsSurfaceNameRecognized(objectName))
+            {
+                detectedSurface = objectName;
+                if (debugMode)
+                    Debug.Log($"🦶 Surface détectée par nom d'objet: '{objectName}' (fallback)");
+            }
+            else
+            {
+                // Recherche par mots-clés dans le nom d'objet
+                string keywordSurface = FindSurfaceByKeywords(objectName);
+                if (!string.IsNullOrEmpty(keywordSurface))
+                {
+                    detectedSurface = keywordSurface;
+                    if (debugMode)
+                        Debug.Log($"🦶 Surface détectée par mot-clé objet: '{keywordSurface}' depuis '{objectName}'");
+                }
+                else if (debugMode)
+                {
+                    string materialName = renderer?.material?.name ?? "aucun";
+                    Debug.Log($"🦶 Surface non reconnue - Matériel: '{materialName}' | Objet: '{objectName}' → default");
+                }
+            }
+        }
+        
+        // Met à jour seulement si différent
+        if (detectedSurface != currentSurface)
+        {
+            currentSurface = detectedSurface;
+        }
+    }
+    
+    /// <summary>
+    /// Vérifie si un nom de surface est reconnu dans notre dictionnaire
+    /// </summary>
+    bool IsSurfaceNameRecognized(string surfaceName)
+    {
+        foreach (var kvp in surfaceColorDict)
+        {
+            if (surfaceName.Contains(kvp.Key))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /// <summary>
+    /// Recherche par mots-clés dans le nom du matériel
+    /// </summary>
+    string FindSurfaceByKeywords(string materialName)
+    {
+        // Mots-clés pour chaque type de surface
+        var surfaceKeywords = new Dictionary<string, string[]>
+        {
+            ["grass"] = new[] { "grass", "herbe", "lawn", "field" },
+            ["stone"] = new[] { "stone", "rock", "pierre", "concrete", "cement" },
+            ["metal"] = new[] { "metal", "steel", "iron", "aluminum", "chrome" },
+            ["wood"] = new[] { "wood", "timber", "plank", "oak", "pine" },
+            ["water"] = new[] { "water", "eau", "liquid", "pool" },
+            ["sand"] = new[] { "sand", "beach", "desert", "dune" },
+            ["dirt"] = new[] { "dirt", "soil", "mud", "earth", "ground" }
+        };
+        
+        foreach (var surface in surfaceKeywords)
+        {
+            foreach (string keyword in surface.Value)
+            {
+                if (materialName.Contains(keyword))
+                {
+                    return surface.Key;
+                }
+            }
+        }
+        
+        return ""; // Rien trouvé
     }
     
     Color GetSurfaceColor(string surface)

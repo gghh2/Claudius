@@ -43,6 +43,12 @@ public class QuestObject : MonoBehaviour
     [Header("Debug")]
     [Tooltip("Debug - Show detailed logs")]
     public bool debugMode = true;
+
+    [Header("Exploration Settings")]
+    [Tooltip("Temps requis dans la zone pour valider l'exploration (secondes)")]
+    public float explorationTimeRequired = 2f;
+    private float explorationTimer = 0f;
+    private bool isExploring = false;
     
     // Private variables
     private bool playerInRange = false;
@@ -204,25 +210,61 @@ public class QuestObject : MonoBehaviour
         {
             Debug.Log($"📊 {objectName} - PlayerInRange: {playerInRange}, IsCollected: {isCollected}");
         }
+
+
+        // NOUVEAU : Timer d'exploration
+        if (objectType == QuestObjectType.Marker && playerInRange && !isCollected)
+        {
+            if (!isExploring)
+            {
+                isExploring = true;
+                explorationTimer = 0f;
+                Debug.Log($"🗺️ Début exploration de {objectName}...");
+            }
+            
+            explorationTimer += Time.deltaTime;
+            
+            // Affiche la progression
+            if (nameText != null)
+            {
+                float progress = Mathf.Clamp01(explorationTimer / explorationTimeRequired);
+                nameText.text = $"📍 Exploration: {Mathf.RoundToInt(progress * 100)}%";
+            }
+            
+            // Validation automatique après le délai
+            if (explorationTimer >= explorationTimeRequired)
+            {
+                Debug.Log($"🗺️ ZONE EXPLORÉE : {objectName}");
+                ExploreMarker();
+            }
+        }
+        
+        // Interaction normale pour les autres types
+        if (playerInRange && Input.GetKeyDown(KeyCode.E) && !isCollected && objectType != QuestObjectType.Marker)
+        {
+            InteractWithObject();
+        }
+
+
     }
     
     void InteractWithObject()
     {
-        switch (objectType)
-        {
-            case QuestObjectType.Item:
-                CollectItem();
-                break;
-            case QuestObjectType.InteractableObject:
-                ActivateObject();
-                break;
-            case QuestObjectType.Marker:
-                ExploreMarker();
-                break;
-            case QuestObjectType.NPC:
-                TalkToNPC();
-                break;
-        }
+		switch (objectType)
+	    {
+	        case QuestObjectType.Item:
+	            CollectItem();
+	            break;
+	        case QuestObjectType.InteractableObject:
+	            ActivateObject();
+	            break;
+	        case QuestObjectType.Marker:
+	            ExploreMarker();
+	            break;
+	        case QuestObjectType.NPC:
+	            ActivateObject(); // ← Changez TalkToNPC() par ActivateObject()
+	            break;
+	    }
     }
     
     void CollectItem()
@@ -251,7 +293,7 @@ public class QuestObject : MonoBehaviour
             Debug.LogWarning("❌ QuestManager.Instance est NULL !");
         }
         
-        StartCoroutine(CollectionEffect());
+        StartCoroutine(ExplorationCompleteEffect());
     }
     
     void ActivateObject()
@@ -274,86 +316,111 @@ public class QuestObject : MonoBehaviour
     }
     
     void ExploreMarker()
-    {
-        isCollected = true;
-        Debug.Log($"🗺️ Zone explorée: {objectName}");
-        
-        QuestManager.Instance?.OnMarkerExplored(questId, objectName);
-        StartCoroutine(CollectionEffect());
-    }
-    
-    void TalkToNPC()
-    {
-        isCollected = true;
-        Debug.Log($"💬 Conversation avec: {objectName}");
-        
-        QuestManager.Instance?.OnObjectInteracted(questId, objectName);
-        
-        if (nameText != null)
-        {
-            nameText.text = "✅ Mission accomplie";
-            nameText.color = Color.green;
-        }
-    }
-    
-    System.Collections.IEnumerator CollectionEffect()
-    {
-        Vector3 startPos = transform.position;
-        Vector3 targetPos = startPos + Vector3.up * 2f;
-        
-        float duration = 1f;
-        float elapsed = 0f;
-        
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float t = elapsed / duration;
-            
-            transform.position = Vector3.Lerp(startPos, targetPos, t);
-            if (objectRenderer != null)
-            {
-                Color color = objectRenderer.material.color;
-                color.a = 1f - t;
-                objectRenderer.material.color = color;
-            }
-            
-            if (nameText != null)
-            {
-                Color textColor = nameText.color;
-                textColor.a = 1f - t;
-                nameText.color = textColor;
-            }
-            
-            yield return null;
-        }
-        
-        Destroy(gameObject);
-    }
+	{
+	    isCollected = true;
+	    Debug.Log($"🗺️ Zone explorée: {objectName}");
+	    
+	    QuestManager.Instance?.OnMarkerExplored(questId, objectName);
+	    
+	    // Effet visuel de validation
+	    if (nameText != null)
+	    {
+	        nameText.text = "✅ Zone Explorée !";
+	        nameText.color = Color.green;
+	        nameText.fontSize = fontSize * 1.5f;
+	    }
+	    
+	    // Effet de particules
+	    var footstepSystem = FindObjectOfType<FootstepSystem>();
+	    if (footstepSystem != null)
+	    {
+	        for (int i = 0; i < 3; i++)
+	        {
+	            footstepSystem.PlayLandingParticles();
+	        }
+	    }
+	    
+	    // Destruction progressive
+	    StartCoroutine(ExplorationCompleteEffect());
+	}
+
+	System.Collections.IEnumerator ExplorationCompleteEffect()
+	{
+	    yield return new WaitForSeconds(2f); // Laisse le message visible
+	    
+	    // Puis fait disparaître progressivement
+	    float fadeTime = 1f;
+	    float elapsed = 0f;
+	    
+	    while (elapsed < fadeTime)
+	    {
+	        elapsed += Time.deltaTime;
+	        float alpha = 1f - (elapsed / fadeTime);
+	        
+	        if (objectRenderer != null)
+	        {
+	            Color color = objectRenderer.material.color;
+	            color.a = alpha;
+	            objectRenderer.material.color = color;
+	        }
+	        
+	        if (nameText != null)
+	        {
+	            Color textColor = nameText.color;
+	            textColor.a = alpha;
+	            nameText.color = textColor;
+	        }
+	        
+	        yield return null;
+	    }
+	    
+	    Destroy(gameObject);
+	}
     
     // TRIGGER EVENTS avec debug amélioré
     void OnTriggerEnter(Collider other)
-    {
-        if (debugMode)
-            Debug.Log($"🔍 OnTriggerEnter - Objet détecté: {other.name} (Tag: {other.tag})");
-        
-        if (other.CompareTag("Player"))
-        {
-            playerInRange = true;
-            ShowInteractionPrompt(true);
-            Debug.Log($"✅ JOUEUR DÉTECTÉ près de {objectName} - Appuyez sur E pour interagir !");
-        }
-    }
+	{
+	    if (debugMode)
+	        Debug.Log($"🔍 OnTriggerEnter - Objet détecté: {other.name} (Tag: {other.tag})");
+	    
+	    if (other.CompareTag("Player"))
+	    {
+	        playerInRange = true;
+	        
+	        // NOUVEAU : Auto-validation pour les marqueurs d'exploration
+	        if (objectType == QuestObjectType.Marker && !isCollected)
+	        {
+	            Debug.Log($"🗺️ ZONE EXPLORÉE AUTOMATIQUEMENT : {objectName}");
+	            ExploreMarker();
+	        }
+	        else
+	        {
+	            // Pour les autres types, affiche le prompt
+	            ShowInteractionPrompt(true);
+	            Debug.Log($"✅ JOUEUR DÉTECTÉ près de {objectName} - Appuyez sur E pour interagir !");
+	        }
+	    }
+	}
     
     void OnTriggerExit(Collider other)
     {
-        if (debugMode)
-            Debug.Log($"🔍 OnTriggerExit - Objet quitté: {other.name} (Tag: {other.tag})");
-        
         if (other.CompareTag("Player"))
         {
             playerInRange = false;
             ShowInteractionPrompt(false);
-            Debug.Log($"📤 Joueur s'éloigne de {objectName}");
+            
+            // NOUVEAU : Reset le timer d'exploration si on quitte la zone
+            if (objectType == QuestObjectType.Marker && isExploring && !isCollected)
+            {
+                isExploring = false;
+                explorationTimer = 0f;
+                Debug.Log($"📤 Exploration interrompue pour {objectName}");
+                
+                if (nameText != null)
+                {
+                    nameText.text = GetDisplayText();
+                }
+            }
         }
     }
     
@@ -418,7 +485,7 @@ public class QuestObject : MonoBehaviour
         Gizmos.color = Color.white;
         Gizmos.DrawRay(transform.position, Vector3.up * 3f);
     }
-    
+
     [ContextMenu("Debug AI Fields")]
     public void DebugAIFields()
     {

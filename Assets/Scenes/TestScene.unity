@@ -1099,15 +1099,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   zoneName: Ruine
   zoneType: 3
-  zoneColor: {r: 1, g: 0.62319684, b: 0, a: 1}
-  spawnRadius: 8
-  maxSpawnPoints: 5
+  description: "Ruines anciennes myst\xE9rieuses avec artefacts cach\xE9s"
+  supportedObjects: 0000000003000000
+  zoneColor: {r: 0.6, g: 0.5, b: 0.4, a: 1}
+  spawnRadius: 13.8
+  maxSpawnPoints: 6
   showSpawnArea: 1
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 1
-  supportedObjects: 010000000300000000000000
-  description: Vestiges d'une ancienne civilisation alien
+  spawnPriority: 5
+  maxSimultaneousQuests: 3
   debugMode: 0
 --- !u!1 &149425597
 GameObject:
@@ -1878,6 +1880,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   zoneName: Laboratoire Principal
   zoneType: 0
+  description: "Laboratoire scientifique avec \xE9quipements de recherche, \xE9chantillons
+    et terminaux"
+  supportedObjects: 0000000002000000
   zoneColor: {r: 0, g: 1, b: 1, a: 1}
   spawnRadius: 8
   maxSpawnPoints: 5
@@ -1885,8 +1890,8 @@ MonoBehaviour:
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 1
-  supportedObjects: 000000000200000003000000
-  description: "Laboratoire scientifique avec \xE9quipements de recherche"
+  spawnPriority: 4
+  maxSimultaneousQuests: 3
   debugMode: 0
 --- !u!4 &258641232 stripped
 Transform:
@@ -2004,15 +2009,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   zoneName: Ruine
   zoneType: 3
-  zoneColor: {r: 1, g: 0.62319684, b: 0, a: 1}
-  spawnRadius: 8
-  maxSpawnPoints: 5
+  description: "Ruines anciennes myst\xE9rieuses avec artefacts cach\xE9s"
+  supportedObjects: 0000000003000000
+  zoneColor: {r: 0.6, g: 0.5, b: 0.4, a: 1}
+  spawnRadius: 12.2
+  maxSpawnPoints: 6
   showSpawnArea: 1
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 1
-  supportedObjects: 010000000300000000000000
-  description: Vestiges d'une ancienne civilisation alien
+  spawnPriority: 5
+  maxSimultaneousQuests: 3
   debugMode: 0
 --- !u!1 &280185439
 GameObject:
@@ -5101,8 +5108,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37788c922e8d50c4cad8506cc3884f7f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 5
-  sprintSpeed: 10
+  moveSpeed: 8
+  sprintSpeed: 12
   sprintKey: 304
   sprintTransitionSpeed: 0.3
   canSprintInAir: 0
@@ -5112,7 +5119,7 @@ MonoBehaviour:
   staminaRegenRate: 15
   staminaRegenDelay: 1
   currentStamina: 0
-  jumpForce: 12
+  jumpForce: 20
   groundLayer:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -5631,7 +5638,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1611696917}
-  m_RootOrder: 7
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &831795805
 MonoBehaviour:
@@ -5647,15 +5654,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   zoneName: Baie Medical
   zoneType: 9
-  zoneColor: {r: 1, g: 0.62319684, b: 0, a: 1}
-  spawnRadius: 8
+  description: "Centre m\xE9dical avec \xE9quipements de soin avanc\xE9s"
+  supportedObjects: 0000000002000000
+  zoneColor: {r: 0.9, g: 1, b: 0.9, a: 1}
+  spawnRadius: 4
   maxSpawnPoints: 5
   showSpawnArea: 1
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 1
-  supportedObjects: 01000000020000000300000000000000
-  description: Description de la zone pour l'IA
+  spawnPriority: 4
+  maxSimultaneousQuests: 3
   debugMode: 0
 --- !u!1001 &841899387
 PrefabInstance:
@@ -6259,15 +6268,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   zoneName: "March\xE9"
   zoneType: 2
-  zoneColor: {r: 0, g: 0.86517644, b: 1, a: 1}
-  spawnRadius: 8
-  maxSpawnPoints: 5
+  description: Zone commerciale avec marchands et marchandises
+  supportedObjects: 0000000001000000
+  zoneColor: {r: 1, g: 0.9, b: 0.3, a: 1}
+  spawnRadius: 6
+  maxSpawnPoints: 8
   showSpawnArea: 1
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 1
-  supportedObjects: 01000000020000000300000000000000
-  description: Description de la zone pour l'IA
+  spawnPriority: 7
+  maxSimultaneousQuests: 3
   debugMode: 0
 --- !u!1 &937537654
 GameObject:
@@ -6628,7 +6639,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 5
+  orthographic size: 6
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -8001,62 +8012,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1076660047}
   m_CullTransparentMesh: 1
---- !u!1 &1078930816
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1078930817}
-  - component: {fileID: 1078930818}
-  m_Layer: 0
-  m_Name: Zone_Bridge_01
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1078930817
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1078930816}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.05, y: 0.099999905, z: -15.71}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1611696917}
-  m_RootOrder: 6
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1078930818
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1078930816}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9e52b077ed9c5fb4ca50e43061df7ce1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  zoneName: Pont
-  zoneType: 8
-  zoneColor: {r: 1, g: 0.62319684, b: 0, a: 1}
-  spawnRadius: 8
-  maxSpawnPoints: 5
-  showSpawnArea: 1
-  obstacleLayer:
-    serializedVersion: 2
-    m_Bits: 1
-  supportedObjects: 01000000020000000300000000000000
-  description: Description de la zone pour l'IA
-  debugMode: 0
 --- !u!1 &1079070886
 GameObject:
   m_ObjectHideFlags: 0
@@ -9112,15 +9067,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   zoneName: "S\xE9curity Area"
   zoneType: 4
-  zoneColor: {r: 1, g: 0.62319684, b: 0, a: 1}
-  spawnRadius: 8
-  maxSpawnPoints: 5
+  description: "Poste de s\xE9curit\xE9 avec gardes et syst\xE8mes de surveillance"
+  supportedObjects: 0200000001000000
+  zoneColor: {r: 1, g: 0.2, b: 0.2, a: 1}
+  spawnRadius: 3
+  maxSpawnPoints: 4
   showSpawnArea: 1
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 1
-  supportedObjects: 01000000020000000300000000000000
-  description: Description de la zone pour l'IA
+  spawnPriority: 2
+  maxSimultaneousQuests: 3
   debugMode: 0
 --- !u!1 &1304698724
 GameObject:
@@ -9574,6 +9531,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   zoneName: Hangar
   zoneType: 1
+  description: Description de la zone pour l'IA
+  supportedObjects: 01000000020000000300000000000000
   zoneColor: {r: 0, g: 1, b: 0.15767026, a: 1}
   spawnRadius: 8
   maxSpawnPoints: 5
@@ -9581,8 +9540,8 @@ MonoBehaviour:
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 1
-  supportedObjects: 01000000020000000300000000000000
-  description: Description de la zone pour l'IA
+  spawnPriority: 8
+  maxSimultaneousQuests: 3
   debugMode: 0
 --- !u!1 &1398089747
 GameObject:
@@ -10169,7 +10128,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1628671277}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.99999243
+  m_Size: 0.9999958
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -10258,15 +10217,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   zoneName: "Local Ing\xE9nieur"
   zoneType: 7
-  zoneColor: {r: 1, g: 0.62319684, b: 0, a: 1}
+  description: "Hangar technique avec vaisseaux et \xE9quipements de maintenance"
+  supportedObjects: 000000000100000002000000
+  zoneColor: {r: 1, g: 0.6, b: 0.2, a: 1}
   spawnRadius: 8
-  maxSpawnPoints: 5
+  maxSpawnPoints: 7
   showSpawnArea: 1
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 1
-  supportedObjects: 01000000020000000300000000000000
-  description: Description de la zone pour l'IA
+  spawnPriority: 6
+  maxSimultaneousQuests: 3
   debugMode: 0
 --- !u!1001 &1475049738
 PrefabInstance:
@@ -11233,8 +11194,8 @@ Transform:
   - {fileID: 1973865252}
   - {fileID: 1697655605}
   - {fileID: 1451605327}
-  - {fileID: 1078930817}
   - {fileID: 831795804}
+  - {fileID: 1803155613}
   m_Father: {fileID: 1795769962}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -11917,6 +11878,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   zoneName: Maison
   zoneType: 6
+  description: Description de la zone pour l'IA
+  supportedObjects: 01000000020000000000000003000000
   zoneColor: {r: 1, g: 0.62319684, b: 0, a: 1}
   spawnRadius: 8
   maxSpawnPoints: 5
@@ -11924,8 +11887,8 @@ MonoBehaviour:
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 1
-  supportedObjects: 01000000020000000000000003000000
-  description: Description de la zone pour l'IA
+  spawnPriority: 7
+  maxSimultaneousQuests: 3
   debugMode: 0
 --- !u!1 &1712107819
 GameObject:
@@ -12534,6 +12497,65 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 8
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1803155612
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1803155613}
+  - component: {fileID: 1803155614}
+  m_Layer: 0
+  m_Name: Zone_Fallback_01
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1803155613
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1803155612}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 24.18, y: 0, z: -31.41}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1611696917}
+  m_RootOrder: 7
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1803155614
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1803155612}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e52b077ed9c5fb4ca50e43061df7ce1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  zoneName: Zone de Fallback
+  zoneType: 0
+  description: "Si jamais aucune qu\xEAte n'est possible \xE0 g\xE9n\xE9rer dans
+    les zones existantes elle peut utiliser cette zone qui contient tous les \xE9l\xE9ments."
+  supportedObjects: 00000000010000000200000003000000
+  zoneColor: {r: 0, g: 1, b: 1, a: 1}
+  spawnRadius: 6.3
+  maxSpawnPoints: 5
+  showSpawnArea: 1
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 1
+  spawnPriority: 0
+  maxSimultaneousQuests: 3
+  debugMode: 0
 --- !u!1 &1804580756
 GameObject:
   m_ObjectHideFlags: 0
@@ -13732,15 +13754,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   zoneName: Entrepot
   zoneType: 5
-  zoneColor: {r: 1, g: 0.62319684, b: 0, a: 1}
-  spawnRadius: 8
-  maxSpawnPoints: 5
+  description: Zone de stockage avec conteneurs et marchandises
+  supportedObjects: 00000000
+  zoneColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  spawnRadius: 5
+  maxSpawnPoints: 10
   showSpawnArea: 1
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 1
-  supportedObjects: 01000000020000000300000000000000
-  description: Description de la zone pour l'IA
+  spawnPriority: 3
+  maxSimultaneousQuests: 3
   debugMode: 0
 --- !u!1 &1985802901
 GameObject:

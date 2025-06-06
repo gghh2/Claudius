@@ -1,97 +1,33 @@
+// Assets/Scripts/AI/Core/AIDialogueManager.cs
 using System.Collections;
-using UnityEngine;
-using UnityEngine.Networking;
-using System.Text;
 using System.Collections.Generic;
 using System.Linq;
-
-// Classes pour l'historique des conversations
-[System.Serializable]
-public class ConversationHistory
-{
-    public string npcName;
-    public List<string> messages = new List<string>();
-    public bool hasSpokenBefore = false;
-}
-
-// Classes pour l'API OpenAI
-[System.Serializable]
-public class OpenAIMessage
-{
-    public string role;
-    public string content;
-}
-
-[System.Serializable]
-public class OpenAIRequest
-{
-    public string model;
-    public OpenAIMessage[] messages;
-    public float temperature;
-    public int max_tokens;
-}
-
-[System.Serializable]
-public class OpenAIResponse
-{
-    public OpenAIChoice[] choices;
-}
-
-[System.Serializable]
-public class OpenAIChoice
-{
-    public OpenAIMessage message;
-}
-
-[System.Serializable]
-public class AIConfig
-{
-    [Header("===== TECHNICAL CONFIGURATION =====")]
-    
-    [HideInInspector] // Cache le champ API Key dans l'Inspector
-    public string apiKey = "";
-    
-    [Header("Model Settings")]
-    [Tooltip("Technical - GPT model to use")]
-    public string model = "gpt-3.5-turbo";
-    
-    [Tooltip("Technical - Generation temperature")]
-    [Range(0f, 1f)]
-    public float temperature = 0.8f;
-    
-    [Tooltip("Technical - Maximum tokens")]
-    public int maxTokens = 150;
-    
-    [Header("Debug")]
-    [Tooltip("Technical - Show API status")]
-    public bool showApiStatus = true;
-}
+using System.Text;
+using UnityEngine;
+using UnityEngine.Networking;
 
 public class AIDialogueManager : MonoBehaviour
 {
-        [Header("===== AI CONFIGURATION - Used by AI System =====")]
-    
     [Header("AI Settings")]
     public AIConfig aiConfig;
     
-    [Header("Game Context (AI)")]
-    [Tooltip("AI SYSTEM - Global game context for dialogue generation")]
+    [Header("Prompt Configuration")]
+    public AIPromptConfig promptConfig;
+    public AIPromptConfig marchandPromptConfig;
+    public AIPromptConfig scientifiquePromptConfig;
+    public AIPromptConfig gardePromptConfig;
+    public AIPromptConfig defaultPromptConfig; // Fallback
+    
+    [Header("Context")]
     [TextArea(3, 6)]
     public string gameContext = "Vous êtes dans un univers de space opera. Le joueur explore une station spatiale et rencontre différents personnages. Répondez en français et gardez vos réponses courtes (1-3 phrases maximum).";
     
-    [Space(20)]
-    [Header("===== TECHNICAL CONFIGURATION - Not used by AI =====")]
-    
     [Header("API Status")]
-    [Tooltip("Technical - Shows if API key is loaded")]
     [SerializeField] private bool apiKeyLoaded = false;
-    
-    [Tooltip("Technical - Shows API key source")]
     [SerializeField] private string apiKeySource = "Non chargée";
     
-    [Header("Conversation History")]
+    // Private variables
     private Dictionary<string, ConversationHistory> conversationHistories = new Dictionary<string, ConversationHistory>();
-    
     private List<OpenAIMessage> currentConversation;
     private string apiUrl = "https://api.openai.com/v1/chat/completions";
     
@@ -117,7 +53,6 @@ public class AIDialogueManager : MonoBehaviour
     
     void LoadAPIKey()
     {
-        // Réinitialise
         apiKeyLoaded = false;
         apiKeySource = "Non chargée";
         
@@ -137,65 +72,28 @@ public class AIDialogueManager : MonoBehaviour
                 if (aiConfig.showApiStatus)
                 {
                     Debug.Log($"✅ Clé API OpenAI chargée depuis {apiKeySource}");
-                    
-                    // Affiche les premiers caractères pour vérification (sans révéler la clé complète)
-                    string maskedKey = configKey.Substring(0, 7) + "..." + configKey.Substring(configKey.Length - 4);
-                    Debug.Log($"🔑 Clé masquée: {maskedKey}");
                 }
-            }
-            else
-            {
-                Debug.LogError("❌ APIConfig.cs trouvé mais clé non configurée ! Remplacez 'sk-REMPLACEZ_MOI' par votre vraie clé.");
             }
         }
         catch (System.Exception e)
         {
             Debug.LogError($"❌ Impossible de charger APIConfig.cs : {e.Message}");
-            Debug.LogError("📋 Instructions :");
-            Debug.LogError("1. Créez le dossier Assets/Scripts/Config/");
-            Debug.LogError("2. Copiez APIConfig.cs.template vers APIConfig.cs");
-            Debug.LogError("3. Remplacez 'sk-REMPLACEZ_MOI' par votre clé API OpenAI");
-            Debug.LogError("4. Assurez-vous que APIConfig.cs est dans .gitignore");
         }
         
-        // Tentative 2 : Variable d'environnement (optionnel)
-        if (!apiKeyLoaded)
-        {
-            string envKey = System.Environment.GetEnvironmentVariable("OPENAI_API_KEY");
-            if (!string.IsNullOrEmpty(envKey))
-            {
-                aiConfig.apiKey = envKey;
-                apiKeyLoaded = true;
-                apiKeySource = "Variable d'environnement";
-                
-                if (aiConfig.showApiStatus)
-                {
-                    Debug.Log($"✅ Clé API OpenAI chargée depuis {apiKeySource}");
-                }
-            }
-        }
-        
-        // Affichage final du statut
         if (!apiKeyLoaded)
         {
             Debug.LogWarning("⚠️ Clé API OpenAI non configurée ! Mode fallback activé.");
-            Debug.LogWarning("💡 L'IA utilisera des réponses prédéfinies au lieu de GPT.");
         }
     }
     
     public void StartAIConversation(NPCData npcData)
     {
-        // Initialise une nouvelle conversation
         currentConversation = new List<OpenAIMessage>();
         
-        // Message système pour définir le contexte
         string systemPrompt = BuildSystemPrompt(npcData);
-        currentConversation.Add(new OpenAIMessage { role = "system", content = systemPrompt });
+        currentConversation.Add(new OpenAIMessage("system", systemPrompt));
+        currentConversation.Add(new OpenAIMessage("user", "Le joueur s'approche de vous. Saluez-le de manière naturelle selon votre personnalité."));
         
-        // Message pour déclencher la salutation
-        currentConversation.Add(new OpenAIMessage { role = "user", content = "Le joueur s'approche de vous. Saluez-le de manière naturelle selon votre personnalité." });
-        
-        // Appel à l'IA ou fallback
         if (IsConfigured())
         {
             StartCoroutine(GetAIResponse(npcData, true));
@@ -214,10 +112,8 @@ public class AIDialogueManager : MonoBehaviour
             return;
         }
         
-        // Ajoute le message du joueur
-        currentConversation.Add(new OpenAIMessage { role = "user", content = playerMessage });
+        currentConversation.Add(new OpenAIMessage("user", playerMessage));
         
-        // Appel à l'IA ou fallback
         if (IsConfigured())
         {
             StartCoroutine(GetAIResponse(npcData, false));
@@ -230,17 +126,13 @@ public class AIDialogueManager : MonoBehaviour
     
     public void InitializeConversationWithContext(NPCData npcData, string lastNPCMessage, int dialogueStep)
     {
-        // Initialise une nouvelle conversation avec le contexte du dialogue précédent
         currentConversation = new List<OpenAIMessage>();
         
-        // Message système pour définir le contexte
         string systemPrompt = BuildSystemPrompt(npcData);
-        currentConversation.Add(new OpenAIMessage { role = "system", content = systemPrompt });
+        currentConversation.Add(new OpenAIMessage("system", systemPrompt));
         
-        // Ajoute le contexte du dialogue précédent si disponible
         if (!string.IsNullOrEmpty(lastNPCMessage) && dialogueStep > 0)
         {
-            // Retire les préfixes comme "Dr. Elena Vasquez: " du message
             string cleanMessage = lastNPCMessage;
             if (cleanMessage.Contains(": "))
             {
@@ -251,27 +143,63 @@ public class AIDialogueManager : MonoBehaviour
                 }
             }
             
-            // Ajoute le dernier message du NPC comme contexte
-            currentConversation.Add(new OpenAIMessage { 
-                role = "assistant", 
-                content = cleanMessage 
-            });
-            
+            currentConversation.Add(new OpenAIMessage("assistant", cleanMessage));
             Debug.Log($"Contexte ajouté pour {npcData.name}: {cleanMessage}");
         }
         
         Debug.Log($"Conversation IA initialisée avec contexte pour {npcData.name}");
     }
     
-    // Garde aussi l'ancienne méthode pour les nouveaux dialogues
     public void InitializeConversation(NPCData npcData)
     {
         InitializeConversationWithContext(npcData, "", 0);
     }
     
+
+
+    AIPromptConfig GetConfigForRole(string role)
+    {
+        switch (role.ToLower())
+        {
+            case "marchand":
+            case "trader":
+                return marchandPromptConfig;
+                
+            case "scientifique":
+            case "scientist":
+            case "chercheur":
+                return scientifiquePromptConfig;
+                
+            case "garde":
+            case "garde impérial":
+            case "guard":
+            case "security":
+                return gardePromptConfig;
+                
+            default:
+                return defaultPromptConfig;
+        }
+    }
+
+
+
+
+
+
+
+
+
     string BuildSystemPrompt(NPCData npcData)
     {
-        string basePrompt = $@"{gameContext}
+        // NOUVEAU CODE :
+    AIPromptConfig configToUse = GetConfigForRole(npcData.role);
+    
+    if (configToUse == null)
+    {
+        Debug.LogError($"❌ Aucune config trouvée pour le rôle: {npcData.role}");
+        
+        // Fallback avec l'ancien système
+        return $@"{gameContext}
 
 VOUS ÊTES:
 - Nom: {npcData.name}
@@ -295,13 +223,35 @@ ZONES DISPONIBLES: laboratory, hangar, market, security, residential, engineerin
 {GetRoleSpecificQuestExamples(npcData.role)}
 
 Vous êtes sur une planète extraterrestre et interagissez avec un voyageur.";
-
-        return basePrompt;
     }
+    
+    // Utilise la config appropriée
+    return $@"{configToUse.npcPersonality}
 
+VOUS ÊTES:
+- Nom: {npcData.name}
+- Rôle: {npcData.role}
+- Description: {npcData.description}
+
+{configToUse.globalInstructions}
+
+SYSTÈME DE QUÊTES:
+{configToUse.questInstructions}
+
+EXEMPLES POUR VOTRE RÔLE:
+{configToUse.roleSpecificExamples}";
+}
+
+
+
+
+
+
+
+
+    
     string GetQuestInstructionsForNPC(string npcName)
     {
-        // Vérifie si ce NPC a déjà donné une quête active
         if (QuestJournal.Instance != null)
         {
             var activeQuests = QuestJournal.Instance.GetActiveQuests();
@@ -317,16 +267,10 @@ NE DONNEZ PAS DE NOUVELLE QUÊTE. À la place:
 - Demandez des nouvelles de la mission en cours
 - Encouragez le voyageur  
 - Donnez des conseils sur où chercher
-- Montrez votre préoccupation ou satisfaction selon le progrès
-
-EXEMPLES:
-""Alors, avez-vous trouvé ce que je vous ai demandé ?""
-""Comment se passe votre mission ?""
-""J'espère que vous progressez bien dans votre recherche.""";
+- Montrez votre préoccupation ou satisfaction selon le progrès";
             }
             else
             {
-                // Vérifie si une quête a été terminée
                 var completedQuests = QuestJournal.Instance.GetCompletedQuests();
                 var npcCompletedQuest = completedQuests.FirstOrDefault(q => q.giverNPCName == npcName);
                 
@@ -343,9 +287,10 @@ Vous pouvez donner des quêtes en utilisant ces tokens:
 [QUEST:TALK:personnage:zone] = Parler à quelqu'un
 [QUEST:INTERACT:objet:zone] = Interagir avec un objet";
                 }
-                else
-                {
-                    return @"STATUT QUÊTE:
+            }
+        }
+        
+        return @"STATUT QUÊTE:
 Vous n'avez pas encore donné de mission à ce voyageur.
 Vous pouvez donner des quêtes en utilisant ces tokens:
 
@@ -354,13 +299,8 @@ Vous pouvez donner des quêtes en utilisant ces tokens:
 [QUEST:EXPLORE:zone] = Explorer une zone
 [QUEST:TALK:personnage:zone] = Parler à quelqu'un
 [QUEST:INTERACT:objet:zone] = Interagir avec un objet";
-                }
-            }
-        }
-        
-        return "Vous pouvez donner des quêtes si approprié.";
     }
-
+    
     string GetRoleSpecificQuestExamples(string role)
     {
         switch (role.ToLower())
@@ -368,44 +308,32 @@ Vous pouvez donner des quêtes en utilisant ces tokens:
             case "marchand":
                 return @"EXEMPLES DE RÉPONSES AVEC TOKENS:
 Joueur: ""Avez-vous du travail pour moi ?""
-Vous: ""Justement ! Récupérez ce colis urgent pour moi [QUEST:FETCH:colis_urgent:hangar:1] et je vous paierai bien.""
-
-Joueur: ""Comment puis-je vous aider ?""
-Vous: ""J'attends une livraison importante. Allez la chercher ! [QUEST:FETCH:marchandise_rare:storage:2]""";
+Vous: ""Justement ! Récupérez ce colis urgent pour moi [QUEST:FETCH:colis_urgent:hangar:1] et je vous paierai bien.""";
 
             case "scientifique":
                 return @"EXEMPLES DE RÉPONSES AVEC TOKENS:
 Joueur: ""Avez-vous besoin d'aide ?""
-Vous: ""Mes échantillons ont disparu ! Retrouvez-les [QUEST:FETCH:echantillon_alien:laboratory:3] s'il vous plaît.""
-
-Joueur: ""Du travail ?""
-Vous: ""Ce terminal est en panne depuis des jours [QUEST:INTERACT:terminal_recherche:laboratory]. Pouvez-vous le réparer ?""";
+Vous: ""Mes échantillons ont disparu ! Retrouvez-les [QUEST:FETCH:echantillon_alien:laboratory:3] s'il vous plaît.""";
 
             case "garde impérial":
                 return @"EXEMPLES DE RÉPONSES AVEC TOKENS:
 Joueur: ""Une mission pour moi ?""
-Vous: ""Activité suspecte détectée. Inspectez les ruines [QUEST:EXPLORE:ruins] et rapportez-moi vos découvertes.""
-
-Joueur: ""Comment aider ?""
-Vous: ""Vérifiez ce terminal de sécurité [QUEST:INTERACT:console_securite:security]. Il affiche des erreurs.""";
+Vous: ""Activité suspecte détectée. Inspectez les ruines [QUEST:EXPLORE:ruins] et rapportez-moi vos découvertes.""";
 
             default:
                 return @"EXEMPLES GÉNÉRIQUES:
 ""Aidez-moi à récupérer mes affaires [QUEST:FETCH:objet_personnel:residential:1]""
-""Explorez cette zone suspecte [QUEST:EXPLORE:hangar]""
-""Parlez à mon contact [QUEST:TALK:informateur:market]""";
+""Explorez cette zone suspecte [QUEST:EXPLORE:hangar]""";
         }
     }
     
     IEnumerator GetAIResponse(NPCData npcData, bool isWelcome)
     {
-        // Indique le chargement
         if (DialogueUI.Instance != null)
         {
             DialogueUI.Instance.ShowLoadingState(true);
         }
         
-        // Prépare la requête
         OpenAIRequest request = new OpenAIRequest
         {
             model = aiConfig.model,
@@ -417,7 +345,6 @@ Vous: ""Vérifiez ce terminal de sécurité [QUEST:INTERACT:console_securite:sec
         string jsonData = JsonUtility.ToJson(request);
         Debug.Log($"Envoi requête OpenAI pour {npcData.name}");
         
-        // Appel API
         yield return StartCoroutine(CallOpenAI(jsonData, npcData, isWelcome));
     }
     
@@ -435,7 +362,6 @@ Vous: ""Vérifiez ce terminal de sécurité [QUEST:INTERACT:console_securite:sec
             
             yield return request.SendWebRequest();
             
-            // Désactive le chargement
             if (DialogueUI.Instance != null)
             {
                 DialogueUI.Instance.ShowLoadingState(false);
@@ -456,7 +382,6 @@ Vous: ""Vérifiez ce terminal de sécurité [QUEST:INTERACT:console_securite:sec
                     Debug.LogError($"Réponse: {errorText}");
                 }
                 
-                // Fallback en cas d'erreur
                 UseFallback(npcData, isWelcome, "");
             }
         }
@@ -466,13 +391,20 @@ Vous: ""Vérifiez ce terminal de sécurité [QUEST:INTERACT:console_securite:sec
     {
         try
         {
+            // AJOUT DEBUG
+            Debug.Log($"📝 Prompt envoyé à l'IA:");
+            Debug.Log(BuildSystemPrompt(npcData));
+            
             OpenAIResponse response = JsonUtility.FromJson<OpenAIResponse>(jsonResponse);
             
             if (response.choices != null && response.choices.Length > 0)
             {
                 string aiResponse = response.choices[0].message.content.Trim();
                 
-                // DÉTECTION DES QUÊTES (mais pas création immédiate)
+                Debug.Log($"🤖 Réponse IA brute:");
+                Debug.Log(aiResponse);
+                
+                // Détection des quêtes
                 List<QuestToken> detectedQuests = null;
                 if (QuestTokenDetector.Instance != null)
                 {
@@ -481,21 +413,17 @@ Vous: ""Vérifiez ce terminal de sécurité [QUEST:INTERACT:console_securite:sec
                     if (detectedQuests.Count > 0)
                     {
                         Debug.Log($"🎯 {detectedQuests.Count} quête(s) détectée(s)");
-                        
-                        // Nettoie le message des tokens AVANT de l'afficher
                         aiResponse = QuestTokenDetector.Instance.CleanMessageFromTokens(aiResponse);
                     }
                 }
                 
-                // Ajoute la réponse à l'historique
-                currentConversation.Add(new OpenAIMessage { role = "assistant", content = aiResponse });
+                currentConversation.Add(new OpenAIMessage("assistant", aiResponse));
                 
                 Debug.Log($"IA ({npcData.name}): {aiResponse}");
                 
                 string formattedResponse = $"{npcData.name}: {aiResponse}";
                 SaveMessageToHistory(npcData.name, formattedResponse, false);
                 
-                // Affiche dans l'UI
                 if (isWelcome)
                 {
                     DialogueUI.Instance.StartAIDialogue(npcData, formattedResponse);
@@ -505,7 +433,6 @@ Vous: ""Vérifiez ce terminal de sécurité [QUEST:INTERACT:console_securite:sec
                     DialogueUI.Instance.ShowText(formattedResponse);
                 }
                 
-                // MAINTENANT envoie les quêtes à DialogueUI APRÈS l'affichage
                 if (detectedQuests != null && detectedQuests.Count > 0)
                 {
                     Debug.Log($"📋 Envoi de {detectedQuests.Count} quête(s) à DialogueUI");
@@ -590,8 +517,6 @@ Vous: ""Vérifiez ce terminal de sécurité [QUEST:INTERACT:console_securite:sec
         }
     }
     
-    // ========== MÉTHODES POUR L'HISTORIQUE ==========
-    
     public void SaveMessageToHistory(string npcName, string message, bool isPlayer = false)
     {
         if (!conversationHistories.ContainsKey(npcName))
@@ -620,8 +545,6 @@ Vous: ""Vérifiez ce terminal de sécurité [QUEST:INTERACT:console_securite:sec
         return conversationHistories.ContainsKey(npcName) && conversationHistories[npcName].hasSpokenBefore;
     }
     
-    // ========== MÉTHODES UTILITAIRES ==========
-    
     public bool IsConfigured()
     {
         return apiKeyLoaded && !string.IsNullOrEmpty(aiConfig.apiKey);
@@ -632,14 +555,12 @@ Vous: ""Vérifiez ce terminal de sécurité [QUEST:INTERACT:console_securite:sec
         currentConversation?.Clear();
     }
     
-    // Méthode pour effacer tout l'historique (optionnel)
     public void ClearAllHistory()
     {
         conversationHistories.Clear();
         Debug.Log("Historique des conversations effacé");
     }
     
-    // Méthodes de debug
     [ContextMenu("Reload API Key")]
     public void ReloadAPIKey()
     {

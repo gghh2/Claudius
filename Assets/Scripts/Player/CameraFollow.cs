@@ -67,8 +67,6 @@ public class CameraFollow : MonoBehaviour
         HandleZoomInput();
         UpdateCameraZoom();
     }
-    
-
 
     void HandleZoomInput()
 	{

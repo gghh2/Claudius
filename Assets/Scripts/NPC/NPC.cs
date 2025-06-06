@@ -2,22 +2,29 @@ using UnityEngine;
 
 public class NPC : MonoBehaviour
 {
-    [Header("NPC Configuration")]
-    [Tooltip("Nom du PNJ affiché dans les dialogues")]
+    [Header("===== AI CONFIGURATION - Used by AI System =====")]
+    
+    [Header("NPC Identity (AI)")]
+    [Tooltip("AI SYSTEM - NPC name displayed in dialogues")]
     public string npcName = "Alien Trader";
     
-    [Tooltip("Personnalité/Rôle du PNJ (ex: Marchand, Garde, Scientifique)")]
+    [Tooltip("AI SYSTEM - Role determines personality and dialogue style")]
     public string npcRole = "Trader";
     
-    [Tooltip("Description courte du PNJ pour l'IA")]
+    [Header("NPC Description (AI)")]
+    [Tooltip("AI SYSTEM - Detailed description for coherent dialogue generation")]
     [TextArea(2, 4)]
     public string npcDescription = "Un marchand alien qui vend des équipements spatiaux";
     
+    [Space(20)]
+    [Header("===== TECHNICAL CONFIGURATION - Not used by AI =====")]
+    
     [Header("Interaction Settings")]
-    [Tooltip("Distance à laquelle le joueur peut interagir")]
+    [Tooltip("Technical - Distance at which player can interact")]
     public float interactionRange = 3f;
     
-    [Tooltip("Couleur du PNJ (optionnel - pour différencier visuellement)")]
+    [Header("Visual Settings")]
+    [Tooltip("Visual - NPC color (optional - for visual differentiation)")]
     public Color npcColor = Color.white;
     
     private Transform player;
@@ -49,30 +56,30 @@ public class NPC : MonoBehaviour
     }
     
     void CheckPlayerDistance()
-{
-    float distance = Vector3.Distance(transform.position, player.position);
-    
-    if (distance <= interactionRange && !playerInRange)
     {
-        playerInRange = true;
-        ShowInteractionPrompt(true);
-    }
-    else if (distance > interactionRange && playerInRange)
-    {
-        playerInRange = false;
-        ShowInteractionPrompt(false);
-    }
-    
-    // Interaction avec E - SEULEMENT si aucun dialogue n'est ouvert
-    if (playerInRange && Input.GetKeyDown(KeyCode.E))
-    {
-        // Vérifier si l'UI de dialogue est ouverte
-        if (DialogueUI.Instance != null && !DialogueUI.Instance.IsDialogueOpen())
+        float distance = Vector3.Distance(transform.position, player.position);
+        
+        if (distance <= interactionRange && !playerInRange)
         {
-            StartDialogue();
+            playerInRange = true;
+            ShowInteractionPrompt(true);
+        }
+        else if (distance > interactionRange && playerInRange)
+        {
+            playerInRange = false;
+            ShowInteractionPrompt(false);
+        }
+        
+        // Interaction avec E - SEULEMENT si aucun dialogue n'est ouvert
+        if (playerInRange && Input.GetKeyDown(KeyCode.E))
+        {
+            // Vérifier si l'UI de dialogue est ouverte
+            if (DialogueUI.Instance != null && !DialogueUI.Instance.IsDialogueOpen())
+            {
+                StartDialogue();
+            }
         }
     }
-}
     
     void ShowInteractionPrompt(bool show)
     {
@@ -83,35 +90,35 @@ public class NPC : MonoBehaviour
     }
     
     void StartDialogue()
-	{
-	    Debug.Log($"=== Dialogue avec {npcName} ===");
-	    
-	    // Arrête le mouvement du NPC
-	    NPCMovement movement = GetComponent<NPCMovement>();
-	    if (movement != null)
-	    {
-	        movement.StopMovement();
-	    }
-	    
-	    // Cache le nom pendant le dialogue (optionnel)
-	    NPCNameDisplay nameDisplay = GetComponent<NPCNameDisplay>();
-	    if (nameDisplay != null)
-	    {
-	        nameDisplay.HideName();
-	    }
-	    
-	    // Utilise la nouvelle interface
-	    if (DialogueUI.Instance != null)
-	    {
-	        DialogueUI.Instance.StartDialogue(GetNPCData());
-	    }
-	    else
-	    {
-	        Debug.LogError("DialogueUI non trouvé !");
-	    }
-	}
+    {
+        Debug.Log($"=== Dialogue avec {npcName} ===");
+        
+        // Arrête le mouvement du NPC
+        NPCMovement movement = GetComponent<NPCMovement>();
+        if (movement != null)
+        {
+            movement.StopMovement();
+        }
+        
+        // Cache le nom pendant le dialogue (optionnel)
+        NPCNameDisplay nameDisplay = GetComponent<NPCNameDisplay>();
+        if (nameDisplay != null)
+        {
+            nameDisplay.HideName();
+        }
+        
+        // Utilise la nouvelle interface
+        if (DialogueUI.Instance != null)
+        {
+            DialogueUI.Instance.StartDialogue(GetNPCData());
+        }
+        else
+        {
+            Debug.LogError("DialogueUI non trouvé !");
+        }
+    }
     
-    // Méthode utile pour récupérer les infos du PNJ (pour l'IA plus tard)
+    // Méthode utile pour récupérer les infos du PNJ (pour l'IA)
     public NPCData GetNPCData()
     {
         return new NPCData
@@ -120,6 +127,16 @@ public class NPC : MonoBehaviour
             role = npcRole,
             description = npcDescription
         };
+    }
+    
+    [ContextMenu("Debug AI Fields")]
+    public void DebugAIFields()
+    {
+        Debug.Log($"=== AI FIELDS for {gameObject.name} ===");
+        Debug.Log($"NPC Name: {npcName}");
+        Debug.Log($"NPC Role: {npcRole}");
+        Debug.Log($"NPC Description: {npcDescription}");
+        Debug.Log("=====================================");
     }
 }
 

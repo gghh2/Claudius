@@ -5123,15 +5123,21 @@ MonoBehaviour:
   - surfaceName: grass
     audioClips:
     - {fileID: 8300000, guid: f706807afeac2fb459dba477e2c6c5d9, type: 3}
-    - {fileID: 8300000, guid: f706807afeac2fb459dba477e2c6c5d9, type: 3}
+    - {fileID: 8300000, guid: 430a1ecb9e0306d4e9c4453efa48417f, type: 3}
+    - {fileID: 8300000, guid: 6e2ed1fc8c2623e499b9b8fbc601d8f3, type: 3}
+    - {fileID: 8300000, guid: 950eab963ffedff408f9a3f1d12fba0f, type: 3}
   - surfaceName: dirt
     audioClips: []
   - surfaceName: stone
     audioClips:
-    - {fileID: 0}
-    - {fileID: 8300000, guid: 48466666a0db3504fb12c1e81bb82da4, type: 3}
+    - {fileID: 8300000, guid: 45ca0501711022e4290b92739464b7a1, type: 3}
+    - {fileID: 8300000, guid: 26255b10b56b6ae4ea3d6340c75ac091, type: 3}
+    - {fileID: 8300000, guid: c5d3594353748c7488fab287da1d9489, type: 3}
+    - {fileID: 8300000, guid: 769c823a2c9348e42a5d759fc372efaa, type: 3}
   - surfaceName: metal
-    audioClips: []
+    audioClips:
+    - {fileID: 8300000, guid: 19eb5d18597225046b2ea150fd960cf3, type: 3}
+    - {fileID: 8300000, guid: d64dc123d7f208841be4312e74d2819d, type: 3}
   - surfaceName: sand
     audioClips: []
   - surfaceName: water
@@ -9023,7 +9029,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 104216, guid: a6b9d7f63692cfd44b503ed7e09f6e5d, type: 3}
       propertyPath: m_Name
-      value: Corridor_2
+      value: Corridor_2_metal
       objectReference: {fileID: 0}
     - target: {fileID: 473370, guid: a6b9d7f63692cfd44b503ed7e09f6e5d, type: 3}
       propertyPath: m_RootOrder
@@ -9373,7 +9379,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1628671277}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9995874
+  m_Size: 0.9999392
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -12040,7 +12046,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 937068111446096652, guid: a7159e697d5beaf4ab2f1398331828aa, type: 3}
       propertyPath: m_Name
-      value: column_2
+      value: column_2_stone
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a7159e697d5beaf4ab2f1398331828aa, type: 3}
@@ -12289,7 +12295,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -927199367670048503, guid: 42b0d1dc1292f462e9262bf8019d9b1c, type: 3}
       propertyPath: m_Name
-      value: rockBlobOne
+      value: rockBlobOne_stone
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 42b0d1dc1292f462e9262bf8019d9b1c, type: 3}

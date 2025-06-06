@@ -1,0 +1,31 @@
+{
+    "version": "1.0",
+    "totalAssets": 1,
+    "cachedAssets": [
+        {
+            "itemName": "cristal_energie",
+            "displayName": "Cristal Energie",
+            "assetId": "cristal_energie_81571368",
+            "prefabPath": "",
+            "modelPath": "test/path/cristal.fbx",
+            "texturesFolder": "",
+            "isGenerated": false,
+            "originalPrompt": "",
+            "generationMethod": "Manual",
+            "triangleCount": 0,
+            "modelHash": "",
+            "modelBounds": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "quality": 2,
+            "usageCount": 0,
+            "averageLoadTime": 0.0,
+            "status": 3
+        }
+    ],
+    "generatedAssetsCount": 0,
+    "manualAssetsCount": 1,
+    "totalCacheSizeMB": 0.0
+}

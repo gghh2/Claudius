@@ -1,0 +1,665 @@
+using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
+
+/// <summary>
+/// Système de bruits de pas avec particules - Version finale optimisée
+/// </summary>
+public class FootstepSystem : MonoBehaviour
+{
+    [Header("Audio Settings")]
+    [Tooltip("Sons de pas par défaut (utilisés quand aucun son spécifique n'est configuré pour la surface)")]
+    public AudioClip[] defaultFootstepSounds;
+    public AudioSource audioSource;
+    
+    [Header("Surface Audio")]
+    [Tooltip("Sons spécifiques selon les surfaces détectées")]
+    public SurfaceAudioMapping[] surfaceAudio = new SurfaceAudioMapping[]
+    {
+        new SurfaceAudioMapping("grass", null),
+        new SurfaceAudioMapping("dirt", null),
+        new SurfaceAudioMapping("stone", null),
+        new SurfaceAudioMapping("metal", null),
+        new SurfaceAudioMapping("sand", null),
+        new SurfaceAudioMapping("water", null),
+        new SurfaceAudioMapping("wood", null),
+        new SurfaceAudioMapping("floor", null),
+        new SurfaceAudioMapping("ground", null)
+    };
+    
+    [Header("Movement Detection")]
+    [Range(0.01f, 1f)]
+    public float movementThreshold = 0.1f;
+    public bool useSmoothing = false;
+    [Range(0.05f, 0.3f)]
+    public float smoothingDuration = 0.1f;
+    
+    [Header("Footstep Timing")]
+    [Range(0.1f, 1f)]
+    public float stepInterval = 0.5f;
+    
+    [Header("Volume Settings")]
+    [Range(0f, 1f)]
+    public float footstepVolume = 0.7f;
+    [Range(0f, 0.3f)]
+    public float volumeVariation = 0.1f;
+    
+    [Header("Pitch Settings")]
+    [Range(0.5f, 2f)]
+    public float basePitch = 1f;
+    [Range(0f, 0.3f)]
+    public float pitchVariation = 0.2f;
+    
+    [Header("Surface Detection")]
+    public bool enableSurfaceDetection = true;
+    public float groundCheckDistance = 0.3f;
+    public LayerMask groundLayers = 1;
+    
+    [Header("Visual Effects")]
+    public ParticleSystem footstepParticles;
+    public bool autoCreateParticles = true;
+    [Range(1, 50)]
+    public int particlesPerStep = 10;
+    public bool adaptParticleColor = true;
+    
+    [Header("Surface Colors")]
+    [Tooltip("Couleurs des particules selon les surfaces détectées")]
+    public SurfaceColorMapping[] surfaceColors = new SurfaceColorMapping[]
+    {
+        new SurfaceColorMapping("grass", new Color(0.2f, 0.8f, 0.2f)),
+        new SurfaceColorMapping("dirt", new Color(0.6f, 0.4f, 0.2f)),
+        new SurfaceColorMapping("stone", new Color(0.7f, 0.7f, 0.7f)),
+        new SurfaceColorMapping("metal", new Color(0.8f, 0.8f, 0.9f)),
+        new SurfaceColorMapping("sand", new Color(0.9f, 0.8f, 0.6f)),
+        new SurfaceColorMapping("water", new Color(0.3f, 0.6f, 1f)),
+        new SurfaceColorMapping("wood", new Color(0.6f, 0.3f, 0.1f)),
+        new SurfaceColorMapping("floor", new Color(0.5f, 0.5f, 0.5f)),
+        new SurfaceColorMapping("ground", new Color(0.4f, 0.3f, 0.2f)),
+        new SurfaceColorMapping("default", new Color(0.8f, 0.8f, 0.8f))
+    };
+    
+    [Header("Debug")]
+    public bool debugMode = false;
+    
+    // Variables privées
+    private float stepTimer = 0f;
+    private bool isMoving = false;
+    private Vector3 lastPosition;
+    private string currentSurface = "default";
+    
+    // Lissage
+    private float smoothTimer = 0f;
+    private bool wasMoving = false;
+    
+    // Buffer de positions
+    private Vector3[] positionBuffer = new Vector3[3];
+    private int bufferIndex = 0;
+    
+    // Cache
+    private RaycastHit groundHit;
+    private Dictionary<string, Color> surfaceColorDict;
+    private Dictionary<string, AudioClip[]> surfaceAudioDict;
+    private Material particleMaterial;
+    
+    void Start()
+    {
+        SetupAudioSource();
+        BuildSurfaceColorDictionary();
+        BuildSurfaceAudioDictionary();
+        SetupParticleSystem();
+        InitializePositionBuffer();
+        
+        if (debugMode)
+            Debug.Log("🦶 FootstepSystem initialisé");
+    }
+    
+    void Update()
+    {
+        CheckMovement();
+        UpdateFootsteps();
+        
+        if (debugMode && enableSurfaceDetection)
+        {
+            DrawGroundRaycast();
+        }
+    }
+    
+    void SetupAudioSource()
+    {
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+                audioSource = gameObject.AddComponent<AudioSource>();
+        }
+        
+        audioSource.playOnAwake = false;
+        audioSource.spatialBlend = 1f;
+        audioSource.volume = footstepVolume;
+    }
+    
+    void BuildSurfaceColorDictionary()
+    {
+        surfaceColorDict = new Dictionary<string, Color>();
+        
+        foreach (var mapping in surfaceColors)
+        {
+            if (!string.IsNullOrEmpty(mapping.surfaceName))
+            {
+                surfaceColorDict[mapping.surfaceName.ToLower()] = mapping.color;
+            }
+        }
+        
+        // Assure-toi qu'il y a toujours une couleur par défaut
+        if (!surfaceColorDict.ContainsKey("default"))
+        {
+            surfaceColorDict["default"] = Color.white;
+        }
+        
+        if (debugMode)
+            Debug.Log($"🎨 {surfaceColorDict.Count} couleurs de surface chargées depuis l'Inspector");
+    }
+    
+    void BuildSurfaceAudioDictionary()
+    {
+        surfaceAudioDict = new Dictionary<string, AudioClip[]>();
+        
+        foreach (var mapping in surfaceAudio)
+        {
+            if (!string.IsNullOrEmpty(mapping.surfaceName) && mapping.audioClips != null && mapping.audioClips.Length > 0)
+            {
+                // Filtre les clips null
+                var validClips = new List<AudioClip>();
+                foreach (var clip in mapping.audioClips)
+                {
+                    if (clip != null)
+                        validClips.Add(clip);
+                }
+                
+                if (validClips.Count > 0)
+                {
+                    surfaceAudioDict[mapping.surfaceName.ToLower()] = validClips.ToArray();
+                }
+            }
+        }
+        
+        if (debugMode)
+            Debug.Log($"🎵 {surfaceAudioDict.Count} mappings audio de surface chargés depuis l'Inspector");
+    }
+    
+    void SetupParticleSystem()
+    {
+        if (footstepParticles == null && autoCreateParticles)
+        {
+            CreateParticleSystem();
+        }
+        else if (footstepParticles != null)
+        {
+            ConfigureExistingParticles();
+        }
+    }
+    
+    void CreateParticleSystem()
+    {
+        GameObject particleGO = new GameObject("FootstepParticles");
+        particleGO.transform.SetParent(transform);
+        particleGO.transform.localPosition = Vector3.zero;
+        
+        footstepParticles = particleGO.AddComponent<ParticleSystem>();
+        
+        // SOLUTION : Crée et assigne un matériel
+        CreateParticleMaterial();
+        
+        ConfigureParticles();
+        
+        if (debugMode)
+            Debug.Log("✨ Système de particules créé avec matériel");
+    }
+    
+    void ConfigureExistingParticles()
+    {
+        if (footstepParticles == null) return;
+        
+        // Vérifie si le renderer a un matériel
+        var renderer = footstepParticles.GetComponent<ParticleSystemRenderer>();
+        if (renderer != null && renderer.material == null)
+        {
+            CreateParticleMaterial();
+            if (debugMode)
+                Debug.Log("🔧 Matériel assigné au système de particules existant");
+        }
+        
+        ConfigureParticles();
+    }
+    
+    void CreateParticleMaterial()
+    {
+        // Crée un matériel simple pour les particules
+        particleMaterial = new Material(Shader.Find("Sprites/Default"));
+        particleMaterial.name = "FootstepParticleMaterial";
+        
+        // Assigne le matériel au renderer
+        var renderer = footstepParticles.GetComponent<ParticleSystemRenderer>();
+        if (renderer != null)
+        {
+            renderer.material = particleMaterial;
+        }
+    }
+    
+    void ConfigureParticles()
+    {
+        if (footstepParticles == null) return;
+        
+        var main = footstepParticles.main;
+        main.startLifetime = 1f;
+        main.startSpeed = 2f;
+        main.startSize = 0.1f;
+        main.startColor = Color.white;
+        main.maxParticles = 100;
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+        
+        var shape = footstepParticles.shape;
+        shape.enabled = true;
+        shape.shapeType = ParticleSystemShapeType.Cone;
+        shape.angle = 45f;
+        shape.radius = 0.2f;
+        
+        var velocityOverLifetime = footstepParticles.velocityOverLifetime;
+        velocityOverLifetime.enabled = true;
+        velocityOverLifetime.space = ParticleSystemSimulationSpace.Local;
+        velocityOverLifetime.radial = new ParticleSystem.MinMaxCurve(-1f);
+        
+        var sizeOverLifetime = footstepParticles.sizeOverLifetime;
+        sizeOverLifetime.enabled = true;
+        AnimationCurve sizeCurve = new AnimationCurve();
+        sizeCurve.AddKey(0f, 1f);
+        sizeCurve.AddKey(1f, 0f);
+        sizeOverLifetime.size = new ParticleSystem.MinMaxCurve(1f, sizeCurve);
+        
+        var colorOverLifetime = footstepParticles.colorOverLifetime;
+        colorOverLifetime.enabled = true;
+        Gradient gradient = new Gradient();
+        gradient.SetKeys(
+            new GradientColorKey[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+            new GradientAlphaKey[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0f, 1f) }
+        );
+        colorOverLifetime.color = gradient;
+        
+        var emission = footstepParticles.emission;
+        emission.enabled = true;
+        emission.rateOverTime = 0;
+        
+        var forceOverLifetime = footstepParticles.forceOverLifetime;
+        forceOverLifetime.enabled = true;
+        forceOverLifetime.y = -2f;
+    }
+    
+    void InitializePositionBuffer()
+    {
+        lastPosition = transform.position;
+        for (int i = 0; i < positionBuffer.Length; i++)
+        {
+            positionBuffer[i] = transform.position;
+        }
+    }
+    
+    void CheckMovement()
+    {
+        positionBuffer[bufferIndex] = transform.position;
+        bufferIndex = (bufferIndex + 1) % positionBuffer.Length;
+        
+        float totalDistance = 0f;
+        for (int i = 0; i < positionBuffer.Length - 1; i++)
+        {
+            totalDistance += Vector3.Distance(positionBuffer[i], positionBuffer[i + 1]);
+        }
+        
+        float averageSpeed = totalDistance / (positionBuffer.Length * Time.deltaTime);
+        bool currentlyMoving = averageSpeed > movementThreshold;
+        
+        if (useSmoothing)
+        {
+            if (currentlyMoving)
+            {
+                isMoving = true;
+                smoothTimer = 0f;
+                wasMoving = true;
+            }
+            else if (wasMoving)
+            {
+                smoothTimer += Time.deltaTime;
+                if (smoothTimer >= smoothingDuration)
+                {
+                    isMoving = false;
+                    wasMoving = false;
+                    smoothTimer = 0f;
+                }
+            }
+            else
+            {
+                isMoving = false;
+                smoothTimer = 0f;
+            }
+        }
+        else
+        {
+            isMoving = currentlyMoving;
+        }
+        
+        lastPosition = transform.position;
+    }
+    
+    void UpdateFootsteps()
+    {
+        if (!isMoving)
+        {
+            stepTimer = 0f;
+            return;
+        }
+        
+        if (enableSurfaceDetection && !IsGrounded())
+        {
+            stepTimer = 0f;
+            return;
+        }
+        
+        stepTimer += Time.deltaTime;
+        
+        if (stepTimer >= stepInterval)
+        {
+            PlayFootstep();
+            stepTimer = 0f;
+        }
+    }
+    
+    void PlayFootstep()
+    {
+        // Son
+        AudioClip stepSound = GetSurfaceAudioClip(currentSurface);
+        if (stepSound == null) return;
+        
+        float finalVolume = footstepVolume + Random.Range(-volumeVariation, volumeVariation);
+        finalVolume = Mathf.Clamp01(finalVolume);
+        
+        float finalPitch = basePitch + Random.Range(-pitchVariation, pitchVariation);
+        finalPitch = Mathf.Clamp(finalPitch, 0.1f, 3f);
+        
+        audioSource.volume = finalVolume;
+        audioSource.pitch = finalPitch;
+        audioSource.PlayOneShot(stepSound);
+        
+        // Particules
+        PlayStepParticles();
+        
+        if (debugMode)
+        {
+            Debug.Log($"🦶 PAS: {stepSound.name} | Surface: {currentSurface}");
+        }
+    }
+    
+    void PlayStepParticles()
+    {
+        if (footstepParticles == null) return;
+        
+        if (adaptParticleColor)
+        {
+            Color particleColor = GetSurfaceColor(currentSurface);
+            var main = footstepParticles.main;
+            main.startColor = particleColor;
+        }
+        
+        var emission = footstepParticles.emission;
+        emission.SetBursts(new ParticleSystem.Burst[] 
+        {
+            new ParticleSystem.Burst(0f, particlesPerStep)
+        });
+        
+        footstepParticles.Play();
+        
+        if (debugMode)
+        {
+            Debug.Log($"💨 Particules: {particlesPerStep} ({currentSurface})");
+        }
+    }
+    
+    bool IsGrounded()
+    {
+        Vector3 rayStart = transform.position + Vector3.up * 0.1f;
+        
+        if (Physics.Raycast(rayStart, Vector3.down, out groundHit, groundCheckDistance + 0.1f, groundLayers))
+        {
+            DetectSurface(groundHit);
+            return true;
+        }
+        
+        return false;
+    }
+    
+    void DetectSurface(RaycastHit hit)
+    {
+        string newSurface = hit.collider.gameObject.name.ToLower();
+        
+        if (newSurface != currentSurface)
+        {
+            currentSurface = newSurface;
+            
+            if (debugMode)
+                Debug.Log($"🦶 Surface: {currentSurface}");
+        }
+    }
+    
+    Color GetSurfaceColor(string surface)
+    {
+        string lowerSurface = surface.ToLower();
+        
+        foreach (var kvp in surfaceColorDict)
+        {
+            if (lowerSurface.Contains(kvp.Key))
+            {
+                return kvp.Value;
+            }
+        }
+        
+        return surfaceColorDict["default"];
+    }
+    
+    AudioClip GetSurfaceAudioClip(string surface)
+    {
+        if (audioSource == null) return null;
+        
+        string lowerSurface = surface.ToLower();
+        
+        // 1. Cherche d'abord un son spécifique à la surface
+        foreach (var kvp in surfaceAudioDict)
+        {
+            if (lowerSurface.Contains(kvp.Key))
+            {
+                AudioClip[] clips = kvp.Value;
+                if (clips != null && clips.Length > 0)
+                {
+                    if (debugMode)
+                        Debug.Log($"🎵 Son spécifique trouvé pour '{lowerSurface}' → {kvp.Key}");
+                    return clips[Random.Range(0, clips.Length)];
+                }
+            }
+        }
+        
+        // 2. Fallback vers les sons par défaut
+        if (defaultFootstepSounds != null && defaultFootstepSounds.Length > 0)
+        {
+            var validSounds = defaultFootstepSounds.Where(clip => clip != null).ToArray();
+            if (validSounds.Length > 0)
+            {
+                if (debugMode)
+                    Debug.Log($"🎵 Son par défaut utilisé pour '{lowerSurface}'");
+                return validSounds[Random.Range(0, validSounds.Length)];
+            }
+        }
+        
+        if (debugMode)
+            Debug.LogWarning($"🎵 Aucun son trouvé pour '{lowerSurface}'");
+        return null;
+    }
+    
+    void DrawGroundRaycast()
+    {
+        Vector3 rayStart = transform.position + Vector3.up * 0.1f;
+        Debug.DrawRay(rayStart, Vector3.down * (groundCheckDistance + 0.1f), 
+                     IsGrounded() ? Color.green : Color.red);
+    }
+    
+    void OnGUI()
+    {
+        if (!debugMode) return;
+        
+        GUILayout.BeginArea(new Rect(10, 150, 300, 180));
+        GUILayout.Label("=== FOOTSTEP DEBUG ===");
+        GUILayout.Label($"En mouvement: {(isMoving ? "✅" : "❌")}");
+        GUILayout.Label($"Au sol: {(IsGrounded() ? "✅" : "❌")}");
+        GUILayout.Label($"Timer: {stepTimer:F2}s / {stepInterval:F2}s");
+        GUILayout.Label($"Surface: {currentSurface}");
+        GUILayout.Label($"Sons par défaut: {defaultFootstepSounds?.Length ?? 0}");
+        GUILayout.Label($"Sons de surface: {surfaceAudioDict?.Count ?? 0}");
+        GUILayout.Label($"Particules: {(footstepParticles != null ? "✅" : "❌")}");
+        
+        if (useSmoothing)
+        {
+            GUILayout.Label($"Lissage: {smoothTimer:F2}s");
+        }
+        
+        if (GUILayout.Button("Force un pas"))
+        {
+            PlayFootstep();
+        }
+        
+        if (GUILayout.Button("Rebuild Colors"))
+        {
+            BuildSurfaceColorDictionary();
+        }
+        
+        if (GUILayout.Button("Rebuild Audio"))
+        {
+            BuildSurfaceAudioDictionary();
+        }
+        
+        GUILayout.EndArea();
+    }
+    
+    // Structure pour l'Inspector
+    [System.Serializable]
+    public class SurfaceColorMapping
+    {
+        [Tooltip("Nom de la surface (contenu dans le nom du GameObject)")]
+        public string surfaceName;
+        
+        [Tooltip("Couleur des particules pour cette surface")]
+        public Color color;
+        
+        public SurfaceColorMapping(string name, Color col)
+        {
+            surfaceName = name;
+            color = col;
+        }
+        
+        public SurfaceColorMapping()
+        {
+            surfaceName = "";
+            color = Color.white;
+        }
+    }
+    
+    [System.Serializable]
+    public class SurfaceAudioMapping
+    {
+        [Tooltip("Nom de la surface (contenu dans le nom du GameObject)")]
+        public string surfaceName;
+        
+        [Tooltip("Sons de pas spécifiques à cette surface")]
+        public AudioClip[] audioClips;
+        
+        public SurfaceAudioMapping(string name, AudioClip[] clips)
+        {
+            surfaceName = name;
+            audioClips = clips;
+        }
+        
+        public SurfaceAudioMapping()
+        {
+            surfaceName = "";
+            audioClips = new AudioClip[0];
+        }
+    }
+    
+    // Méthodes publiques pour contrôle externe
+    public void SetFootstepsEnabled(bool enabled)
+    {
+        this.enabled = enabled;
+        if (!enabled)
+        {
+            stepTimer = 0f;
+            isMoving = false;
+        }
+    }
+    
+    public void SetFootstepVolume(float volume)
+    {
+        footstepVolume = Mathf.Clamp01(volume);
+        if (audioSource != null)
+            audioSource.volume = footstepVolume;
+    }
+    
+    public void ForceFootstep()
+    {
+        PlayFootstep();
+    }
+    
+    public void PlayJumpParticles()
+    {
+        if (footstepParticles == null) return;
+        
+        if (adaptParticleColor)
+        {
+            Color particleColor = GetSurfaceColor(currentSurface);
+            var main = footstepParticles.main;
+            main.startColor = particleColor;
+        }
+        
+        var emission = footstepParticles.emission;
+        emission.SetBursts(new ParticleSystem.Burst[] 
+        {
+            new ParticleSystem.Burst(0f, particlesPerStep * 2)
+        });
+        
+        footstepParticles.Play();
+        
+        if (debugMode)
+        {
+            Debug.Log($"🦘💨 Particules saut: {particlesPerStep * 2}");
+        }
+    }
+    
+    public void PlayLandingParticles()
+    {
+        if (footstepParticles == null) return;
+        
+        if (adaptParticleColor)
+        {
+            Color particleColor = GetSurfaceColor(currentSurface);
+            var main = footstepParticles.main;
+            main.startColor = particleColor;
+        }
+        
+        var emission = footstepParticles.emission;
+        emission.SetBursts(new ParticleSystem.Burst[] 
+        {
+            new ParticleSystem.Burst(0f, particlesPerStep * 3)
+        });
+        
+        footstepParticles.Play();
+        
+        if (debugMode)
+        {
+            Debug.Log($"🎯💨 Particules atterrissage: {particlesPerStep * 3}");
+        }
+    }
+}

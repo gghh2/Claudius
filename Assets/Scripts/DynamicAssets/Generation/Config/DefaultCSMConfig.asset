@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 165bcfa626db8584fa26a24e7c64003c, type: 3}
+  m_Name: DefaultCSMConfig
+  m_EditorClassIdentifier: 
+  apiKey: msy_ijYOxI6EdfF1LLpoEO8MRfDc3l4ylBVgBuiP
+  apiUrl: https://api.meshy.ai/v2/text-to-3d
+  defaultStyle: low-poly game asset, clean textures, optimized for real-time rendering
+  maxTriangles: 1000
+  modelScale: 1
+  defaultQuality: 1
+  textureResolution: 512
+  generateTextures: 1
+  outputFormat: 0
+  generateLODs: 0
+  generationTimeout: 300
+  downloadTimeout: 60
+  retryAttempts: 2
+  retryDelay: 10
+  debugMode: 1
+  enhancePrompts: 1
+  promptSuffix: ', highly detailed, professional quality, game ready'
+  estimatedCostPerGeneration: 0.5
+  dailyBudgetLimit: 20

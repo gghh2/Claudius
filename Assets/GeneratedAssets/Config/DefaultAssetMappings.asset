@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: DefaultAssetMappings
+  m_EditorClassIdentifier: Assembly-CSharp:DynamicAssets.Core:AssetMappingConfig
+  version: 1.0
+  defaultStyle: low-poly game asset, clean textures
+  defaultQuality: 1
+  defaultTriangles: 1000
+  mappings:
+  - itemName: cristal_energie
+    visualPrompt: glowing blue energy crystal with magical aura, fantasy sci-fi style
+    style: fantasy
+    tags: []
+    targetQuality: 1
+    targetTriangles: 1000
+  - itemName: echantillon_alien
+    visualPrompt: alien biological sample in glass tube, green glowing liquid
+    style: sci-fi
+    tags: []
+    targetQuality: 1
+    targetTriangles: 1000
+  - itemName: artefact_alien
+    visualPrompt: alien biological sample in glass tube, green glowing liquid
+    style: sci-fi
+    tags: []
+    targetQuality: 1
+    targetTriangles: 1000
+  stylePresets:
+  - name: 
+    baseStyle: 
+    colorPalette: 
+    lighting: 
+    quality: 0
+    triangleCount: 0

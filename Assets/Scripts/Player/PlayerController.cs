@@ -86,8 +86,12 @@ public class PlayerController : MonoBehaviour
         // Calcule la direction de mouvement
         moveDirection = new Vector3(inputX, 0, inputY).normalized;
         
-        // Calcule la vitesse actuelle
-        currentSpeed = new Vector3(rb.velocity.x, 0, rb.velocity.z).magnitude;
+        // CORRECTION : Calcule la vitesse selon le mouvement désiré
+        // Option 1: Vitesse basée sur l'input (plus réactive)
+        currentSpeed = moveDirection.magnitude * moveSpeed;
+        
+        // Option 2: Vitesse basée sur la vélocité réelle du Rigidbody
+        // currentSpeed = new Vector3(rb.velocity.x, 0, rb.velocity.z).magnitude;
         
         // Gestion du saut
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
@@ -116,19 +120,19 @@ public class PlayerController : MonoBehaviour
         
         // Pour l'isométrique, on n'a besoin que de la vitesse
         animator.SetFloat("Speed", currentSpeed);
-
-
-        // DEBUG TEMPORAIRE - Supprimez après tests
-    Debug.Log($"🎭 Speed envoyé à l'Animator: {currentSpeed:F2} | Vélocité RB: {rb.velocity.magnitude:F2}");
-
-        
         animator.SetBool("IsGrounded", isGrounded);
         
         // Paramètre simplifié pour savoir si on bouge
         bool isMoving = currentSpeed > 0.1f;
         animator.SetBool("IsMoving", isMoving);
         
-        // Debug optionnel
+        // DEBUG TEMPORAIRE - Retirez après diagnostic
+        if (Time.frameCount % 30 == 0) // Toutes les demi-secondes environ
+        {
+            Debug.Log($"🎭 DEBUG ANIMATOR: Speed={currentSpeed:F2} | IsMoving={isMoving} | Input=({inputX:F1},{inputY:F1})");
+        }
+        
+        // Debug manuel avec F1
         if (Input.GetKeyDown(KeyCode.F1))
         {
             Debug.Log($"🎭 Animator State: Speed={currentSpeed:F2}, IsMoving={isMoving}, Direction={moveDirection}");

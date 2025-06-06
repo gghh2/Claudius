@@ -7,19 +7,28 @@ public class PlayerController : MonoBehaviour
     
     [Header("Jump")]
     public float jumpForce = 8f;
-    public LayerMask groundLayer = 1; // Layer du sol
+    public LayerMask groundLayer = 1;
     public float groundCheckDistance = 0.2f;
     
     [Header("Jump Effects")]
-    public ParticleSystem jumpEffect; // Effet de particules au saut
-    public AudioClip jumpSound; // Son du saut - GLISSE TON FICHIER AUDIO ICI
-    public AudioSource audioSource; // Source audio - OPTIONNEL si tu veux utiliser une autre AudioSource
+    public ParticleSystem jumpEffect;
+    public AudioClip jumpSound;
+    public AudioSource audioSource;
     
+    [Header("Animation")]
+    public Animator animator;
+    
+    // Variables privées
     private Vector3 moveDirection;
     private Rigidbody rb;
     private bool isGrounded = false;
     
-    // NOUVEAU : Référence au système de pas
+    // Variables d'input pour l'animator
+    private float inputX;
+    private float inputY;
+    private float currentSpeed;
+    
+    // Référence au système de pas
     private FootstepSystem footstepSystem;
     
     void Start()
@@ -27,14 +36,18 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
         
-        // NOUVEAU: Assure-toi que le joueur a le bon tag
+        // Récupère l'Animator si pas assigné
+        if (animator == null)
+            animator = GetComponent<Animator>();
+        
+        // Vérifie le tag Player
         if (!gameObject.CompareTag("Player"))
         {
             gameObject.tag = "Player";
             Debug.Log("✅ Tag 'Player' assigné automatiquement");
         }
         
-        // Si pas d'AudioSource assignée, en crée une automatiquement
+        // Configure AudioSource
         if (audioSource == null)
         {
             audioSource = GetComponent<AudioSource>();
@@ -42,22 +55,21 @@ public class PlayerController : MonoBehaviour
                 audioSource = gameObject.AddComponent<AudioSource>();
         }
         
-        // NOUVEAU : Récupère le système de pas
+        // Récupère le système de pas
         footstepSystem = GetComponent<FootstepSystem>();
         if (footstepSystem == null)
         {
-            Debug.LogWarning("⚠️ Aucun FootstepSystem trouvé sur le joueur. Ajoutez le composant FootstepSystem pour les bruits de pas.");
+            Debug.LogWarning("⚠️ Aucun FootstepSystem trouvé sur le joueur");
         }
-        else
-        {
-            Debug.Log("🦶 FootstepSystem détecté et connecté");
-        }
+        
+        Debug.Log("🎮 PlayerController initialisé avec Animator");
     }
     
     void Update()
     {
         HandleInput();
         CheckGrounded();
+        UpdateAnimator();
     }
     
     void FixedUpdate()
@@ -67,12 +79,15 @@ public class PlayerController : MonoBehaviour
     
     void HandleInput()
     {
-        // Mouvement horizontal
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
+        // Récupère les inputs
+        inputX = Input.GetAxisRaw("Horizontal");
+        inputY = Input.GetAxisRaw("Vertical");
         
-        // Conversion pour vue isométrique
-        moveDirection = new Vector3(horizontal, 0, vertical).normalized;
+        // Calcule la direction de mouvement
+        moveDirection = new Vector3(inputX, 0, inputY).normalized;
+        
+        // Calcule la vitesse actuelle
+        currentSpeed = new Vector3(rb.velocity.x, 0, rb.velocity.z).magnitude;
         
         // Gestion du saut
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
@@ -95,37 +110,56 @@ public class PlayerController : MonoBehaviour
         }
     }
     
+    void UpdateAnimator()
+    {
+        if (animator == null) return;
+        
+        // Pour l'isométrique, on n'a besoin que de la vitesse
+        animator.SetFloat("Speed", currentSpeed);
+        animator.SetBool("IsGrounded", isGrounded);
+        
+        // Paramètre simplifié pour savoir si on bouge
+        bool isMoving = currentSpeed > 0.1f;
+        animator.SetBool("IsMoving", isMoving);
+        
+        // Debug optionnel
+        if (Input.GetKeyDown(KeyCode.F1))
+        {
+            Debug.Log($"🎭 Animator State: Speed={currentSpeed:F2}, IsMoving={isMoving}, Direction={moveDirection}");
+        }
+    }
+    
     void Jump()
     {
-        // Applique une force vers le haut
+        // Applique la force de saut
         rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
         
-        // NOUVEAU : Désactive temporairement les pas pendant le saut
+        // Animation de saut
+        if (animator != null)
+        {
+            animator.SetTrigger("Jump");
+        }
+        
+        // Désactive temporairement les pas pendant le saut
         if (footstepSystem != null)
         {
             footstepSystem.SetFootstepsEnabled(false);
-            
-            // NOUVEAU : Effet de particules au décollage
             footstepSystem.PlayJumpParticles();
             
             // Réactive après une courte durée
             Invoke(nameof(ReenableFootsteps), 0.3f);
         }
         
-        // Effets visuels
+        // Effets visuels et sonores
         if (jumpEffect != null)
             jumpEffect.Play();
         
-        // Effets sonores
         if (jumpSound != null && audioSource != null)
             audioSource.PlayOneShot(jumpSound);
         
         Debug.Log("🦘 Saut !");
     }
     
-    /// <summary>
-    /// NOUVEAU : Réactive les bruits de pas après un saut
-    /// </summary>
     void ReenableFootsteps()
     {
         if (footstepSystem != null)
@@ -142,24 +176,19 @@ public class PlayerController : MonoBehaviour
         bool wasGrounded = isGrounded;
         isGrounded = Physics.Raycast(rayStart, Vector3.down, groundCheckDistance + 0.1f, groundLayer);
         
-        // NOUVEAU : Son d'atterrissage
+        // Son d'atterrissage
         if (!wasGrounded && isGrounded && footstepSystem != null)
         {
-            // Force un pas quand on atterrit
             footstepSystem.ForceFootstep();
-            
-            // NOUVEAU : Effet de particules à l'atterrissage
             footstepSystem.PlayLandingParticles();
         }
         
-        // Debug visuel (optionnel)
+        // Debug visuel
         Debug.DrawRay(rayStart, Vector3.down * (groundCheckDistance + 0.1f), 
                      isGrounded ? Color.green : Color.red);
     }
     
-    /// <summary>
-    /// NOUVEAU : Active/désactive les bruits de pas manuellement
-    /// </summary>
+    // Méthodes publiques pour contrôle externe
     public void ToggleFootsteps(bool enabled)
     {
         if (footstepSystem != null)
@@ -169,9 +198,6 @@ public class PlayerController : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// NOUVEAU : Ajuste le volume des pas
-    /// </summary>
     public void SetFootstepVolume(float volume)
     {
         if (footstepSystem != null)
@@ -181,19 +207,38 @@ public class PlayerController : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// NOUVEAU : Méthode pour obtenir la vitesse actuelle (utile pour autres systèmes)
-    /// </summary>
     public float GetCurrentSpeed()
     {
-        return new Vector3(rb.velocity.x, 0, rb.velocity.z).magnitude;
+        return currentSpeed;
     }
     
-    /// <summary>
-    /// NOUVEAU : Vérifie si le joueur bouge
-    /// </summary>
     public bool IsMoving()
     {
-        return GetCurrentSpeed() > 0.1f;
+        return currentSpeed > 0.1f;
+    }
+    
+    public Vector3 GetMoveDirection()
+    {
+        return moveDirection;
+    }
+    
+    // Debug dans l'éditeur
+    void OnGUI()
+    {
+        if (!Input.GetKey(KeyCode.F1)) return;
+        
+        GUILayout.BeginArea(new Rect(10, 10, 250, 120));
+        GUILayout.Label("=== PLAYER DEBUG (F1) ===");
+        GUILayout.Label($"Vitesse: {currentSpeed:F2}");
+        GUILayout.Label($"Au sol: {(isGrounded ? "✅" : "❌")}");
+        GUILayout.Label($"Direction: {moveDirection}");
+        GUILayout.Label($"En mouvement: {(IsMoving() ? "✅" : "❌")}");
+        
+        if (animator != null)
+        {
+            GUILayout.Label($"État actuel: {animator.GetCurrentAnimatorStateInfo(0).shortNameHash}");
+        }
+        
+        GUILayout.EndArea();
     }
 }

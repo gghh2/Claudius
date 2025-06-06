@@ -46,31 +46,47 @@ public class OpenAIChoice
 [System.Serializable]
 public class AIConfig
 {
-    [Header("API Configuration")]
+    [Header("===== TECHNICAL CONFIGURATION =====")]
+    
     [HideInInspector] // Cache le champ API Key dans l'Inspector
     public string apiKey = "";
     
     [Header("Model Settings")]
+    [Tooltip("Technical - GPT model to use")]
     public string model = "gpt-3.5-turbo";
+    
+    [Tooltip("Technical - Generation temperature")]
     [Range(0f, 1f)]
     public float temperature = 0.8f;
+    
+    [Tooltip("Technical - Maximum tokens")]
     public int maxTokens = 150;
     
     [Header("Debug")]
+    [Tooltip("Technical - Show API status")]
     public bool showApiStatus = true;
 }
 
 public class AIDialogueManager : MonoBehaviour
 {
+        [Header("===== AI CONFIGURATION - Used by AI System =====")]
+    
     [Header("AI Settings")]
     public AIConfig aiConfig;
     
-    [Header("Context")]
+    [Header("Game Context (AI)")]
+    [Tooltip("AI SYSTEM - Global game context for dialogue generation")]
     [TextArea(3, 6)]
     public string gameContext = "Vous êtes dans un univers de space opera. Le joueur explore une station spatiale et rencontre différents personnages. Répondez en français et gardez vos réponses courtes (1-3 phrases maximum).";
     
+    [Space(20)]
+    [Header("===== TECHNICAL CONFIGURATION - Not used by AI =====")]
+    
     [Header("API Status")]
+    [Tooltip("Technical - Shows if API key is loaded")]
     [SerializeField] private bool apiKeyLoaded = false;
+    
+    [Tooltip("Technical - Shows API key source")]
     [SerializeField] private string apiKeySource = "Non chargée";
     
     [Header("Conversation History")]

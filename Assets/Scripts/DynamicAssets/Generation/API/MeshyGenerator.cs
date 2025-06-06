@@ -164,7 +164,7 @@ namespace DynamicAssets.Generation.API
             // Prépare la requête JSON pour Meshy (format corrigé)
             var meshyRequest = new MeshyCreateRequest
             {
-                mode = "refine",
+                mode = "preview",
                 prompt = prompt,
                 art_style = "realistic",
                 negative_prompt = "low quality, blurry, distorted"

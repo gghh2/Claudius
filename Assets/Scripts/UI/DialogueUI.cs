@@ -3,36 +3,72 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq; // AJOUTÉ POUR LE SYSTÈME DE QUÊTE UNIQUE
+using System.Linq;
 
 public class DialogueUI : MonoBehaviour
 {
-    [Header("UI Elements")]
+    [Header("===== UI ELEMENTS - Standard Interface =====")]
+    
+    [Header("Main Panels")]
+    [Tooltip("UI Element - Main dialogue panel")]
     public GameObject dialoguePanel;
+    
+    [Tooltip("UI Element - NPC name display")]
     public TextMeshProUGUI npcNameText;
+    
+    [Tooltip("UI Element - Dialogue text display")]
     public TextMeshProUGUI dialogueText;
+    
+    [Tooltip("UI Element - Continue button")]
     public Button continueButton;
+    
+    [Tooltip("UI Element - Close button")]
     public Button closeButton;
     
+    [Space(20)]
+    [Header("===== AI CONFIGURATION - Used by AI System =====")]
+    
     [Header("AI Integration")]
-    public GameObject loadingIndicator; // Un petit texte "..." ou spinner
-    public TMP_InputField playerInputField; // Pour que le joueur tape ses réponses
+    [Tooltip("AI SYSTEM - Loading indicator for AI responses")]
+    public GameObject loadingIndicator;
+    
+    [Tooltip("AI SYSTEM - Player input field for AI conversations")]
+    public TMP_InputField playerInputField;
+    
+    [Tooltip("AI SYSTEM - Send button for AI messages")]
     public Button sendButton;
-    public Button switchToAIButton; // Bouton pour passer en mode IA
+    
+    [Tooltip("AI SYSTEM - Button to switch to AI mode")]
+    public Button switchToAIButton;
+    
+    [Space(20)]
+    [Header("===== TECHNICAL CONFIGURATION - Not used by AI =====")]
     
     [Header("History")]
+    [Tooltip("Technical - History button")]
     public Button historyButton;
+    
+    [Tooltip("Technical - History panel")]
     public GameObject historyPanel;
+    
+    [Tooltip("Technical - History text display")]
     public TextMeshProUGUI historyText;
+    
+    [Tooltip("Technical - Close history button")]
     public Button closeHistoryButton;
     
     [Header("Quest Confirmation")]
+    [Tooltip("Technical - Accept quest button")]
     public Button acceptQuestButton;
+    
+    [Tooltip("Technical - Decline quest button")]
     public Button declineQuestButton;
     
     [Header("Settings")]
+    [Tooltip("Technical - Text typing speed")]
     public float typingSpeed = 0.03f;
     
+    // Private variables
     private bool isTyping = false;
     private string currentFullText = "";
     private NPCData currentNPC;
@@ -60,54 +96,66 @@ public class DialogueUI : MonoBehaviour
     }
     
     void Start()
-	{
-	    dialoguePanel.SetActive(false);
-	    continueButton.onClick.AddListener(OnContinueClicked);
-	    closeButton.onClick.AddListener(CloseDialogue);
-	    
-	    // Setup pour l'IA
-	    if (sendButton != null)
-	        sendButton.onClick.AddListener(SendPlayerMessage);
-	        
-	    if (switchToAIButton != null)
-	        switchToAIButton.onClick.AddListener(SwitchToAIMode);
-	    
-	    // Setup pour l'historique
-	    if (historyButton != null)
-	        historyButton.onClick.AddListener(ShowConversationHistory);
-	    
-	    if (closeHistoryButton != null)
-	        closeHistoryButton.onClick.AddListener(CloseHistory);
-	        
-	    if (historyPanel != null)
-	        historyPanel.SetActive(false);
-	    
-	    // Setup pour les quêtes - AVEC DEBUG
-	    if (acceptQuestButton != null)
-	    {
-	        acceptQuestButton.onClick.AddListener(AcceptQuests);
-	        acceptQuestButton.gameObject.SetActive(false); // FORCE le cache au départ
-	        Debug.Log("✅ Bouton Accepter configuré et caché");
-	    }
-	    else
-	    {
-	        Debug.LogError("❌ AcceptQuestButton n'est pas assigné dans l'Inspector !");
-	    }
-	    
-	    if (declineQuestButton != null)
-	    {
-	        declineQuestButton.onClick.AddListener(DeclineQuests);
-	        declineQuestButton.gameObject.SetActive(false); // FORCE le cache au départ
-	        Debug.Log("✅ Bouton Refuser configuré et caché");
-	    }
-	    else
-	    {
-	        Debug.LogError("❌ DeclineQuestButton n'est pas assigné dans l'Inspector !");
-	    }
-	    
-	    // Cache les éléments au départ
-	    SetAIElementsVisibility(false);
-	}
+    {
+        dialoguePanel.SetActive(false);
+        continueButton.onClick.AddListener(OnContinueClicked);
+        closeButton.onClick.AddListener(CloseDialogue);
+        
+        // Setup pour l'IA
+        if (sendButton != null)
+            sendButton.onClick.AddListener(SendPlayerMessage);
+            
+        if (switchToAIButton != null)
+            switchToAIButton.onClick.AddListener(SwitchToAIMode);
+        
+        // Setup pour l'historique
+        if (historyButton != null)
+            historyButton.onClick.AddListener(ShowConversationHistory);
+        
+        if (closeHistoryButton != null)
+            closeHistoryButton.onClick.AddListener(CloseHistory);
+            
+        if (historyPanel != null)
+            historyPanel.SetActive(false);
+        
+        // Setup pour les quêtes
+        if (acceptQuestButton != null)
+        {
+            acceptQuestButton.onClick.AddListener(AcceptQuests);
+            acceptQuestButton.gameObject.SetActive(false);
+            Debug.Log("[UI] Accept button configured and hidden");
+        }
+        else
+        {
+            Debug.LogError("[UI] AcceptQuestButton not assigned in Inspector!");
+        }
+        
+        if (declineQuestButton != null)
+        {
+            declineQuestButton.onClick.AddListener(DeclineQuests);
+            declineQuestButton.gameObject.SetActive(false);
+            Debug.Log("[UI] Decline button configured and hidden");
+        }
+        else
+        {
+            Debug.LogError("[UI] DeclineQuestButton not assigned in Inspector!");
+        }
+        
+        // Cache les éléments au départ
+        SetAIElementsVisibility(false);
+    }
+    
+    [ContextMenu("Debug AI Fields")]
+    public void DebugAIFields()
+    {
+        Debug.Log($"=== AI FIELDS for DialogueUI ===");
+        Debug.Log($"Loading Indicator: {(loadingIndicator != null ? "SET" : "NOT SET")}");
+        Debug.Log($"Player Input Field: {(playerInputField != null ? "SET" : "NOT SET")}");
+        Debug.Log($"Send Button: {(sendButton != null ? "SET" : "NOT SET")}");
+        Debug.Log($"Switch to AI Button: {(switchToAIButton != null ? "SET" : "NOT SET")}");
+        Debug.Log("=================================");
+    }
+    
     
     void Update()
     {

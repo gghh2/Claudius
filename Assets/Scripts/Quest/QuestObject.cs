@@ -3,26 +3,48 @@ using TMPro;
 
 public class QuestObject : MonoBehaviour
 {
-    [Header("Quest Object Info")]
-    public string questId;
+	[Header("===== AI CONFIGURATION - Used by AI System =====")]
+    
+    [Header("Quest Object Info (AI)")]
+    [Tooltip("AI SYSTEM - Object name displayed in dialogues and quests")]
     public string objectName;
+    
+    [Tooltip("AI SYSTEM - Object type for quest generation")]
     public QuestObjectType objectType;
+    
+    [Space(20)]
+    [Header("===== TECHNICAL CONFIGURATION - Not used by AI =====")]
+    
+    [Header("Quest Tracking")]
+    [Tooltip("Technical - Associated quest ID")]
+    public string questId;
+    
+    [Tooltip("Technical - Collection status")]
     public bool isCollected = false;
     
     [Header("Visual Settings")]
+    [Tooltip("Visual - Highlight effect GameObject")]
     public GameObject highlightEffect;
+    
+    [Tooltip("Visual - Glow color")]
     public Color glowColor = Color.yellow;
     
     [Header("Name Display")]
+    [Tooltip("Visual - Name display offset")]
     public Vector3 nameOffset = new Vector3(0, 1.5f, 0);
+    
+    [Tooltip("Visual - Font size")]
     public float fontSize = 3f;
     
     [Header("Interaction Settings")]
+    [Tooltip("Technical - Trigger radius")]
     public float triggerRadius = 2f;
     
     [Header("Debug")]
-    public bool debugMode = true; // NOUVEAU: Debug activé par défaut
+    [Tooltip("Debug - Show detailed logs")]
+    public bool debugMode = true;
     
+    // Private variables
     private bool playerInRange = false;
     private Renderer objectRenderer;
     private GameObject nameDisplay;
@@ -395,5 +417,14 @@ public class QuestObject : MonoBehaviour
         // Affiche le nom au-dessus
         Gizmos.color = Color.white;
         Gizmos.DrawRay(transform.position, Vector3.up * 3f);
+    }
+    
+    [ContextMenu("Debug AI Fields")]
+    public void DebugAIFields()
+    {
+        Debug.Log($"=== AI FIELDS for {gameObject.name} ===");
+        Debug.Log($"Object Name: {objectName}");
+        Debug.Log($"Object Type: {objectType}");
+        Debug.Log("=====================================");
     }
 }

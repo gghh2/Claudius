@@ -24,17 +24,33 @@ public class QuestManager : MonoBehaviour
 {
     public static QuestManager Instance { get; private set; }
     
-    [Header("Quest Prefabs")]
-    public GameObject itemPrefab; // Prefab générique pour les objets
-    public GameObject npcPrefab;  // Prefab générique pour les NPCs
-    public GameObject terminalPrefab; // Prefab pour les terminaux
-    public GameObject markerPrefab; // Prefab pour les marqueurs
+    [Header("===== AI CONFIGURATION - Used by AI System =====")]
+    
+    [Header("Quest Object Prefabs (AI)")]
+    [Tooltip("AI SYSTEM - Prefab for collectible items")]
+    public GameObject itemPrefab;
+    
+    [Tooltip("AI SYSTEM - Prefab for temporary NPCs")]
+    public GameObject npcPrefab;
+    
+    [Tooltip("AI SYSTEM - Prefab for interactive terminals")]
+    public GameObject terminalPrefab;
+    
+    [Tooltip("AI SYSTEM - Prefab for exploration markers")]
+    public GameObject markerPrefab;
+    
+    [Space(20)]
+    [Header("===== TECHNICAL CONFIGURATION - Not used by AI =====")]
     
     [Header("Quest Management")]
+    [Tooltip("Technical - Active quest list")]
     public List<ActiveQuest> activeQuests = new List<ActiveQuest>();
+    
+    [Tooltip("Technical - Maximum concurrent quests")]
     public int maxActiveQuests = 5;
     
     [Header("Debug")]
+    [Tooltip("Debug - Show detailed logs")]
     public bool debugMode = true;
     
     void Awake()
@@ -59,7 +75,7 @@ public class QuestManager : MonoBehaviour
         }
         
         if (debugMode)
-            Debug.Log($"🎯 Création de quête: {token.description}");
+            Debug.Log($"[QUEST] Création de quête: {token.description}");
         
         ActiveQuest newQuest = new ActiveQuest(token, giverNPCName);
         
@@ -92,25 +108,24 @@ public class QuestManager : MonoBehaviour
             activeQuests.Add(newQuest);
             
             // DEBUG : Vérification du QuestJournal
-            Debug.Log($"🔍 QuestJournal.Instance existe: {QuestJournal.Instance != null}");
+            Debug.Log($"[QUEST] QuestJournal.Instance existe: {QuestJournal.Instance != null}");
             
             if (QuestJournal.Instance != null)
             {
-                Debug.Log($"📝 Tentative d'ajout au journal...");
+                Debug.Log($"[QUEST] Tentative d'ajout au journal...");
                 QuestJournal.Instance.AddQuest(token, giverNPCName);
             }
             else
             {
-                Debug.LogError("❌ QuestJournal.Instance est NULL ! Crée un GameObject QuestJournal dans la scène.");
+                Debug.LogError("[QUEST] QuestJournal.Instance est NULL ! Crée un GameObject QuestJournal dans la scène.");
             }
             
             if (debugMode)
-                Debug.Log($"✅ Quête créée avec succès: {token.questId}");
+                Debug.Log($"[QUEST] Quête créée avec succès: {token.questId}");
             
             return true;
         }
         
-        // CORRECTION: Ajout du return manquant
         return false;
     }
     
@@ -260,7 +275,6 @@ public class QuestManager : MonoBehaviour
         return CreateTalkQuest(quest);
     }
     
-    // MODIFIÉ: Plus de complétion automatique pour les quêtes FETCH
     public void OnObjectCollected(string questId, string objectName)
     {
         ActiveQuest quest = activeQuests.FirstOrDefault(q => q.questId == questId);
@@ -269,7 +283,7 @@ public class QuestManager : MonoBehaviour
             quest.currentProgress++;
             
             if (debugMode)
-                Debug.Log($"📊 Progression quête {questId}: {quest.currentProgress}/{quest.questData.quantity}");
+                Debug.Log($"[QUEST] Progression quête {questId}: {quest.currentProgress}/{quest.questData.quantity}");
             
             // Met à jour le journal mais NE COMPLETE PAS automatiquement
             if (QuestJournal.Instance != null)
@@ -277,14 +291,11 @@ public class QuestManager : MonoBehaviour
                 QuestJournal.Instance.UpdateQuestProgress(questId, quest.currentProgress);
             }
             
-            // NOUVEAU: Message quand tous les objets sont collectés
+            // Message quand tous les objets sont collectés
             if (quest.currentProgress >= quest.questData.quantity)
             {
-                Debug.Log($"🎯 OBJECTIFS ACCOMPLIS ! Retournez voir {quest.giverNPCName} pour rendre la quête.");
+                Debug.Log($"[QUEST] OBJECTIFS ACCOMPLIS ! Retournez voir {quest.giverNPCName} pour rendre la quête.");
             }
-            
-            // NOTE: Plus de complétion automatique pour les quêtes FETCH
-            // Le joueur doit maintenant retourner voir le NPC
         }
     }
     
@@ -314,7 +325,6 @@ public class QuestManager : MonoBehaviour
         }
     }
     
-    // NOUVELLE MÉTHODE: Nettoie une quête terminée
     public void CleanupCompletedQuest(string questId)
     {
         ActiveQuest quest = activeQuests.FirstOrDefault(q => q.questId == questId);
@@ -331,21 +341,20 @@ public class QuestManager : MonoBehaviour
             activeQuests.Remove(quest);
             
             if (debugMode)
-                Debug.Log($"🧹 Quête nettoyée: {questId}");
+                Debug.Log($"[QUEST] Quête nettoyée: {questId}");
         }
         else
         {
             if (debugMode)
-                Debug.LogWarning($"⚠️ Tentative de nettoyage d'une quête introuvable: {questId}");
+                Debug.LogWarning($"[QUEST] Tentative de nettoyage d'une quête introuvable: {questId}");
         }
     }
     
-    // MODIFIÉ: Méthode CompleteQuest pour les autres types de quêtes
     void CompleteQuest(ActiveQuest quest)
     {
         quest.isCompleted = true;
         
-        Debug.Log($"🎉 Quête terminée automatiquement: {quest.questData.description}");
+        Debug.Log($"[QUEST] Quête terminée automatiquement: {quest.questData.description}");
         
         // Met à jour le journal
         if (QuestJournal.Instance != null)
@@ -357,7 +366,6 @@ public class QuestManager : MonoBehaviour
         CleanupCompletedQuest(quest.questId);
     }
     
-    // Méthode pour nettoyer toutes les quêtes
     public void ClearAllQuests()
     {
         foreach (ActiveQuest quest in activeQuests)
@@ -371,5 +379,16 @@ public class QuestManager : MonoBehaviour
         
         activeQuests.Clear();
         Debug.Log("Toutes les quêtes ont été nettoyées");
+    }
+    
+    [ContextMenu("Debug AI Fields")]
+    public void DebugAIFields()
+    {
+        Debug.Log($"=== AI PREFABS for QuestManager ===");
+        Debug.Log($"Item Prefab: {(itemPrefab != null ? itemPrefab.name : "NOT SET")}");
+        Debug.Log($"NPC Prefab: {(npcPrefab != null ? npcPrefab.name : "NOT SET")}");
+        Debug.Log($"Terminal Prefab: {(terminalPrefab != null ? terminalPrefab.name : "NOT SET")}");
+        Debug.Log($"Marker Prefab: {(markerPrefab != null ? markerPrefab.name : "NOT SET")}");
+        Debug.Log("====================================");
     }
 }

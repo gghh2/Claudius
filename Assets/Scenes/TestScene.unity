@@ -159,7 +159,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 370690266}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &12414619
 MonoBehaviour:
@@ -1065,7 +1065,7 @@ GameObject:
   - component: {fileID: 138895383}
   m_Layer: 0
   m_Name: Zone_Ruins_01
-  m_TagString: Untagged
+  m_TagString: QuestZone
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1846,7 +1846,7 @@ GameObject:
   - component: {fileID: 250261919}
   m_Layer: 0
   m_Name: Zone_Laboratoire_01
-  m_TagString: Untagged
+  m_TagString: QuestZone
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1975,7 +1975,7 @@ GameObject:
   - component: {fileID: 270119666}
   m_Layer: 0
   m_Name: Zone_Ruins_01
-  m_TagString: Untagged
+  m_TagString: QuestZone
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2517,6 +2517,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1362929683}
   - {fileID: 1219219559}
   - {fileID: 807031749}
   - {fileID: 12414618}
@@ -5208,7 +5209,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 763364905}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 43.02, y: 0.876, z: 23.62}
+  m_LocalPosition: {x: -7.81, y: 0.876, z: -20.99}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -5507,7 +5508,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 370690266}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &807031750
 MonoBehaviour:
@@ -5620,7 +5621,7 @@ GameObject:
   - component: {fileID: 831795805}
   m_Layer: 0
   m_Name: Zone_MedicalBay_01
-  m_TagString: Untagged
+  m_TagString: QuestZone
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6234,7 +6235,7 @@ GameObject:
   - component: {fileID: 933781552}
   m_Layer: 0
   m_Name: Zone_Market_01
-  m_TagString: Untagged
+  m_TagString: QuestZone
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -8045,6 +8046,67 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1106745687
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 370690266}
+    m_Modifications:
+    - target: {fileID: 2514992340246509255, guid: 083d4d7cd1c0b24429c3ee8152c72c15, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2514992340246509255, guid: 083d4d7cd1c0b24429c3ee8152c72c15, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 99.999985
+      objectReference: {fileID: 0}
+    - target: {fileID: 2514992340246509255, guid: 083d4d7cd1c0b24429c3ee8152c72c15, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -7.736727
+      objectReference: {fileID: 0}
+    - target: {fileID: 2514992340246509255, guid: 083d4d7cd1c0b24429c3ee8152c72c15, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.9954986
+      objectReference: {fileID: 0}
+    - target: {fileID: 2514992340246509255, guid: 083d4d7cd1c0b24429c3ee8152c72c15, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -18.272581
+      objectReference: {fileID: 0}
+    - target: {fileID: 2514992340246509255, guid: 083d4d7cd1c0b24429c3ee8152c72c15, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7365451
+      objectReference: {fileID: 0}
+    - target: {fileID: 2514992340246509255, guid: 083d4d7cd1c0b24429c3ee8152c72c15, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.5858785
+      objectReference: {fileID: 0}
+    - target: {fileID: 2514992340246509255, guid: 083d4d7cd1c0b24429c3ee8152c72c15, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.033874817
+      objectReference: {fileID: 0}
+    - target: {fileID: 2514992340246509255, guid: 083d4d7cd1c0b24429c3ee8152c72c15, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.3363039
+      objectReference: {fileID: 0}
+    - target: {fileID: 2514992340246509255, guid: 083d4d7cd1c0b24429c3ee8152c72c15, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -62.355
+      objectReference: {fileID: 0}
+    - target: {fileID: 2514992340246509255, guid: 083d4d7cd1c0b24429c3ee8152c72c15, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 47.88
+      objectReference: {fileID: 0}
+    - target: {fileID: 2514992340246509255, guid: 083d4d7cd1c0b24429c3ee8152c72c15, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: -79.156
+      objectReference: {fileID: 0}
+    - target: {fileID: 3003017604585024637, guid: 083d4d7cd1c0b24429c3ee8152c72c15, type: 3}
+      propertyPath: m_Name
+      value: "TRex Le m\xE9chant"
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 083d4d7cd1c0b24429c3ee8152c72c15, type: 3}
 --- !u!4 &1137675981 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5718677893221934858, guid: 5abcda3154061c54e819166bbf804dd1, type: 3}
@@ -8358,7 +8420,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 370690266}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1219219560
 MonoBehaviour:
@@ -9033,7 +9095,7 @@ GameObject:
   - component: {fileID: 1287445308}
   m_Layer: 0
   m_Name: Zone_Security_01
-  m_TagString: Untagged
+  m_TagString: QuestZone
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -9068,7 +9130,7 @@ MonoBehaviour:
   zoneName: "S\xE9curity Area"
   zoneType: 4
   description: "Poste de s\xE9curit\xE9 avec gardes et syst\xE8mes de surveillance"
-  supportedObjects: 0200000001000000
+  supportedObjects: 020000000100000000000000
   zoneColor: {r: 1, g: 0.2, b: 0.2, a: 1}
   spawnRadius: 3
   maxSpawnPoints: 4
@@ -9350,6 +9412,101 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1362906312}
   m_CullTransparentMesh: 1
+--- !u!1 &1362929682 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3003017604585024637, guid: 083d4d7cd1c0b24429c3ee8152c72c15, type: 3}
+  m_PrefabInstance: {fileID: 1106745687}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1362929683 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2514992340246509255, guid: 083d4d7cd1c0b24429c3ee8152c72c15, type: 3}
+  m_PrefabInstance: {fileID: 1106745687}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1362929684
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1362929682}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57bf490011512b3419c1d0f93e48db64, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  nameDisplayPrefab: {fileID: 0}
+  nameOffset: {x: 0, y: 2.5, z: 0}
+  maxDisplayDistance: 15
+  alwaysShow: 0
+  fontSize: 4
+  textColor: {r: 1, g: 1, b: 1, a: 1}
+  useNPCColor: 1
+--- !u!114 &1362929685
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1362929682}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f92546831b036b349922d4ad32711871, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  interactionRange: 3
+  turnInKey: 102
+  turnInPromptPrefab: {fileID: 0}
+  promptOffset: {x: 0, y: 3, z: 0}
+  debugMode: 1
+--- !u!114 &1362929686
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1362929682}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f93150c4b3ddfc74fab1150668215f3a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  npcName: "TRex Le m\xE9chant"
+  npcRole: "Un m\xE9chant de premi\xE8re"
+  npcDescription: "Un mec m\xE9chant ! "
+  interactionRange: 3
+  npcColor: {r: 1, g: 1, b: 1, a: 1}
+--- !u!114 &1362929687
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1362929682}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6fa2ab19b8a3bb64f953931434d0a8e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveSpeed: 2
+  waitTimeMin: 2
+  waitTimeMax: 5
+  movementRadius: 50
+  showMovementArea: 1
+  debugMode: 0
+--- !u!136 &1362929690
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1362929682}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  m_Radius: 0.009960905
+  m_Height: 0.019952493
+  m_Direction: 1
+  m_Center: {x: 0.00000917213, y: 0.00001067482, z: -0.0000070589613}
 --- !u!1 &1375041851
 GameObject:
   m_ObjectHideFlags: 0
@@ -9497,7 +9654,7 @@ GameObject:
   - component: {fileID: 1394971750}
   m_Layer: 0
   m_Name: Zone_Hangar_01
-  m_TagString: Untagged
+  m_TagString: QuestZone
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -10128,7 +10285,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1628671277}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9999958
+  m_Size: 0.99948436
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -10183,7 +10340,7 @@ GameObject:
   - component: {fileID: 1451605328}
   m_Layer: 0
   m_Name: Zone_Ingineering_01
-  m_TagString: Untagged
+  m_TagString: QuestZone
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -11844,7 +12001,7 @@ GameObject:
   - component: {fileID: 1697655606}
   m_Layer: 0
   m_Name: Zone_Residential_01
-  m_TagString: Untagged
+  m_TagString: QuestZone
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -12123,6 +12280,11 @@ MonoBehaviour:
     temperature: 0.8
     maxTokens: 150
     showApiStatus: 1
+  promptConfig: {fileID: 11400000, guid: e50f9e12ebb823c46b8e305067534938, type: 2}
+  marchandPromptConfig: {fileID: 11400000, guid: e50f9e12ebb823c46b8e305067534938, type: 2}
+  scientifiquePromptConfig: {fileID: 11400000, guid: dbad94dd808af534fa095ca657036d90, type: 2}
+  gardePromptConfig: {fileID: 11400000, guid: 0f2f94829331d7745a06188f5a26df5d, type: 2}
+  defaultPromptConfig: {fileID: 11400000, guid: a82171c12c2a5f1448fa943c15454954, type: 2}
   gameContext: "Vous \xEAtes dans un univers de space opera. R\xE9pondez en fran\xE7ais
     et gardez des r\xE9ponses moyennes."
   apiKeyLoaded: 0
@@ -12509,7 +12671,7 @@ GameObject:
   - component: {fileID: 1803155614}
   m_Layer: 0
   m_Name: Zone_Fallback_01
-  m_TagString: Untagged
+  m_TagString: QuestZone
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -13720,7 +13882,7 @@ GameObject:
   - component: {fileID: 1973865253}
   m_Layer: 0
   m_Name: Zone_Storage_01
-  m_TagString: Untagged
+  m_TagString: QuestZone
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

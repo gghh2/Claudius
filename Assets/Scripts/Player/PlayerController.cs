@@ -237,7 +237,7 @@ public class PlayerController : MonoBehaviour
             Debug.Log($"🦶 Volume des pas: {volume:F2}");
         }
     }
-    
+     
     public float GetCurrentSpeed()
     {
         return currentSpeed;

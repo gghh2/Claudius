@@ -101,6 +101,9 @@ public class FootstepSystem : MonoBehaviour
     private Dictionary<string, AudioClip[]> surfaceAudioDict;
     private Material particleMaterial;
     
+    // NOUVEAU : Référence au modèle pour position des pieds
+    private Transform modelTransform;
+    
     void Start()
     {
         SetupAudioSource();
@@ -108,6 +111,14 @@ public class FootstepSystem : MonoBehaviour
         BuildSurfaceAudioDictionary();
         SetupParticleSystem();
         InitializePositionBuffer();
+        
+        // NOUVEAU : Trouve le modèle pour la position des pieds
+        modelTransform = transform.Find("space_man_model");
+        if (modelTransform == null)
+        {
+            Debug.LogWarning("⚠️ space_man_model non trouvé - utilisation position Player");
+            modelTransform = transform; // Fallback
+        }
         
         if (debugMode)
             Debug.Log("🦶 FootstepSystem initialisé");
@@ -296,10 +307,12 @@ public class FootstepSystem : MonoBehaviour
     
     void InitializePositionBuffer()
     {
-        lastPosition = transform.position;
+        // CORRECTION : Utilise la position du modèle
+        Vector3 initialPosition = modelTransform != null ? modelTransform.position : transform.position;
+        lastPosition = initialPosition;
         for (int i = 0; i < positionBuffer.Length; i++)
         {
-            positionBuffer[i] = transform.position;
+            positionBuffer[i] = initialPosition;
         }
     }
     
@@ -316,6 +329,9 @@ public class FootstepSystem : MonoBehaviour
         
         float averageSpeed = totalDistance / (positionBuffer.Length * Time.deltaTime);
         bool currentlyMoving = averageSpeed > movementThreshold;
+        
+        // SOLUTION : Détecte le début du mouvement pour pas immédiat
+        bool wasMovingPreviously = isMoving;
         
         if (useSmoothing)
         {
@@ -346,6 +362,14 @@ public class FootstepSystem : MonoBehaviour
             isMoving = currentlyMoving;
         }
         
+        // NOUVEAU : Premier pas immédiat quand on commence à bouger
+        if (!wasMovingPreviously && isMoving)
+        {
+            stepTimer = stepInterval; // Force le premier pas immédiatement
+            if (debugMode)
+                Debug.Log("🦶 Premier pas immédiat détecté !");
+        }
+        
         lastPosition = transform.position;
     }
     
@@ -353,7 +377,7 @@ public class FootstepSystem : MonoBehaviour
     {
         if (!isMoving)
         {
-            stepTimer = 0f;
+            stepTimer = 0f; // Reset du timer quand on s'arrête
             return;
         }
         
@@ -365,10 +389,11 @@ public class FootstepSystem : MonoBehaviour
         
         stepTimer += Time.deltaTime;
         
+        // SOLUTION : Premier pas immédiat quand on commence à bouger
         if (stepTimer >= stepInterval)
         {
             PlayFootstep();
-            stepTimer = 0f;
+            stepTimer = 0f; // Reset après chaque pas
         }
     }
     
@@ -424,7 +449,8 @@ public class FootstepSystem : MonoBehaviour
     
     bool IsGrounded()
     {
-        Vector3 rayStart = transform.position + Vector3.up * 0.1f;
+        // CORRECTION : Raycast depuis les pieds du modèle
+        Vector3 rayStart = modelTransform.position + Vector3.up * 0.1f;
         
         if (Physics.Raycast(rayStart, Vector3.down, out groundHit, groundCheckDistance + 0.1f, groundLayers))
         {
@@ -503,7 +529,8 @@ public class FootstepSystem : MonoBehaviour
     
     void DrawGroundRaycast()
     {
-        Vector3 rayStart = transform.position + Vector3.up * 0.1f;
+        // CORRECTION : Debug raycast depuis les pieds du modèle
+        Vector3 rayStart = modelTransform.position + Vector3.up * 0.1f;
         Debug.DrawRay(rayStart, Vector3.down * (groundCheckDistance + 0.1f), 
                      IsGrounded() ? Color.green : Color.red);
     }

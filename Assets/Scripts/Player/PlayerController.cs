@@ -6,9 +6,12 @@ public class PlayerController : MonoBehaviour
     public float moveSpeed = 5f;
     
     [Header("Jump")]
-    public float jumpForce = 8f;
+    public float jumpForce = 12f; // Augmenté de 8f à 12f
     public LayerMask groundLayer = 1;
     public float groundCheckDistance = 0.2f;
+    [Range(1f, 3f)]
+    [Tooltip("Multiplicateur de gravité pendant la chute (plus haut = chute plus rapide)")]
+    public float fallGravityMultiplier = 2f;
     
     [Header("Jump Effects")]
     public ParticleSystem jumpEffect;
@@ -36,7 +39,16 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
         
-        // CORRECTION : Récupère l'Animator dans les enfants
+        // Configuration Rigidbody pour mouvement plus fluide
+        rb.interpolation = RigidbodyInterpolation.Interpolate; // Lisse le mouvement
+        rb.drag = 8f; // Ajoute de la résistance pour un arrêt plus net
+        rb.angularDrag = 10f; // Résistance à la rotation
+        rb.mass = 1f; // Masse normale
+        
+        // NOUVEAU : Correction automatique de position du modèle
+        FixModelPosition();
+        
+        // Récupère l'Animator dans les enfants
         if (animator == null)
         {
             animator = GetComponent<Animator>(); // D'abord sur cet objet
@@ -79,7 +91,7 @@ public class PlayerController : MonoBehaviour
             Debug.LogWarning("⚠️ Aucun FootstepSystem trouvé sur le joueur");
         }
         
-        Debug.Log("🎮 PlayerController initialisé avec Animator");
+        Debug.Log("🎮 PlayerController initialisé");
     }
     
     void Update()
@@ -87,6 +99,9 @@ public class PlayerController : MonoBehaviour
         HandleInput();
         CheckGrounded();
         UpdateAnimator();
+        
+        // NOUVEAU : Gravité augmentée pendant la chute pour saut plus réactif
+        ApplyJumpPhysics();
     }
     
     void FixedUpdate()
@@ -124,10 +139,17 @@ public class PlayerController : MonoBehaviour
         // Garde la vélocité Y actuelle (pour le saut)
         rb.velocity = new Vector3(movement.x, rb.velocity.y, movement.z);
         
-        // Rotation du personnage vers la direction de mouvement
+        // SOLUTION 1 : Rotation plus fluide et conditionnelle
         if (moveDirection != Vector3.zero)
         {
-            transform.rotation = Quaternion.LookRotation(moveDirection);
+            // Calcule la rotation cible
+            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+            
+            // Applique une rotation progressive au lieu d'instantanée
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.fixedDeltaTime * 15f);
+            
+            // Alternative plus douce :
+            // transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, 360f * Time.fixedDeltaTime);
         }
     }
     
@@ -147,13 +169,7 @@ public class PlayerController : MonoBehaviour
         bool isMoving = currentSpeed > 0.1f;
         animator.SetBool("IsMoving", isMoving);
         
-        // DEBUG TEMPORAIRE - Retirez après diagnostic
-        if (Time.frameCount % 30 == 0) // Toutes les demi-secondes environ
-        {
-            Debug.Log($"🎭 DEBUG ANIMATOR: Speed={currentSpeed:F2} | IsMoving={isMoving} | Input=({inputX:F1},{inputY:F1}) | Animator={animator.gameObject.name}");
-        }
-        
-        // Debug manuel avec F1
+        // Debug manuel avec F1 seulement
         if (Input.GetKeyDown(KeyCode.F1))
         {
             Debug.Log($"🎭 Animator State: Speed={currentSpeed:F2}, IsMoving={isMoving}, Direction={moveDirection}");
@@ -162,7 +178,8 @@ public class PlayerController : MonoBehaviour
     
     void Jump()
     {
-        // Applique la force de saut
+        // SOLUTION : Saut plus réactif avec reset de vélocité Y
+        rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z); // Reset la vélocité Y
         rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
         
         // Animation de saut
@@ -191,6 +208,25 @@ public class PlayerController : MonoBehaviour
         Debug.Log("🦘 Saut !");
     }
     
+    /// <summary>
+    /// NOUVEAU : Gère la physique du saut pour un feeling plus réactif
+    /// </summary>
+    void ApplyJumpPhysics()
+    {
+        // Si on tombe (vélocité Y négative) et qu'on n'est pas au sol
+        if (rb.velocity.y < 0f && !isGrounded)
+        {
+            // Applique une gravité supplémentaire pour une chute plus rapide
+            rb.AddForce(Vector3.down * Physics.gravity.magnitude * (fallGravityMultiplier - 1f), ForceMode.Acceleration);
+        }
+        // Optionnel : Gravité réduite pendant la montée pour un saut plus "floaty" au pic
+        else if (rb.velocity.y > 0f && !Input.GetKey(KeyCode.Space))
+        {
+            // Si on relâche espace pendant la montée, on accélère la descente
+            rb.AddForce(Vector3.down * Physics.gravity.magnitude * 0.5f, ForceMode.Acceleration);
+        }
+    }
+    
     void ReenableFootsteps()
     {
         if (footstepSystem != null)
@@ -201,8 +237,20 @@ public class PlayerController : MonoBehaviour
     
     void CheckGrounded()
     {
-        // Raycast vers le bas pour vérifier si on touche le sol
-        Vector3 rayStart = transform.position + Vector3.up * 0.1f;
+        // CORRECTION : Raycast depuis les pieds du modèle, pas depuis le centre du Player
+        Transform spaceManModel = transform.Find("space_man_model");
+        Vector3 rayStart;
+        
+        if (spaceManModel != null)
+        {
+            // Raycast depuis la position du modèle (ses pieds)
+            rayStart = spaceManModel.position + Vector3.up * 0.1f;
+        }
+        else
+        {
+            // Fallback : depuis le Player
+            rayStart = transform.position + Vector3.up * 0.1f;
+        }
         
         bool wasGrounded = isGrounded;
         isGrounded = Physics.Raycast(rayStart, Vector3.down, groundCheckDistance + 0.1f, groundLayer);
@@ -214,7 +262,7 @@ public class PlayerController : MonoBehaviour
             footstepSystem.PlayLandingParticles();
         }
         
-        // Debug visuel
+        // Debug visuel depuis les pieds du modèle
         Debug.DrawRay(rayStart, Vector3.down * (groundCheckDistance + 0.1f), 
                      isGrounded ? Color.green : Color.red);
     }
@@ -237,7 +285,7 @@ public class PlayerController : MonoBehaviour
             Debug.Log($"🦶 Volume des pas: {volume:F2}");
         }
     }
-     
+    
     public float GetCurrentSpeed()
     {
         return currentSpeed;
@@ -251,6 +299,46 @@ public class PlayerController : MonoBehaviour
     public Vector3 GetMoveDirection()
     {
         return moveDirection;
+    }
+    
+    /// <summary>
+    /// NOUVEAU : Corrige automatiquement la position du modèle par rapport au collider
+    /// </summary>
+    void FixModelPosition()
+    {
+        // Trouve le modèle space_man_model
+        Transform spaceManModel = transform.Find("space_man_model");
+        if (spaceManModel == null)
+        {
+            Debug.LogWarning("⚠️ space_man_model non trouvé dans les enfants");
+            return;
+        }
+        
+        // Récupère le Capsule Collider sur cet objet
+        CapsuleCollider capsule = GetComponent<CapsuleCollider>();
+        if (capsule == null)
+        {
+            Debug.LogWarning("⚠️ Capsule Collider non trouvé sur Player");
+            return;
+        }
+        
+        // Calcule la position pour que les pieds du modèle touchent le sol
+        // Le collider va du sol (Y=0) jusqu'à sa hauteur
+        // Le modèle doit être positionné pour que ses pieds soient au bas du collider
+        
+        Vector3 originalPosition = spaceManModel.localPosition;
+        
+        // SOLUTION : Place le modèle pour que ses pieds soient au niveau du bas du collider
+        float colliderBottom = capsule.center.y - (capsule.height / 2f);
+        float newY = colliderBottom; // Les pieds du modèle au bas du collider
+        
+        spaceManModel.localPosition = new Vector3(originalPosition.x, newY, originalPosition.z);
+        
+        Debug.Log($"🔧 Position du modèle corrigée:");
+        Debug.Log($"  Collider: Center Y={capsule.center.y:F2}, Height={capsule.height:F2}");
+        Debug.Log($"  Bas du collider: Y={colliderBottom:F2}");
+        Debug.Log($"  Modèle avant: Y={originalPosition.y:F2}");
+        Debug.Log($"  Modèle après: Y={newY:F2}");
     }
     
     // Debug dans l'éditeur
@@ -270,6 +358,20 @@ public class PlayerController : MonoBehaviour
             GUILayout.Label($"État actuel: {animator.GetCurrentAnimatorStateInfo(0).shortNameHash}");
         }
         
+        if (GUILayout.Button("Debug Model Position"))
+        {
+            FixModelPosition();
+        }
+        
         GUILayout.EndArea();
+    }
+    
+    /// <summary>
+    /// Méthode manuelle pour corriger la position du modèle
+    /// </summary>
+    [ContextMenu("Fix Model Position")]
+    public void ManualFixModelPosition()
+    {
+        FixModelPosition();
     }
 }

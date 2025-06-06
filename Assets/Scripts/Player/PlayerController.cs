@@ -36,9 +36,26 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
         
-        // Récupère l'Animator si pas assigné
+        // CORRECTION : Récupère l'Animator dans les enfants
         if (animator == null)
-            animator = GetComponent<Animator>();
+        {
+            animator = GetComponent<Animator>(); // D'abord sur cet objet
+            if (animator == null)
+            {
+                animator = GetComponentInChildren<Animator>(); // Puis dans les enfants
+                Debug.Log("🎭 Animator trouvé dans les enfants: " + (animator != null ? animator.name : "AUCUN"));
+            }
+        }
+        
+        // Vérification finale
+        if (animator == null)
+        {
+            Debug.LogError("❌ AUCUN ANIMATOR TROUVÉ ! Vérifiez votre hiérarchie.");
+        }
+        else
+        {
+            Debug.Log($"✅ Animator trouvé sur: {animator.gameObject.name}");
+        }
         
         // Vérifie le tag Player
         if (!gameObject.CompareTag("Player"))
@@ -116,7 +133,11 @@ public class PlayerController : MonoBehaviour
     
     void UpdateAnimator()
     {
-        if (animator == null) return;
+        if (animator == null) 
+        {
+            Debug.LogWarning("❌ Animator est NULL ! Impossible de mettre à jour les animations.");
+            return;
+        }
         
         // Pour l'isométrique, on n'a besoin que de la vitesse
         animator.SetFloat("Speed", currentSpeed);
@@ -129,7 +150,7 @@ public class PlayerController : MonoBehaviour
         // DEBUG TEMPORAIRE - Retirez après diagnostic
         if (Time.frameCount % 30 == 0) // Toutes les demi-secondes environ
         {
-            Debug.Log($"🎭 DEBUG ANIMATOR: Speed={currentSpeed:F2} | IsMoving={isMoving} | Input=({inputX:F1},{inputY:F1})");
+            Debug.Log($"🎭 DEBUG ANIMATOR: Speed={currentSpeed:F2} | IsMoving={isMoving} | Input=({inputX:F1},{inputY:F1}) | Animator={animator.gameObject.name}");
         }
         
         // Debug manuel avec F1

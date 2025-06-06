@@ -116,6 +116,12 @@ public class PlayerController : MonoBehaviour
         
         // Pour l'isométrique, on n'a besoin que de la vitesse
         animator.SetFloat("Speed", currentSpeed);
+
+
+        // DEBUG TEMPORAIRE - Supprimez après tests
+    Debug.Log($"🎭 Speed envoyé à l'Animator: {currentSpeed:F2} | Vélocité RB: {rb.velocity.magnitude:F2}");
+
+        
         animator.SetBool("IsGrounded", isGrounded);
         
         // Paramètre simplifié pour savoir si on bouge

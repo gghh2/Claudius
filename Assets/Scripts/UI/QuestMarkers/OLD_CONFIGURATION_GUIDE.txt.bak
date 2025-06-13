@@ -1,0 +1,61 @@
+# Configuration des Marqueurs de Quête
+
+## Méthode 1 : Configuration via ScriptableObject (RECOMMANDÉE)
+
+### 1. Créer l'asset de configuration
+1. Dans le Project, clic droit dans un dossier
+2. Create → Quest System → Quest Marker Configuration
+3. Nommez le fichier "QuestMarkerConfig"
+
+### 2. Configurer les paramètres
+Sélectionnez l'asset créé et modifiez dans l'Inspector :
+- **Marker Size** : Taille des flèches (40-120)
+- **Edge Offset** : Distance du bord de l'écran (20-100)
+- **Marker Color** : Couleur des flèches
+- **Show Distance** : Afficher la distance en mètres
+- **Hide Distance** : Distance pour cacher les marqueurs (5-50m)
+- **Enable Pulse** : Animation de pulsation
+- **Pulse Speed** : Vitesse de pulsation
+- **Pulse Amount** : Intensité de pulsation
+- **Debug Mode** : Activer les logs de debug
+
+### 3. Assigner la configuration
+Deux options :
+
+**Option A : Dossier Resources (automatique)**
+- Créez un dossier "Resources" dans Assets (s'il n'existe pas)
+- Placez votre QuestMarkerConfig dedans
+- Le système le trouvera automatiquement
+
+**Option B : Assignment manuel (après lancement)**
+- Lancez le jeu
+- Trouvez "QuestMarkerSystem" dans la hiérarchie
+- Assignez votre QuestMarkerConfig dans le champ "Config"
+
+## Méthode 2 : Préfab personnalisé
+
+### 1. Créer un prefab QuestMarkerSystem
+1. Lancez le jeu une fois
+2. Dans la hiérarchie, trouvez "QuestMarkerSystem"
+3. Faites-en un prefab (glissez dans Project)
+4. Arrêtez le jeu
+
+### 2. Modifier le QuestMarkerInitializer
+Modifiez le script pour utiliser votre prefab au lieu de créer un GameObject vide.
+
+## Vérification
+
+Pour vérifier que tout fonctionne :
+1. Lancez le jeu avec Debug Mode activé
+2. Regardez la console pour "[QuestMarkerSystem] Configuration loaded from asset"
+3. Acceptez une quête
+4. Les marqueurs devraient apparaître avec vos paramètres
+
+## Dépannage
+
+**"No configuration found, using default values"**
+→ L'asset n'est pas dans Resources ou pas assigné
+
+**Les marqueurs ne changent pas de couleur**
+→ Vérifiez que vous avez bien sauvegardé l'asset de configuration
+→ Relancez le jeu après modification

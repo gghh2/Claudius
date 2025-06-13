@@ -64,6 +64,10 @@ public class DialogueUI : MonoBehaviour
     [Tooltip("Technical - Decline quest button")]
     public Button declineQuestButton;
     
+    [Header("Delivery System")]
+    [Tooltip("Technical - Deliver item button")]
+    public Button deliverButton;
+    
     [Header("Settings")]
     [Tooltip("Technical - Text typing speed")]
     public float typingSpeed = 0.03f;
@@ -76,10 +80,20 @@ public class DialogueUI : MonoBehaviour
     private bool isAIMode = false;
     private bool isCurrentlyDisplaying = false;
     private bool isSendingMessage = false;
+    private bool shouldCloseOnNextContinue = false; // Track if we should close on next continue click
     
     // Quest confirmation system
     private List<QuestToken> pendingQuests = new List<QuestToken>();
     private string questGiverName = "";
+    
+    // Delivery system
+    private string pendingDeliveryQuestId = "";
+    private string pendingDeliveryPackage = "";
+    
+    // Fetch quest completion system
+    private string pendingFetchQuestId = "";
+    private string pendingFetchObjectName = "";
+    private int pendingFetchQuantity = 0;
     
     public static DialogueUI Instance { get; private set; }
     
@@ -107,6 +121,29 @@ public class DialogueUI : MonoBehaviour
             
         if (switchToAIButton != null)
             switchToAIButton.onClick.AddListener(SwitchToAIMode);
+            
+        // Configure l'InputField pour gérer Enter correctement
+        if (playerInputField != null)
+        {
+            // Configure le submit à la validation (Enter)
+            playerInputField.onSubmit.RemoveAllListeners();
+            playerInputField.onSubmit.AddListener((text) => {
+                if (!string.IsNullOrEmpty(text.Trim()) && !isSendingMessage)
+                {
+                    SendPlayerMessage();
+                }
+            });
+            
+            // Optionnel : Configure aussi onEndEdit si besoin
+            playerInputField.onEndEdit.RemoveAllListeners();
+            playerInputField.onEndEdit.AddListener((text) => {
+                // Garde le focus sur l'input en mode IA
+                if (isAIMode && dialoguePanel.activeInHierarchy)
+                {
+                    StartCoroutine(RefocusInput());
+                }
+            });
+        }
         
         // Setup pour l'historique
         if (historyButton != null)
@@ -141,6 +178,18 @@ public class DialogueUI : MonoBehaviour
             Debug.LogError("[UI] DeclineQuestButton not assigned in Inspector!");
         }
         
+        // Setup pour les livraisons
+        if (deliverButton != null)
+        {
+            deliverButton.onClick.AddListener(DeliverPackage);
+            deliverButton.gameObject.SetActive(false);
+            Debug.Log("[UI] Deliver button configured and hidden");
+        }
+        else
+        {
+            Debug.LogError("[UI] DeliverButton not assigned in Inspector!");
+        }
+        
         // Cache les éléments au départ
         SetAIElementsVisibility(false);
     }
@@ -159,20 +208,23 @@ public class DialogueUI : MonoBehaviour
     
     void Update()
     {
-
-	 // Gestion ENTER en mode IA
+        // Gestion ENTER en mode IA
         if (isAIMode && !isSendingMessage)
         {
-            // Vérifie si ENTER est pressé ET qu'on est dans l'input field
+            // Vérifie si ENTER est pressé
             if ((Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)))
             {
-                // Vérifie que l'input field a du contenu
-                if (playerInputField != null && !string.IsNullOrEmpty(playerInputField.text.Trim()))
+                // Vérifie que l'input field existe et est actif
+                if (playerInputField != null && playerInputField.gameObject.activeInHierarchy)
                 {
-                    // Empêche le comportement par défaut (select all)
-                    if (playerInputField.isFocused)
+                    // Vérifie qu'il y a du texte dans l'input
+                    if (!string.IsNullOrEmpty(playerInputField.text.Trim()))
                     {
+                        // Envoie le message
                         SendPlayerMessage();
+                        
+                        // Empêche la propagation de l'événement
+                        Event.current?.Use();
                     }
                 }
             }
@@ -191,12 +243,9 @@ public class DialogueUI : MonoBehaviour
     
     void SetQuestButtonsVisibility(bool visible)
 	{
-	    Debug.Log($"🔧 SetQuestButtonsVisibility appelée avec: {visible}");
-	    
 	    if (acceptQuestButton != null)
 	    {
 	        acceptQuestButton.gameObject.SetActive(visible);
-	        Debug.Log($"Bouton Accept: {(visible ? "AFFICHÉ" : "CACHÉ")}");
 	    }
 	    else
 	    {
@@ -206,7 +255,6 @@ public class DialogueUI : MonoBehaviour
 	    if (declineQuestButton != null)
 	    {
 	        declineQuestButton.gameObject.SetActive(visible);
-	        Debug.Log($"Bouton Decline: {(visible ? "AFFICHÉ" : "CACHÉ")}");
 	    }
 	    else
 	    {
@@ -224,7 +272,7 @@ public class DialogueUI : MonoBehaviour
         dialoguePanel.SetActive(true);
         
         // Applique la couleur du NPC au nom
-        npcNameText.text = currentNPC.name;
+        npcNameText.text = TextFormatter.FormatName(currentNPC.name);
         npcNameText.color = GetNPCColor(currentNPC.name);
         
         // Affiche le bouton historique SI on a déjà parlé à ce NPC
@@ -246,7 +294,7 @@ public class DialogueUI : MonoBehaviour
         SetAIElementsVisibility(false);
         SetQuestButtonsVisibility(false);
         
-        FindObjectOfType<PlayerController>().enabled = false;
+        FindObjectOfType<PlayerController>()?.DisableControl();
     }
     
     // Mode dialogue IA
@@ -258,7 +306,7 @@ public class DialogueUI : MonoBehaviour
         dialoguePanel.SetActive(true);
         
         // Applique la couleur du NPC
-        npcNameText.text = currentNPC.name;
+        npcNameText.text = TextFormatter.FormatName(currentNPC.name);
         npcNameText.color = GetNPCColor(currentNPC.name);
         
         UpdateHistoryButtonVisibility();
@@ -271,7 +319,7 @@ public class DialogueUI : MonoBehaviour
             switchToAIButton.gameObject.SetActive(false);
         SetAIElementsVisibility(true);
         
-        FindObjectOfType<PlayerController>().enabled = false;
+        FindObjectOfType<PlayerController>()?.DisableControl();
     }
     
     void SwitchToAIMode()
@@ -443,14 +491,17 @@ public class DialogueUI : MonoBehaviour
     {
         if (currentNPC != null && text.Contains($"{currentNPC.name}:"))
         {
+            // NOUVEAU: Formate le nom pour l'affichage
+            string formattedName = TextFormatter.FormatName(currentNPC.name);
+            
             // Convertit la couleur en hex
             Color npcColor = GetNPCColor(currentNPC.name);
             string hexColor = ColorUtility.ToHtmlStringRGB(npcColor);
             
-            // Applique la couleur au nom du NPC
+            // Remplace d'abord le nom original s'il existe
             string coloredText = text.Replace(
                 $"{currentNPC.name}:", 
-                $"<color=#{hexColor}>{currentNPC.name}:</color>"
+                $"<color=#{hexColor}>{formattedName}:</color>"
             );
             
             return coloredText;
@@ -463,6 +514,13 @@ public class DialogueUI : MonoBehaviour
     {
         // Mode classique seulement
         if (isAIMode) return;
+        
+        // Si on doit fermer après ce clic (après avoir rendu une quête)
+        if (shouldCloseOnNextContinue)
+        {
+            CloseDialogue();
+            return;
+        }
         
         if (isTyping)
         {
@@ -561,6 +619,18 @@ public class DialogueUI : MonoBehaviour
         isSendingMessage = false;
     }
     
+    IEnumerator RefocusInput()
+    {
+        // Attend un frame pour que Unity finisse de traiter l'evènement
+        yield return null;
+        
+        if (playerInputField != null && isAIMode && dialoguePanel.activeInHierarchy)
+        {
+            playerInputField.Select();
+            playerInputField.ActivateInputField();
+        }
+    }
+    
     // Méthode appelée par l'IA pour afficher sa réponse
     public void ShowAIResponse(string aiResponse)
     {
@@ -587,11 +657,13 @@ public class DialogueUI : MonoBehaviour
 	        string questInfo = "\n\n--- MISSION PROPOSÉE ---\n";
 	        foreach (QuestToken quest in quests)
 	        {
-	            questInfo += $"• {quest.description}\n";
+	        // Formate la description pour supprimer les underscores
+	            string formattedDescription = TextFormatter.FormatName(quest.description);
+	            questInfo += $"• {formattedDescription}\n";
 	        }
 	        questInfo += "Acceptez-vous cette mission ?";
-	        
-	        ShowText(currentFullText + questInfo);
+        
+        ShowText(currentFullText + questInfo);
 	    }
 	}
     
@@ -671,6 +743,174 @@ public class DialogueUI : MonoBehaviour
         return Color.white;
     }
     
+    // SYSTEME DE LIVRAISON
+    public void ShowDeliveryButton(string questId, string packageName)
+    {
+        pendingDeliveryQuestId = questId;
+        pendingDeliveryPackage = packageName;
+        
+        // Cache le bouton continuer et affiche le bouton livrer
+        if (continueButton != null)
+            continueButton.gameObject.SetActive(false);
+        
+        if (deliverButton != null)
+        {
+            deliverButton.gameObject.SetActive(true);
+            // Ne pas modifier le texte - garder celui de l'Inspector
+        }
+        
+        // Cache aussi les éléments IA
+        SetAIElementsVisibility(false);
+    }
+    
+    // NOUVEAU: Système pour les quêtes FETCH
+    public void ShowFetchQuestButton(string questId, string objectName, int quantity)
+    {
+        Debug.Log($"ShowFetchQuestButton appelé: {objectName} x{quantity}");
+        
+        pendingFetchQuestId = questId;
+        pendingFetchObjectName = objectName;
+        pendingFetchQuantity = quantity;
+        
+        // Cache le bouton continuer et affiche le bouton livrer
+        if (continueButton != null)
+            continueButton.gameObject.SetActive(false);
+        
+        if (switchToAIButton != null)
+            switchToAIButton.gameObject.SetActive(false);
+        
+        if (deliverButton != null)
+        {
+            deliverButton.gameObject.SetActive(true);
+            // Optionnel : changer le texte du bouton
+            var buttonText = deliverButton.GetComponentInChildren<TextMeshProUGUI>();
+            if (buttonText != null)
+                buttonText.text = "Remettre les objets";
+        }
+        
+        // Cache aussi les éléments IA
+        SetAIElementsVisibility(false);
+        
+        // S'assure que les boutons de quête sont cachés
+        SetQuestButtonsVisibility(false);
+    }
+    
+    void DeliverPackage()
+    {
+        // Gestion des quêtes DELIVERY
+        if (!string.IsNullOrEmpty(pendingDeliveryQuestId))
+        {
+            Debug.Log($"🚚 Livraison du colis via UI: {pendingDeliveryPackage}");
+            
+            // Trouve le QuestObject pour gérer la livraison
+            QuestObject[] allQuestObjects = FindObjectsOfType<QuestObject>();
+            foreach (QuestObject qo in allQuestObjects)
+            {
+                if (qo.questId == pendingDeliveryQuestId && qo.isDeliveryTarget)
+                {
+                    // Déclenche la livraison via QuestObject
+                    qo.HandleDeliveryFromUI();
+                    break;
+                }
+            }
+            
+            // Affiche un message de succès
+            ShowText($"{currentNPC.name}: Parfait ! Merci pour cette livraison rapide. Votre travail est apprécié !");
+        }
+        // NOUVEAU : Gestion des quêtes FETCH
+        else if (!string.IsNullOrEmpty(pendingFetchQuestId))
+        {
+            Debug.Log($"📦 Remise des objets via UI: {pendingFetchObjectName} x{pendingFetchQuantity}");
+            
+            // Retire les objets de l'inventaire
+            bool success = PlayerInventory.Instance.RemoveItem(
+                pendingFetchObjectName, 
+                pendingFetchQuantity, 
+                pendingFetchQuestId
+            );
+            
+            if (success)
+            {
+                // Complete la quête dans le journal
+                QuestJournal.Instance.CompleteQuest(pendingFetchQuestId);
+                
+                // Play quest complete sound
+                if (QuestManager.Instance != null)
+                {
+                    QuestManager.Instance.PlayQuestCompleteSoundPublic();
+                }
+                
+                // Nettoie la quête active dans le QuestManager
+                if (QuestManager.Instance != null)
+                {
+                    QuestManager.Instance.CleanupCompletedQuest(pendingFetchQuestId);
+                }
+                
+                // Affiche un message de succès personnalisé
+                ShowText(GetFetchQuestCompletionMessage());
+            }
+            else
+            {
+                Debug.LogError("❌ Erreur lors du retrait des objets de l'inventaire");
+                ShowText($"{currentNPC.name}: Il semble y avoir un problème... Avez-vous bien tous les objets ?");
+            }
+        }
+        
+        // Cache le bouton de livraison/remise
+        if (deliverButton != null)
+            deliverButton.gameObject.SetActive(false);
+        
+        // Réaffiche le bouton continuer pour fermer le dialogue
+        if (continueButton != null)
+        {
+            continueButton.gameObject.SetActive(true);
+            var buttonText = continueButton.GetComponentInChildren<TextMeshProUGUI>();
+            if (buttonText != null)
+                buttonText.text = "Terminer";
+        }
+        
+        // Marque qu'on doit fermer au prochain clic
+        shouldCloseOnNextContinue = true;
+        
+        // Reset
+        pendingDeliveryQuestId = "";
+        pendingDeliveryPackage = "";
+        pendingFetchQuestId = "";
+        pendingFetchObjectName = "";
+        pendingFetchQuantity = 0;
+    }
+    
+    string GetFetchQuestCompletionMessage()
+    {
+        if (currentNPC == null) return "Merci !";
+        
+        // NOUVEAU: Utilise TextFormatter pour formater le nom du NPC
+        string formattedNPCName = TextFormatter.FormatName(currentNPC.name);
+        string formattedObjectName = TextFormatter.FormatName(pendingFetchObjectName);
+        
+        switch (currentNPC.role.ToLower())
+        {
+            case "marchand":
+                return $"{formattedNPCName}: Parfait ! Vous avez récupéré tous les {formattedObjectName} que je demandais. " +
+                       $"Voici votre récompense bien méritée ! Ces objets vont me rapporter gros sur le marché.";
+            
+            case "scientifique":
+                return $"{formattedNPCName}: Excellent travail ! Ces spécimens de {formattedObjectName} " +
+                       $"vont révolutionner mes recherches. La science vous remercie ! " +
+                       $"Vos efforts contribuent à l'avancement de nos connaissances.";
+            
+            case "garde impérial":
+                return $"{formattedNPCName}: Mission accomplie avec brio, voyageur ! " +
+                       $"Vous avez récupéré les {formattedObjectName} comme demandé. " +
+                       $"L'Empire reconnaît votre efficacité et votre dévouement.";
+            
+            default:
+                return $"{formattedNPCName}: Merci infiniment ! Vous avez accompli exactement ce que je demandais. " +
+                       $"Ces {formattedObjectName} me sont très précieux. " +
+                       $"C'est un travail formidable !";
+        }
+    }
+    
     void UpdateHistoryButtonVisibility()
     {
         if (historyButton != null && AIDialogueManager.Instance != null)
@@ -735,7 +975,7 @@ public class DialogueUI : MonoBehaviour
         ClearPendingQuests(); // Nettoie les quêtes en attente
         
         dialoguePanel.SetActive(false);
-        FindObjectOfType<PlayerController>().enabled = true;
+        FindObjectOfType<PlayerController>()?.EnableControl();
         
         // REPREND le mouvement et réaffiche les noms
         NPCMovement[] allNPCMovements = FindObjectsOfType<NPCMovement>();
@@ -761,6 +1001,7 @@ public class DialogueUI : MonoBehaviour
         
         dialogueStep = 0;
         isAIMode = false;
+        shouldCloseOnNextContinue = false; // Reset the flag
         SetAIElementsVisibility(false);
         SetQuestButtonsVisibility(false);
         

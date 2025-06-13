@@ -12,7 +12,9 @@ public class NPCMovement : MonoBehaviour
     public bool showMovementArea = true; // Pour visualiser la zone dans l'éditeur
     
     [Header("Debug")]
-    public bool debugMode = false;
+    [Tooltip("Affiche les gizmos de mouvement dans la scène")]
+    public bool showGizmos = true;
+    // Debug logs sont maintenant gérés par GlobalDebugManager
     
     private Vector3 startPosition;
     private Vector3 targetPosition;
@@ -36,13 +38,15 @@ public class NPCMovement : MonoBehaviour
         // Configure le Rigidbody pour éviter les problèmes physiques
         rb.freezeRotation = true;
         rb.drag = 5f; // Arrêt plus naturel
+        rb.constraints = RigidbodyConstraints.FreezeRotation; // Empêche la rotation
+        rb.useGravity = true; // Important pour rester au sol
         
         npcScript = GetComponent<NPC>();
         
         // Commence avec un délai aléatoire
         waitTimer = Random.Range(waitTimeMin, waitTimeMax);
         
-        if (debugMode)
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.NPC))
             Debug.Log($"{gameObject.name} - Position de départ : {startPosition}");
     }
     
@@ -83,7 +87,7 @@ public class NPCMovement : MonoBehaviour
             targetPosition = randomPosition;
             isMoving = true;
             
-            if (debugMode)
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.NPC))
                 Debug.Log($"{gameObject.name} - Nouvelle cible : {targetPosition}");
         }
         else
@@ -103,7 +107,11 @@ public class NPCMovement : MonoBehaviour
         
         if (distanceToTarget > 0.5f)
         {
-            // Continue à bouger vers la cible
+            // NOUVEAU: Utilise MovePosition au lieu de velocity
+            Vector3 newPosition = transform.position + (direction * moveSpeed * Time.deltaTime);
+            rb.MovePosition(newPosition);
+            
+            // Optionnel : garde velocity pour compatibilité
             rb.velocity = direction * moveSpeed;
             
             // Fait tourner le NPC vers sa direction
@@ -119,7 +127,7 @@ public class NPCMovement : MonoBehaviour
             isMoving = false;
             waitTimer = Random.Range(waitTimeMin, waitTimeMax);
             
-            if (debugMode)
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.NPC))
                 Debug.Log($"{gameObject.name} - Arrivé à destination, attente de {waitTimer:F1}s");
         }
     }
@@ -140,7 +148,7 @@ public class NPCMovement : MonoBehaviour
         isStopped = true;
         rb.velocity = Vector3.zero;
         
-        if (debugMode)
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.NPC))
             Debug.Log($"{gameObject.name} - Mouvement arrêté (dialogue)");
     }
     
@@ -150,14 +158,14 @@ public class NPCMovement : MonoBehaviour
         isMoving = false;
         waitTimer = Random.Range(0.5f, 2f); // Reprend bientôt
         
-        if (debugMode)
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.NPC))
             Debug.Log($"{gameObject.name} - Mouvement repris");
     }
     
     // Pour visualiser la zone de mouvement dans l'éditeur
     void OnDrawGizmosSelected()
     {
-        if (showMovementArea)
+        if (showGizmos && showMovementArea)
         {
             Vector3 center = Application.isPlaying ? startPosition : transform.position;
             
@@ -167,7 +175,7 @@ public class NPCMovement : MonoBehaviour
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(center, 0.2f); // Point central
             
-            if (Application.isPlaying && debugMode)
+            if (Application.isPlaying && GlobalDebugManager.IsDebugEnabled(DebugSystem.NPC))
             {
                 Gizmos.color = Color.green;
                 Gizmos.DrawWireSphere(targetPosition, 0.3f); // Position cible

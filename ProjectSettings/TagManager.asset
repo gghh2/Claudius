@@ -6,11 +6,13 @@ TagManager:
   tags:
   - QuestObject
   - QuestZone
+  - NPC
+  - Companion
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - NoTransparency
   - Water
   - UI
   - 

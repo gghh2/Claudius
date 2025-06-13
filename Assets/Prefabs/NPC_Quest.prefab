@@ -15,7 +15,8 @@ GameObject:
   - component: {fileID: 7722832802411701636}
   - component: {fileID: 1225315983720076647}
   - component: {fileID: 2921783544360715767}
-  m_Layer: 0
+  - component: {fileID: 2746086603698107589}
+  m_Layer: 6
   m_Name: NPC_Quest
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -134,7 +135,7 @@ MonoBehaviour:
   waitTimeMax: 5
   movementRadius: 5
   showMovementArea: 1
-  debugMode: 0
+  showGizmos: 1
 --- !u!114 &2921783544360715767
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -154,3 +155,27 @@ MonoBehaviour:
   fontSize: 4
   textColor: {r: 1, g: 1, b: 1, a: 1}
   useNPCColor: 1
+--- !u!114 &2746086603698107589
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7880330424101917107}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93645eecaa0ed1143989fedf7f1369b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  objectName: 
+  objectType: 0
+  questId: 
+  isCollected: 0
+  isDeliveryTarget: 0
+  highlightEffect: {fileID: 0}
+  glowColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  nameOffset: {x: 0, y: 1.5, z: 0}
+  fontSize: 3
+  triggerRadius: 2
+  debugMode: 1
+  explorationTimeRequired: 2

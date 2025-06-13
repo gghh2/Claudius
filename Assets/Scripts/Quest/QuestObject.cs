@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using System.Linq;
 
 public class QuestObject : MonoBehaviour
 {
@@ -21,6 +22,9 @@ public class QuestObject : MonoBehaviour
     
     [Tooltip("Technical - Collection status")]
     public bool isCollected = false;
+    
+    [Tooltip("Technical - Is this NPC a delivery target")]
+    public bool isDeliveryTarget = false;
     
     [Header("Visual Settings")]
     [Tooltip("Visual - Highlight effect GameObject")]
@@ -103,22 +107,51 @@ public class QuestObject : MonoBehaviour
     
     void SetupTriggerCollider()
     {
-        // Retire tous les colliders existants pour éviter les conflits
-        Collider[] existingColliders = GetComponents<Collider>();
-        foreach (Collider col in existingColliders)
+        // Cherche s'il y a déjà un trigger pour la détection
+        Collider[] allColliders = GetComponents<Collider>();
+        bool hasTrigger = false;
+        
+        foreach (Collider col in allColliders)
         {
-            if (debugMode)
-                Debug.Log($"🗑️ Suppression collider existant: {col.GetType().Name}");
-            DestroyImmediate(col);
+            if (col.isTrigger)
+            {
+                hasTrigger = true;
+                triggerCollider = col as SphereCollider;
+                if (debugMode)
+                    Debug.Log($"✅ Trigger existant trouvé: {col.GetType().Name}");
+                break;
+            }
         }
         
-        // Crée un nouveau trigger propre
-        triggerCollider = gameObject.AddComponent<SphereCollider>();
-        triggerCollider.isTrigger = true;
-        triggerCollider.radius = triggerRadius;
-        
-        if (debugMode)
-            Debug.Log($"✅ Nouveau trigger créé - Radius: {triggerRadius}, IsTrigger: {triggerCollider.isTrigger}");
+        // Si pas de trigger, ajoute un SphereCollider SUPPLEMENTAIRE pour la détection
+        if (!hasTrigger)
+        {
+            // Ajoute un nouveau GameObject enfant pour le trigger
+            GameObject triggerObject = new GameObject("QuestTriggerZone");
+            triggerObject.transform.SetParent(transform);
+            triggerObject.transform.localPosition = Vector3.zero;
+            
+            // Ajoute le SphereCollider trigger sur l'enfant
+            triggerCollider = triggerObject.AddComponent<SphereCollider>();
+            triggerCollider.isTrigger = true;
+            triggerCollider.radius = triggerRadius;
+            
+            // Assure que le trigger est sur le même layer
+            triggerObject.layer = gameObject.layer;
+            
+            // IMPORTANT: Ajoute un Rigidbody kinematic pour que les triggers fonctionnent
+            if (GetComponent<Rigidbody>() == null)
+            {
+                Rigidbody rb = gameObject.AddComponent<Rigidbody>();
+                rb.isKinematic = true;
+                rb.useGravity = false;
+                if (debugMode)
+                    Debug.Log("🔧 Rigidbody kinematic ajouté pour les triggers");
+            }
+            
+            if (debugMode)
+                Debug.Log($"✅ Nouveau trigger créé sur GameObject enfant - Radius: {triggerRadius}");
+        }
     }
     
     void CreateNameDisplay()
@@ -149,18 +182,25 @@ public class QuestObject : MonoBehaviour
     
     string GetDisplayText()
     {
+        // NOUVEAU: Formate le nom pour enlever les underscores
+        string formattedName = TextFormatter.FormatName(objectName);
+        
         switch (objectType)
         {
             case QuestObjectType.Item:
-                return $"📦 {objectName}";
+                return $"📦 {formattedName}";
             case QuestObjectType.NPC:
-                return $"👤 {objectName}";
+                // Pour les NPCs de livraison, affiche "Livrer à [nom]"
+                if (isDeliveryTarget)
+                    return $"📦 Livrer à {formattedName}";
+                else
+                    return $"👤 {formattedName}";
             case QuestObjectType.InteractableObject:
-                return $"🔧 {objectName}";
+                return $"🔧 {formattedName}";
             case QuestObjectType.Marker:
-                return $"📍 Explorer: {objectName}";
+                return $"📍 Explorer: {formattedName}";
             default:
-                return objectName;
+                return formattedName;
         }
     }
     
@@ -183,11 +223,11 @@ public class QuestObject : MonoBehaviour
     
     void Update()
     {
-        // Billboard effect
+        // Billboard effect - always face camera
         if (nameDisplay != null && mainCamera != null)
         {
-            nameDisplay.transform.LookAt(mainCamera.transform);
-            nameDisplay.transform.Rotate(0, 180, 0);
+            // Make the text face the camera's forward direction
+            nameDisplay.transform.rotation = Quaternion.LookRotation(mainCamera.transform.forward);
         }
         
         // Interaction
@@ -205,14 +245,7 @@ public class QuestObject : MonoBehaviour
             objectRenderer.material.SetColor("_EmissionColor", glowColor * pulse * 0.5f);
         }
         
-        // NOUVEAU: Debug status chaque seconde
-        if (debugMode && Time.frameCount % 60 == 0) // Toutes les secondes environ
-        {
-            Debug.Log($"📊 {objectName} - PlayerInRange: {playerInRange}, IsCollected: {isCollected}");
-        }
-
-
-        // NOUVEAU : Timer d'exploration
+        // NOUVEAU : Timer d'exploration pour les marqueurs
         if (objectType == QuestObjectType.Marker && playerInRange && !isCollected)
         {
             if (!isExploring)
@@ -228,7 +261,14 @@ public class QuestObject : MonoBehaviour
             if (nameText != null)
             {
                 float progress = Mathf.Clamp01(explorationTimer / explorationTimeRequired);
-                nameText.text = $"📍 Exploration: {Mathf.RoundToInt(progress * 100)}%";
+                string formattedName = TextFormatter.FormatName(objectName);
+                nameText.text = $"📍 {formattedName}\nExploration: {Mathf.RoundToInt(progress * 100)}%";
+                
+                // Change la couleur selon la progression
+                nameText.color = Color.Lerp(Color.yellow, Color.green, progress);
+                
+                // Augmente la taille pendant l'exploration
+                nameText.fontSize = fontSize * 1.3f;
             }
             
             // Validation automatique après le délai
@@ -239,9 +279,11 @@ public class QuestObject : MonoBehaviour
             }
         }
         
-        // Interaction normale pour les autres types
+        // Interaction normale pour les autres types d'objets
         if (playerInRange && Input.GetKeyDown(KeyCode.E) && !isCollected && objectType != QuestObjectType.Marker)
         {
+            if (debugMode)
+                Debug.Log($"🎯 Tentative d'interaction avec {objectName}");
             InteractWithObject();
         }
 
@@ -250,21 +292,29 @@ public class QuestObject : MonoBehaviour
     
     void InteractWithObject()
     {
-		switch (objectType)
-	    {
-	        case QuestObjectType.Item:
-	            CollectItem();
-	            break;
-	        case QuestObjectType.InteractableObject:
-	            ActivateObject();
-	            break;
-	        case QuestObjectType.Marker:
-	            ExploreMarker();
-	            break;
-	        case QuestObjectType.NPC:
-	            ActivateObject(); // ← Changez TalkToNPC() par ActivateObject()
-	            break;
-	    }
+        // Pour les NPCs de livraison, ne pas marquer comme collecté ici
+        if (objectType == QuestObjectType.NPC && isDeliveryTarget)
+        {
+            // Ne rien faire - l'interaction se fait via le dialogue
+            Debug.Log($"[DELIVERY] Interaction avec NPC destinataire - Ouverture du dialogue");
+            return;
+        }
+        
+        switch (objectType)
+        {
+            case QuestObjectType.Item:
+                CollectItem();
+                break;
+            case QuestObjectType.InteractableObject:
+                ActivateObject();
+                break;
+            case QuestObjectType.Marker:
+                ExploreMarker();
+                break;
+            case QuestObjectType.NPC:
+                ActivateObject();
+                break;
+        }
     }
     
     void CollectItem()
@@ -293,11 +343,23 @@ public class QuestObject : MonoBehaviour
             Debug.LogWarning("❌ QuestManager.Instance est NULL !");
         }
         
-        StartCoroutine(ExplorationCompleteEffect());
+        // Destroy immediately
+        Debug.Log($"🗑️ Destruction de l'objet: {objectName}");
+        Destroy(gameObject);
     }
     
     void ActivateObject()
     {
+        // Check if this is a delivery target
+        if (isDeliveryTarget)
+        {
+            HandleDelivery();
+            return;
+        }
+        
+        // NOUVEAU: Pour les NPCs de quête TALK, ne pas les détruire
+        bool isTalkQuestNPC = (objectType == QuestObjectType.NPC && !isDeliveryTarget);
+        
         isCollected = true;
         Debug.Log($"🔧 Objet activé: {objectName}");
         
@@ -313,36 +375,198 @@ public class QuestObject : MonoBehaviour
             nameText.text = "✅ Activé";
             nameText.color = Color.green;
         }
+        
+        // NOUVEAU: Pour les NPCs de quête TALK, nettoyage spécial sans destruction
+        if (isTalkQuestNPC)
+        {
+            Debug.Log($"[TALK] NPC {objectName} reste en place après la quête");
+            CleanupTalkQuestNPC();
+        }
+    }
+    
+    void HandleDelivery()
+    {
+        // Vérifie si le joueur a l'objet à livrer
+        var activeQuest = QuestManager.Instance?.activeQuests.FirstOrDefault(q => q.questId == questId);
+        if (activeQuest == null)
+        {
+            Debug.LogError($"[DELIVERY] Quête introuvable: {questId}");
+            return;
+        }
+        
+        string packageName = activeQuest.questData.objectName;
+        
+        if (PlayerInventory.Instance != null && PlayerInventory.Instance.HasItemsForQuest(packageName, 1, questId))
+        {
+            // Retire l'objet de l'inventaire
+            PlayerInventory.Instance.RemoveItem(packageName, 1, questId);
+            
+            Debug.Log($"🚚 LIVRAISON RÉUSSIE: {packageName} livré à {objectName}");
+            
+            // Complète la quête
+            isCollected = true;
+            
+            // Pour les quêtes DELIVERY, on complète directement ici
+            if (QuestManager.Instance != null)
+            {
+                var quest = QuestManager.Instance.activeQuests.FirstOrDefault(q => q.questId == questId);
+                if (quest != null)
+                {
+                    // Met à jour le journal
+                    if (QuestJournal.Instance != null)
+                    {
+                        QuestJournal.Instance.CompleteQuest(questId);
+                    }
+                    
+                    // Joue le son de complétion
+                    QuestManager.Instance.PlayQuestCompleteSoundPublic();
+                    
+                    // Nettoie la quête SANS détruire le NPC
+                    CleanupDeliveryQuest(quest);
+                }
+            }
+            
+            // Effet visuel de succès
+            if (nameText != null)
+            {
+                nameText.text = $"✅ {packageName} livré !";
+                nameText.color = Color.green;
+                nameText.fontSize = fontSize * 1.5f;
+            }
+            
+            // NE PAS détruire le NPC après livraison
+            // StartCoroutine(ExplorationCompleteEffect()); // Commenté pour garder le NPC
+        }
+        else
+        {
+            Debug.LogWarning($"[DELIVERY] Le joueur n'a pas {packageName} dans son inventaire");
+            
+            if (nameText != null)
+            {
+                nameText.text = $"❌ Il me faut: {packageName}";
+                nameText.color = Color.red;
+            }
+        }
+    }
+    
+    // Méthode publique pour le bouton UI
+    public void HandleDeliveryFromUI()
+    {
+        HandleDelivery();
+    }
+    
+    // NOUVELLE MÉTHODE: Nettoyage spécial pour les NPCs de quête TALK
+    void CleanupTalkQuestNPC()
+    {
+        // Détruit seulement l'affichage du nom créé par QuestObject
+        if (nameDisplay != null)
+        {
+            Destroy(nameDisplay);
+            nameDisplay = null;
+            nameText = null;
+        }
+        
+        // Retire l'effet glow
+        if (objectRenderer != null)
+        {
+            // Désactive l'émission
+            objectRenderer.material.DisableKeyword("_EMISSION");
+            objectRenderer.material.SetColor("_EmissionColor", Color.black);
+            
+            // Restaure la couleur normale du material
+            objectRenderer.material.color = Color.white;
+        }
+        
+        // Désactive le trigger de quête
+        GameObject triggerZone = transform.Find("QuestTriggerZone")?.gameObject;
+        if (triggerZone != null)
+        {
+            Destroy(triggerZone);
+        }
+        
+        // Le NPC reste actif et peut continuer à être interactif pour d'autres dialogues
+        Debug.Log($"[TALK] NPC {objectName} nettoyé mais toujours présent dans le monde");
+    }
+    
+    // Nettoyage spécial pour les quêtes DELIVERY
+    void CleanupDeliveryQuest(ActiveQuest quest)
+    {
+        // Retire la quête de la liste active
+        QuestManager.Instance.activeQuests.Remove(quest);
+        
+        // NE PAS détruire le NPC de livraison
+        Debug.Log($"[DELIVERY] Quête terminée - NPC {objectName} reste en place");
+        
+        // Détruit l'affichage du nom créé par QuestObject
+        if (nameDisplay != null)
+        {
+            Destroy(nameDisplay);
+            nameDisplay = null;
+            nameText = null;
+        }
+        
+        // Retire l'effet glow
+        if (objectRenderer != null)
+        {
+            // Désactive l'émission
+            objectRenderer.material.DisableKeyword("_EMISSION");
+            objectRenderer.material.SetColor("_EmissionColor", Color.black);
+            
+            // Restaure la couleur normale du material
+            objectRenderer.material.color = Color.white;
+        }
+        
+        // Désactive le trigger de quête
+        GameObject triggerZone = transform.Find("QuestTriggerZone")?.gameObject;
+        if (triggerZone != null)
+        {
+            Destroy(triggerZone);
+        }
+        
+        // Désactive le flag de livraison
+        isDeliveryTarget = false;
+        isCollected = true; // Empêche toute interaction future
     }
     
     void ExploreMarker()
-	{
-	    isCollected = true;
-	    Debug.Log($"🗺️ Zone explorée: {objectName}");
-	    
-	    QuestManager.Instance?.OnMarkerExplored(questId, objectName);
-	    
-	    // Effet visuel de validation
-	    if (nameText != null)
-	    {
-	        nameText.text = "✅ Zone Explorée !";
-	        nameText.color = Color.green;
-	        nameText.fontSize = fontSize * 1.5f;
-	    }
-	    
-	    // Effet de particules
-	    var footstepSystem = FindObjectOfType<FootstepSystem>();
-	    if (footstepSystem != null)
-	    {
-	        for (int i = 0; i < 3; i++)
-	        {
-	            footstepSystem.PlayLandingParticles();
-	        }
-	    }
-	    
-	    // Destruction progressive
-	    StartCoroutine(ExplorationCompleteEffect());
-	}
+    {
+        if (isCollected) return; // Évite la double validation
+        
+        isCollected = true;
+        Debug.Log($"🗺️ ZONE EXPLORÉE AVEC SUCCÈS: {objectName}");
+        Debug.Log($"🎆 Quête {questId} - Marqueur validé !");
+        
+        // Notifie le QuestManager
+        if (QuestManager.Instance != null)
+        {
+            QuestManager.Instance.OnMarkerExplored(questId, objectName);
+        }
+        else
+        {
+            Debug.LogError("❌ QuestManager.Instance est NULL !");
+        }
+        
+        // Effet visuel de validation
+        if (nameText != null)
+        {
+            nameText.text = "✅ Zone Explorée !";
+            nameText.color = Color.green;
+            nameText.fontSize = fontSize * 1.5f;
+        }
+        
+        // Effet de particules
+        var footstepSystem = FindObjectOfType<FootstepSystem>();
+        if (footstepSystem != null)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                footstepSystem.PlayLandingParticles();
+            }
+        }
+        
+        // Destruction progressive
+        StartCoroutine(ExplorationCompleteEffect());
+    }
 
 	System.Collections.IEnumerator ExplorationCompleteEffect()
 	{
@@ -379,28 +603,28 @@ public class QuestObject : MonoBehaviour
     
     // TRIGGER EVENTS avec debug amélioré
     void OnTriggerEnter(Collider other)
-	{
-	    if (debugMode)
-	        Debug.Log($"🔍 OnTriggerEnter - Objet détecté: {other.name} (Tag: {other.tag})");
-	    
-	    if (other.CompareTag("Player"))
-	    {
-	        playerInRange = true;
-	        
-	        // NOUVEAU : Auto-validation pour les marqueurs d'exploration
-	        if (objectType == QuestObjectType.Marker && !isCollected)
-	        {
-	            Debug.Log($"🗺️ ZONE EXPLORÉE AUTOMATIQUEMENT : {objectName}");
-	            ExploreMarker();
-	        }
-	        else
-	        {
-	            // Pour les autres types, affiche le prompt
-	            ShowInteractionPrompt(true);
-	            Debug.Log($"✅ JOUEUR DÉTECTÉ près de {objectName} - Appuyez sur E pour interagir !");
-	        }
-	    }
-	}
+    {
+        if (debugMode)
+            Debug.Log($"🔍 OnTriggerEnter - Objet détecté: {other.name} (Tag: {other.tag})");
+        
+        if (other.CompareTag("Player"))
+        {
+            playerInRange = true;
+            
+            // Pour les marqueurs d'exploration, on commence le timer
+            if (objectType == QuestObjectType.Marker && !isCollected)
+            {
+                Debug.Log($"📍 ENTRÉ DANS LA ZONE D'EXPLORATION : {objectName}");
+                Debug.Log($"🕐 Restez {explorationTimeRequired} secondes pour valider l'exploration");
+            }
+            else
+            {
+                // Pour les autres types, affiche le prompt
+                ShowInteractionPrompt(true);
+                Debug.Log($"✅ JOUEUR DÉTECTÉ près de {objectName} - Appuyez sur E pour interagir !");
+            }
+        }
+    }
     
     void OnTriggerExit(Collider other)
     {
@@ -419,6 +643,8 @@ public class QuestObject : MonoBehaviour
                 if (nameText != null)
                 {
                     nameText.text = GetDisplayText();
+                    nameText.color = GetTextColor();
+                    nameText.fontSize = fontSize;
                 }
             }
         }
@@ -431,11 +657,13 @@ public class QuestObject : MonoBehaviour
             string action = GetActionText();
             Debug.Log($"💡💡💡 APPUYEZ SUR E POUR {action.ToUpper()} 💡💡💡");
             
-            // NOUVEAU: Affichage plus visible
+            // Affichage dans le nameText de l'objet
             if (nameText != null)
             {
                 nameText.text = $"{GetDisplayText()}\n[E] {action}";
                 nameText.color = Color.white;
+                // Augmente légèrement la taille pour plus de visibilité
+                nameText.fontSize = fontSize * 1.2f;
             }
         }
         else if (nameText != null)
@@ -443,6 +671,7 @@ public class QuestObject : MonoBehaviour
             // Remet le texte normal
             nameText.text = GetDisplayText();
             nameText.color = GetTextColor();
+            nameText.fontSize = fontSize;
         }
     }
     
@@ -451,15 +680,15 @@ public class QuestObject : MonoBehaviour
         switch (objectType)
         {
             case QuestObjectType.Item:
-                return $"ramasser {objectName}";
+                return "Ramasser";
             case QuestObjectType.InteractableObject:
-                return $"interagir avec {objectName}";
+                return "Interagir";
             case QuestObjectType.Marker:
-                return $"explorer {objectName}";
+                return "Explorer";
             case QuestObjectType.NPC:
-                return $"parler à {objectName}";
+                return "Parler";
             default:
-                return $"interagir avec {objectName}";
+                return "Interagir";
         }
     }
     

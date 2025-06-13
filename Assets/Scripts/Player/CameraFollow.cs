@@ -12,6 +12,17 @@ public class CameraFollow : MonoBehaviour
     public bool followZ = true;
     public bool followY = false;
     
+    [Header("Altitude Following")]
+    [Tooltip("Maintient une hauteur relative constante par rapport au joueur")]
+    public bool maintainRelativeHeight = true;
+    
+    [Tooltip("Hauteur de la caméra au-dessus du joueur")]
+    public float relativeHeight = 9f;
+    
+    [Tooltip("Vitesse de suivi de l'altitude (0 = instantané, 1 = très lent)")]
+    [Range(0f, 1f)]
+    public float heightSmoothness = 0.125f;
+    
     [Header("Zoom Settings (Orthographic)")]
     public bool enableZoom = true;
     public float zoomSpeed = 1f;
@@ -137,15 +148,24 @@ public class CameraFollow : MonoBehaviour
     {
         if (target == null) return;
         
-        // Position désirée
+        // Position désirée de base
         Vector3 desiredPosition = target.position + offset;
         
-        // Applique les restrictions d'axes
-        Vector3 currentPos = transform.position;
-        
-        if (!followX) desiredPosition.x = currentPos.x;
-        if (!followY) desiredPosition.y = currentPos.y;
-        if (!followZ) desiredPosition.z = currentPos.z;
+        // Si on maintient une hauteur relative
+        if (maintainRelativeHeight)
+        {
+            // La position Y désirée est la position Y du joueur + la hauteur relative
+            desiredPosition.y = target.position.y + relativeHeight;
+        }
+        else
+        {
+            // Comportement original avec les restrictions d'axes
+            Vector3 currentPos = transform.position;
+            
+            if (!followX) desiredPosition.x = currentPos.x;
+            if (!followY) desiredPosition.y = currentPos.y;
+            if (!followZ) desiredPosition.z = currentPos.z;
+        }
         
         // Applique les limites si activées
         if (useBoundaries)
@@ -155,7 +175,21 @@ public class CameraFollow : MonoBehaviour
         }
         
         // Mouvement fluide vers la position désirée
-        Vector3 smoothedPosition = Vector3.Lerp(currentPos, desiredPosition, smoothSpeed);
+        Vector3 smoothedPosition;
+        
+        if (maintainRelativeHeight)
+        {
+            // Lissage différencié pour X/Z et Y
+            smoothedPosition.x = Mathf.Lerp(transform.position.x, desiredPosition.x, smoothSpeed);
+            smoothedPosition.z = Mathf.Lerp(transform.position.z, desiredPosition.z, smoothSpeed);
+            smoothedPosition.y = Mathf.Lerp(transform.position.y, desiredPosition.y, heightSmoothness);
+        }
+        else
+        {
+            // Lissage uniforme
+            smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
+        }
+        
         transform.position = smoothedPosition;
     }
     

@@ -218,18 +218,18 @@ public class StaminaUI : MonoBehaviour
         
         if (shouldShow)
         {
-            // Montre la barre
-            canvasGroup.alpha = Mathf.Lerp(canvasGroup.alpha, 1f, Time.deltaTime * fadeSpeed);
+            // Montre la barre (utilise unscaledDeltaTime pour continuer pendant la pause)
+            canvasGroup.alpha = Mathf.Lerp(canvasGroup.alpha, 1f, Time.unscaledDeltaTime * fadeSpeed);
             hideTimer = 0f;
         }
         else
         {
-            // Commence le timer pour cacher
-            hideTimer += Time.deltaTime;
+            // Commence le timer pour cacher (utilise unscaledDeltaTime)
+            hideTimer += Time.unscaledDeltaTime;
             
             if (hideTimer >= hideDelay)
             {
-                canvasGroup.alpha = Mathf.Lerp(canvasGroup.alpha, 0f, Time.deltaTime * fadeSpeed);
+                canvasGroup.alpha = Mathf.Lerp(canvasGroup.alpha, 0f, Time.unscaledDeltaTime * fadeSpeed);
             }
         }
     }

@@ -86,21 +86,53 @@ public class NPCQuestTurnIn : MonoBehaviour
         var activeQuests = QuestJournal.Instance.GetActiveQuests();
         var npcQuest = activeQuests.FirstOrDefault(q => q.giverNPCName == npcScript.npcName);
         
-        if (npcQuest != null && npcQuest.questType == QuestType.FETCH)
+        if (npcQuest != null)
         {
-            string objectName = ExtractObjectNameFromDescription(npcQuest.description);
-            
             if (debugMode)
-                Debug.Log($"🔍 Vérification quête: {npcQuest.questTitle} - Objet: {objectName} x{npcQuest.maxProgress}");
+                Debug.Log($"🔍 Vérification quête: {npcQuest.questTitle} - Type: {npcQuest.questType}");
             
-            // Vérifie si le joueur a les objets requis
-            bool hasAllItems = PlayerInventory.Instance.HasItemsForQuest(
-                objectName, 
-                npcQuest.maxProgress, 
-                npcQuest.questId
-            );
+            bool canTurnIn = false;
             
-            if (hasAllItems)
+            // Vérifie selon le type de quête
+            switch (npcQuest.questType)
+            {
+                case QuestType.FETCH:
+                    // NOUVEAU: Les quêtes FETCH sont gérées par le dialogue avec bouton
+                    // On n'affiche plus le prompt [F] pour ces quêtes
+                    canTurnIn = false;
+                    
+                    if (debugMode)
+                    {
+                        string objectName = ExtractObjectNameFromDescription(npcQuest.description);
+                        int currentCount = PlayerInventory.Instance.GetItemQuantity(objectName, npcQuest.questId);
+                        Debug.Log($"📦 Quête FETCH détectée - Gérée par dialogue: {currentCount}/{npcQuest.maxProgress} {objectName}");
+                    }
+                    break;
+                    
+                case QuestType.EXPLORE:
+                case QuestType.TALK:
+                case QuestType.INTERACT:
+                    // Ces quêtes sont complétées automatiquement lors de l'action
+                    // Vérifier la progression
+                    canTurnIn = npcQuest.currentProgress >= npcQuest.maxProgress;
+                    
+                    if (debugMode)
+                        Debug.Log($"📍 Progression: {npcQuest.currentProgress}/{npcQuest.maxProgress}");
+                    break;
+                    
+                case QuestType.DELIVERY:
+                case QuestType.ESCORT:
+                    // Pour l'instant, traiter comme FETCH
+                    string deliveryItem = ExtractObjectNameFromDescription(npcQuest.description);
+                    canTurnIn = PlayerInventory.Instance.HasItemsForQuest(
+                        deliveryItem, 
+                        1, 
+                        npcQuest.questId
+                    );
+                    break;
+            }
+            
+            if (canTurnIn)
             {
                 hasCompletableQuest = true;
                 currentCompletableQuest = npcQuest;
@@ -116,10 +148,7 @@ public class NPCQuestTurnIn : MonoBehaviour
                 HideTurnInPrompt();
                 
                 if (debugMode)
-                {
-                    int currentCount = PlayerInventory.Instance.GetItemQuantity(objectName, npcQuest.questId);
-                    Debug.Log($"❌ Objets insuffisants: {currentCount}/{npcQuest.maxProgress} {objectName}");
-                }
+                    Debug.Log($"❌ Quête non complétée: {npcQuest.questTitle}");
             }
         }
         else
@@ -140,7 +169,9 @@ public class NPCQuestTurnIn : MonoBehaviour
         
         if (promptText != null)
         {
-            promptText.text = $"🎯 [F] Rendre la quête\n\"{quest.questTitle}\"";
+            // NOUVEAU: Formate le titre de la quête
+            string formattedTitle = TextFormatter.FormatName(quest.questTitle);
+            promptText.text = $"🎯 [F] Rendre la quête\n\"{formattedTitle}\"";
             promptText.color = Color.green;
         }
         
@@ -188,22 +219,61 @@ public class NPCQuestTurnIn : MonoBehaviour
             return;
         }
         
-        string objectName = ExtractObjectNameFromDescription(currentCompletableQuest.description);
+        // NOUVEAU: Vérification supplémentaire - ignore les quêtes FETCH
+        if (currentCompletableQuest.questType == QuestType.FETCH)
+        {
+            Debug.Log("🚫 Les quêtes FETCH sont gérées par le dialogue avec bouton");
+            return;
+        }
         
-        if (debugMode)
-            Debug.Log($"🎯 Tentative de rendu: {objectName} x{currentCompletableQuest.maxProgress}");
+        bool success = false;
         
-        // Retire les objets de l'inventaire
-        bool removed = PlayerInventory.Instance.RemoveItem(
-            objectName, 
-            currentCompletableQuest.maxProgress, 
-            currentCompletableQuest.questId
-        );
+        // Traite selon le type de quête
+        switch (currentCompletableQuest.questType)
+        {
+            case QuestType.FETCH:
+            case QuestType.DELIVERY:
+                string objectName = ExtractObjectNameFromDescription(currentCompletableQuest.description);
+                int quantity = currentCompletableQuest.questType == QuestType.FETCH ? 
+                    currentCompletableQuest.maxProgress : 1;
+                
+                if (debugMode)
+                    Debug.Log($"🎯 Tentative de rendu: {objectName} x{quantity}");
+                
+                // Retire les objets de l'inventaire
+                success = PlayerInventory.Instance.RemoveItem(
+                    objectName, 
+                    quantity, 
+                    currentCompletableQuest.questId
+                );
+                break;
+                
+            case QuestType.EXPLORE:
+            case QuestType.TALK:
+            case QuestType.INTERACT:
+                // Ces quêtes n'ont pas d'objets à retirer
+                success = true;
+                
+                if (debugMode)
+                    Debug.Log($"🎯 Rendu de quête {currentCompletableQuest.questType}");
+                break;
+                
+            case QuestType.ESCORT:
+                // TODO: Vérifier que l'escorte est terminée
+                success = true;
+                break;
+        }
         
-        if (removed)
+        if (success)
         {
             // Complete la quête dans le journal
             QuestJournal.Instance.CompleteQuest(currentCompletableQuest.questId);
+            
+            // Play quest complete sound
+            if (QuestManager.Instance != null)
+            {
+                QuestManager.Instance.PlayQuestCompleteSoundPublic();
+            }
             
             // Nettoie la quête active dans le QuestManager
             if (QuestManager.Instance != null)
@@ -249,26 +319,31 @@ public class NPCQuestTurnIn : MonoBehaviour
     
     string GetCompletionMessage(JournalQuest quest)
     {
+        // NOUVEAU: Formate les noms pour l'affichage
+        string formattedNPCName = TextFormatter.FormatName(npcScript.npcName);
+        string objectName = ExtractObjectNameFromDescription(quest.description);
+        string formattedObjectName = TextFormatter.FormatName(objectName);
+        
         switch (npcScript.npcRole.ToLower())
         {
             case "marchand":
-                return $"{npcScript.npcName}: Parfait ! Vous avez récupéré tout ce que je demandais. " +
-                       $"Voici votre récompense bien méritée ! Ces {ExtractObjectNameFromDescription(quest.description)} " +
+                return $"{formattedNPCName}: Parfait ! Vous avez récupéré tout ce que je demandais. " +
+                       $"Voici votre récompense bien méritée ! Ces {formattedObjectName} " +
                        $"vont me rapporter gros sur le marché.";
             
             case "scientifique":
-                return $"{npcScript.npcName}: Excellent travail ! Ces spécimens de {ExtractObjectNameFromDescription(quest.description)} " +
+                return $"{formattedNPCName}: Excellent travail ! Ces spécimens de {formattedObjectName} " +
                        $"vont révolutionner mes recherches. La science vous remercie ! " +
                        $"Vos efforts contribuent à l'avancement de nos connaissances.";
             
             case "garde impérial":
-                return $"{npcScript.npcName}: Mission accomplie avec brio, voyageur ! " +
-                       $"Vous avez récupéré les {ExtractObjectNameFromDescription(quest.description)} comme demandé. " +
+                return $"{formattedNPCName}: Mission accomplie avec brio, voyageur ! " +
+                       $"Vous avez récupéré les {formattedObjectName} comme demandé. " +
                        $"L'Empire reconnaît votre efficacité et votre dévouement.";
             
             default:
-                return $"{npcScript.npcName}: Merci infiniment ! Vous avez accompli exactement ce que je demandais. " +
-                       $"Ces {ExtractObjectNameFromDescription(quest.description)} me sont très précieux. " +
+                return $"{formattedNPCName}: Merci infiniment ! Vous avez accompli exactement ce que je demandais. " +
+                       $"Ces {formattedObjectName} me sont très précieux. " +
                        $"C'est un travail formidable !";
         }
     }
@@ -276,15 +351,29 @@ public class NPCQuestTurnIn : MonoBehaviour
     // Extrait le nom de l'objet de la description de la quête
     string ExtractObjectNameFromDescription(string description)
     {
-        // Format attendu: "Trouvez X objet_name dans zone"
-        // Exemple: "Trouvez 3 cristal_energie dans laboratory"
-        
+        // La description est maintenant formatée, donc on doit chercher avec une casse insensible
+        // Format attendu: "Trouvez X objet name dans zone"
         string[] words = description.Split(' ');
+        
         for (int i = 0; i < words.Length - 2; i++)
         {
             if (words[i].ToLower() == "trouvez" && int.TryParse(words[i + 1], out _))
             {
-                return words[i + 2];
+                // Reconstitue le nom de l'objet (peut être sur plusieurs mots)
+                string objectName = "";
+                for (int j = i + 2; j < words.Length; j++)
+                {
+                    if (words[j].ToLower() == "dans")
+                        break;
+                    
+                    if (!string.IsNullOrEmpty(objectName))
+                        objectName += "_";
+                    objectName += words[j].ToLower();
+                }
+                
+                if (debugMode)
+                    Debug.Log($"[EXTRACT] Description: '{description}' -> Objet: '{objectName}'");
+                return objectName;
             }
         }
         

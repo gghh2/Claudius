@@ -1,0 +1,107 @@
+- Faciliter la marche quand petit rebord à frandchir
+- Que la zone fall back n'est pas de nom de zone, actuelement Laboratory
+========================================
+UI
+√ Avoir un menu pour quitter / afficher les touches
+√ Création menu Pause
+√ Menu pause n'apaprait pas lors du build ans run
+
+
+========================================
+IA
+√ Que la touche ENTER fonctionne quand discussion IA
+
+========================================
+Matériaux
+
+- √ Finir matériaux texture métal
+- Faire materieux wood FX + Material
+- Shadder pour l'eau
+
+========================================
+GRAPHISME
+√ Skybox cassée
+√ Ajout FOG mais fonctionne pas dans build and run
+
+========================================
+GAMEPLAY
+√ Quand on parle à un PNJ, la barre de stamina peut remonter, actuelement elle se emt en pause
+
+========================================
+COMPANIONS
+- EN mode Build&Run, le companion est tout lent.
+√ Quand le joueur ne bouge plus, le companion ne doit pas aller dans la direction du joueur
+
+========================================
+INVENTAIRE
+√ Fenêtre d' Inventaire 
+
+
+========================================
+SOUND DESIGN
+- Assigner les sons au Compagnion Poule
+
+=========================================
+DEBUG
+Doit-on garder QuestDebugger ?
+
+Debug log console présent encore dans :
+
+CSMModelImporter.cs:50
+CSMPromptConverter.cs
+CSMGenerator.cs
+
+SimpleAssetMapping.cs
+AssetMappingTester.cs
+AssetManagerTester.cs
+DynamicAssetManager.cs
+APITester.cs
+
+NPCQuestTurnIn.cs
+QuestJournal.cs
+
+PlayerController.cs
+StaminaUI.cs
+CompanionSpeedSync.cs
+
+
+DialogueUI.cs
+AIDialogueManager.cs
+
+=======================================
+QUETES
+
+- en cours Redisigner Ecran des quêtes (chevauchement)
+√ Les sons des quêtes sont trop fort
+√ : son de nouvelle quête / quêtes terminée et collecte d'objet de quête
+- Quand il y a plein de quête, le scroll apparait et cache une pertie des quêtes
+√ Pouvoir annuler une quête
+
+Type de Quête :
+---------------
+
+√ Quand on rend une quête avec le message de remerciement du NPC, le bouton Terminer doit fermer la conversation.
+
+FETCH : √
+
+DELIVERY : √
+- Le nom de la quête reste affichée sous le PNJ une fois rendue
+
+EXPLORE : 
+Oui mais - Que les zones à explorer soit plus ou moins lognue
+√ Que quand une zone à explorer fonctionne ça fasse bien ce qui est prévu.
+- Si un NPC nous demande d'explorer pour telle raison, alors une fois l'exploration faite il faut une explications, des données de notre exploration
+
+
+TALK : 
+√ sauf que si on demande au PNJ cible une mission il nous créé le miroir du premier donneur de quête dans un autre lieu
+- TODO A rallonge : Un premier NPC nous dit d'aller voir bidule pour qqch. Si on trouve bidule il faut qu'il nous donne une mission.
+
+INTERACT
+
+ESCORT
+
+
+
+
+========================================

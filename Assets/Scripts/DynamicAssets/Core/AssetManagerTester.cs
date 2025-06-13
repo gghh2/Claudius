@@ -236,6 +236,9 @@ public class AssetManagerTester : MonoBehaviour
     {
         if (!Application.isPlaying) return;
         
+        // Vérifie si le debug des assets dynamiques est activé
+        if (!GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets)) return;
+        
         GUILayout.BeginArea(new Rect(10, 10, 300, 200));
         GUILayout.Label("=== ASSET MANAGER TESTER ===");
         

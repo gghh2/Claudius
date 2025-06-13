@@ -76,9 +76,7 @@ public class QuestZone : MonoBehaviour
     [Range(1, 20)]
     public int maxSimultaneousQuests = 3;
     
-    [Header("Debug")]
-    [Tooltip("Debug - Show detailed logs")]
-    public bool debugMode = false;
+    // Debug est maintenant géré par GlobalDebugManager
     
     // Variables privées (non visibles dans l'Inspector)
     private List<Vector3> spawnPoints = new List<Vector3>();
@@ -106,7 +104,8 @@ public class QuestZone : MonoBehaviour
             }
         }
         
-        Debug.Log($"Zone {zoneName}: {spawnPoints.Count} points de spawn générés");
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
+            Debug.Log($"Zone {zoneName}: {spawnPoints.Count} points de spawn générés");
     }
     
     Vector3 GetRandomPointInZone()
@@ -162,9 +161,12 @@ public class QuestZone : MonoBehaviour
     
     public GameObject SpawnQuestObject(GameObject prefab, QuestObjectType objectType)
     {
-        Debug.Log($"=== SPAWN DEBUG pour {zoneName} ===");
-        Debug.Log($"Type demandé: {objectType}");
-        Debug.Log($"Types supportés: {string.Join(", ", supportedObjects)}");
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
+        {
+            Debug.Log($"=== SPAWN DEBUG pour {zoneName} ===");
+            Debug.Log($"Type demandé: {objectType}");
+            Debug.Log($"Types supportés: {string.Join(", ", supportedObjects)}");
+        }
         
         if (!supportedObjects.Contains(objectType))
         {
@@ -193,7 +195,8 @@ public class QuestZone : MonoBehaviour
         GameObject spawnedObject = Instantiate(prefab, spawnPoint, Quaternion.identity);
         spawnedObjects.Add(spawnedObject);
         
-        Debug.Log($"Objet spawné avec succès: {spawnedObject.name}");
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
+            Debug.Log($"Objet spawné avec succès: {spawnedObject.name}");
         return spawnedObject;
     }
     
@@ -208,7 +211,8 @@ public class QuestZone : MonoBehaviour
         }
         spawnedObjects.Clear();
         
-        Debug.Log($"Zone {zoneName} nettoyée");
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
+            Debug.Log($"Zone {zoneName} nettoyée");
     }
     
     // Méthode utilisée par l'IA

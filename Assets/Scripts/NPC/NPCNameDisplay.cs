@@ -34,6 +34,9 @@ public class NPCNameDisplay : MonoBehaviour
         }
         
         CreateNameDisplay();
+        
+        // NOUVEAU: Invoque une mise à jour différée au cas où le nom change après Start()
+        Invoke(nameof(RefreshDisplayName), 0.1f);
     }
     
     void CreateNameDisplay()
@@ -59,7 +62,10 @@ public class NPCNameDisplay : MonoBehaviour
         // Configure le texte
         if (nameText != null && npcScript != null)
         {
-            nameText.text = npcScript.npcName;
+            // NOUVEAU: Formate le nom pour enlever les underscores
+            string formattedName = TextFormatter.FormatName(npcScript.npcName);
+            nameText.text = formattedName;
+            
             nameText.fontSize = fontSize;
             nameText.alignment = TextAlignmentOptions.Center;
             nameText.horizontalAlignment = HorizontalAlignmentOptions.Center;
@@ -89,9 +95,8 @@ public class NPCNameDisplay : MonoBehaviour
     {
         if (nameDisplay == null || mainCamera == null) return;
         
-        // Fait toujours regarder la caméra (billboard effect)
-        nameDisplay.transform.LookAt(mainCamera.transform);
-        nameDisplay.transform.Rotate(0, 180, 0); // Retourne pour que le texte soit dans le bon sens
+        // Billboard effect - always face camera direction
+        nameDisplay.transform.rotation = Quaternion.LookRotation(mainCamera.transform.forward);
         
         // Gère la visibilité selon la distance
         if (!alwaysShow && playerTransform != null)
@@ -129,7 +134,26 @@ public class NPCNameDisplay : MonoBehaviour
     {
         if (nameText != null)
         {
-            nameText.text = newName;
+            // NOUVEAU: Formate le nom pour enlever les underscores
+            nameText.text = TextFormatter.FormatName(newName);
+        }
+    }
+    
+    // NOUVELLE MÉTHODE: Rafraîchit le nom affiché depuis le composant NPC
+    public void RefreshDisplayName()
+    {
+        if (nameText != null && npcScript != null)
+        {
+            // NOUVEAU: Formate le nom pour enlever les underscores
+            nameText.text = TextFormatter.FormatName(npcScript.npcName);
+            
+            // Met à jour la couleur aussi
+            if (useNPCColor)
+            {
+                nameText.color = npcScript.npcColor;
+            }
+            
+            Debug.Log($"[NPCNameDisplay] Nom rafraîchi: {npcScript.npcName} -> {nameText.text}");
         }
     }
     

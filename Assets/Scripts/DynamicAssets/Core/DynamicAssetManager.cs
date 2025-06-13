@@ -33,8 +33,8 @@ namespace DynamicAssets.Core
         public int maxCacheSize = 100;
         
         [Header("Debug")]
-        public bool debugMode = true;
         public bool showDetailedLogs = false;
+        // Debug principal est maintenant géré par GlobalDebugManager
         
         // Cache en mémoire
         private Dictionary<string, GameObject> loadedPrefabs = new Dictionary<string, GameObject>();
@@ -77,7 +77,7 @@ namespace DynamicAssets.Core
                 
                 isInitialized = true;
                 
-                if (debugMode)
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
                     Debug.Log($"✅ DynamicAssetManager initialisé - {cacheData.totalAssets} assets en cache");
             }
             catch (Exception e)
@@ -149,7 +149,7 @@ namespace DynamicAssets.Core
                     if (cacheData == null)
                         cacheData = new AssetCacheData();
                     
-                    if (debugMode)
+                    if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
                         Debug.Log($"📂 Cache chargé: {cacheData.totalAssets} assets");
                 }
                 catch (Exception e)
@@ -161,7 +161,7 @@ namespace DynamicAssets.Core
             else
             {
                 cacheData = new AssetCacheData();
-                if (debugMode)
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
                     Debug.Log("📂 Nouveau cache créé");
             }
         }
@@ -236,7 +236,7 @@ namespace DynamicAssets.Core
                         loadedPrefabs[itemName] = prefab;
                         cachedAsset.RecordUsage();
                         
-                        if (debugMode)
+                        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
                             Debug.Log($"✅ Chargé depuis cache: {itemName}");
                         return prefab;
                     }
@@ -249,7 +249,7 @@ namespace DynamicAssets.Core
                 }
                 
                 // 4. Fallback vers prefab par défaut
-                if (debugMode)
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
                     Debug.Log($"⚠️ Utilisation fallback pour: {itemName}");
                 return GetFallbackPrefab(objectType);
             }
@@ -344,11 +344,14 @@ namespace DynamicAssets.Core
                 return;
             }
             
-            Debug.Log($"💾 === AJOUT CACHE DÉTAILLÉ ===");
-            Debug.Log($"Item Name: {itemName}");
-            Debug.Log($"Prefab: {prefab.name}");
-            Debug.Log($"Model Path: {modelPath}");
-            Debug.Log($"Cache Data avant: {cacheData?.totalAssets ?? 0} assets");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+            {
+                Debug.Log($"💾 === AJOUT CACHE DÉTAILLÉ ===");
+                Debug.Log($"Item Name: {itemName}");
+                Debug.Log($"Prefab: {prefab.name}");
+                Debug.Log($"Model Path: {modelPath}");
+                Debug.Log($"Cache Data avant: {cacheData?.totalAssets ?? 0} assets");
+            }
             
             // Crée l'entrée de cache CORRECTEMENT
             CachedAsset asset = CachedAsset.CreateManual(itemName, "", modelPath);
@@ -359,7 +362,8 @@ namespace DynamicAssets.Core
             if (cacheData != null)
             {
                 cacheData.AddAsset(asset);
-                Debug.Log($"✅ Asset ajouté à cacheData: {itemName}");
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                    Debug.Log($"✅ Asset ajouté à cacheData: {itemName}");
             }
             else
             {
@@ -369,24 +373,27 @@ namespace DynamicAssets.Core
             
             // Ajoute en mémoire
             loadedPrefabs[itemName] = prefab;
-            Debug.Log($"✅ Asset ajouté en mémoire: {itemName}");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                Debug.Log($"✅ Asset ajouté en mémoire: {itemName}");
             
             // FORCE la sauvegarde immédiate
             SaveCacheToDisk();
             
-            Debug.Log($"Cache Data après: {cacheData.totalAssets} assets");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                Debug.Log($"Cache Data après: {cacheData.totalAssets} assets");
             
             // Vérification immédiate
             if (cacheData.FindAsset(itemName) != null)
             {
-                Debug.Log($"✅ VÉRIFICATION : {itemName} trouvé dans cacheData");
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                    Debug.Log($"✅ VÉRIFICATION : {itemName} trouvé dans cacheData");
             }
             else
             {
                 Debug.LogError($"❌ ÉCHEC VÉRIFICATION : {itemName} non trouvé dans cacheData");
             }
             
-            if (debugMode)
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
                 Debug.Log($"✅ Asset ajouté au cache avec succès: {itemName}");
         }
         
@@ -432,7 +439,10 @@ namespace DynamicAssets.Core
                     return;
                 }
                 
-                Debug.Log($"💾 Sauvegarde cache vers: {fullCachePath}");
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                {
+                    Debug.Log($"💾 Sauvegarde cache vers: {fullCachePath}");
+                }
                 
                 cacheData.UpdateStatistics();
                 string jsonContent = JsonUtility.ToJson(cacheData, true);
@@ -446,7 +456,8 @@ namespace DynamicAssets.Core
                 
                 File.WriteAllText(fullCachePath, jsonContent);
                 
-                Debug.Log($"✅ Cache sauvegardé avec succès: {cacheData.totalAssets} assets");
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                    Debug.Log($"✅ Cache sauvegardé avec succès: {cacheData.totalAssets} assets");
                 
                 if (showDetailedLogs)
                     Debug.Log($"💾 Contenu: {jsonContent}");

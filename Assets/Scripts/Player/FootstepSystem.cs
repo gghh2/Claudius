@@ -78,8 +78,7 @@ public class FootstepSystem : MonoBehaviour
         new SurfaceColorMapping("default", new Color(0.8f, 0.8f, 0.8f))
     };
     
-    [Header("Debug")]
-    public bool debugMode = false;
+    // Debug est maintenant géré par GlobalDebugManager
     
     // Variables privées
     private float stepTimer = 0f;
@@ -104,6 +103,9 @@ public class FootstepSystem : MonoBehaviour
     // NOUVEAU : Référence au modèle pour position des pieds
     private Transform modelTransform;
     
+    // NOUVEAU : Référence au détecteur de terrain
+    private TerrainLayerDetector terrainDetector;
+    
     void Start()
     {
         SetupAudioSource();
@@ -120,7 +122,10 @@ public class FootstepSystem : MonoBehaviour
             modelTransform = transform; // Fallback
         }
         
-        if (debugMode)
+        // NOUVEAU : Cherche le détecteur de terrain
+        terrainDetector = GetComponent<TerrainLayerDetector>();
+        
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep))
             Debug.Log("🦶 FootstepSystem initialisé");
     }
     
@@ -129,7 +134,7 @@ public class FootstepSystem : MonoBehaviour
         CheckMovement();
         UpdateFootsteps();
         
-        if (debugMode && enableSurfaceDetection)
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep) && enableSurfaceDetection)
         {
             DrawGroundRaycast();
         }
@@ -167,7 +172,7 @@ public class FootstepSystem : MonoBehaviour
             surfaceColorDict["default"] = Color.white;
         }
         
-        if (debugMode)
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep))
             Debug.Log($"🎨 {surfaceColorDict.Count} couleurs de surface chargées depuis l'Inspector");
     }
     
@@ -194,7 +199,7 @@ public class FootstepSystem : MonoBehaviour
             }
         }
         
-        if (debugMode)
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep))
             Debug.Log($"🎵 {surfaceAudioDict.Count} mappings audio de surface chargés depuis l'Inspector");
     }
     
@@ -223,7 +228,7 @@ public class FootstepSystem : MonoBehaviour
         
         ConfigureParticles();
         
-        if (debugMode)
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep))
             Debug.Log("✨ Système de particules créé avec matériel");
     }
     
@@ -236,7 +241,7 @@ public class FootstepSystem : MonoBehaviour
         if (renderer != null && renderer.material == null)
         {
             CreateParticleMaterial();
-            if (debugMode)
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep))
                 Debug.Log("🔧 Matériel assigné au système de particules existant");
         }
         
@@ -366,7 +371,7 @@ public class FootstepSystem : MonoBehaviour
         if (!wasMovingPreviously && isMoving)
         {
             stepTimer = stepInterval; // Force le premier pas immédiatement
-            if (debugMode)
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep))
                 Debug.Log("🦶 Premier pas immédiat détecté !");
         }
         
@@ -416,7 +421,7 @@ public class FootstepSystem : MonoBehaviour
         // Particules
         PlayStepParticles();
         
-        if (debugMode)
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep))
         {
             Debug.Log($"🦶 PAS: {stepSound.name} | Surface: {currentSurface}");
         }
@@ -441,7 +446,7 @@ public class FootstepSystem : MonoBehaviour
         
         footstepParticles.Play();
         
-        if (debugMode)
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep))
         {
             Debug.Log($"💨 Particules: {particlesPerStep} ({currentSurface})");
         }
@@ -465,7 +470,7 @@ public class FootstepSystem : MonoBehaviour
     {
         string detectedSurface = "default";
         
-        // MÉTHODE 1: Essaie d'ABORD le nom du Material (priorité haute)
+        // MÉTHODE 1: PRIORITÉ HAUTE - Vérifie d'abord le Material (pour les objets posés sur le terrain)
         Renderer renderer = hit.collider.GetComponent<Renderer>();
         if (renderer != null && renderer.material != null)
         {
@@ -477,7 +482,7 @@ public class FootstepSystem : MonoBehaviour
             if (IsSurfaceNameRecognized(materialName))
             {
                 detectedSurface = materialName;
-                if (debugMode)
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep))
                     Debug.Log($"🦶 Surface détectée par matériel: '{materialName}' (priorité haute)");
             }
             else
@@ -487,20 +492,32 @@ public class FootstepSystem : MonoBehaviour
                 if (!string.IsNullOrEmpty(keywordSurface))
                 {
                     detectedSurface = keywordSurface;
-                    if (debugMode)
+                    if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep))
                         Debug.Log($"🦶 Surface détectée par mot-clé matériel: '{keywordSurface}' depuis '{materialName}'");
                 }
             }
         }
         
-        // MÉTHODE 2: Si pas trouvé par matériel, essaie le nom du GameObject (priorité basse)
+        // MÉTHODE 2: Si pas trouvé par matériel, vérifie si c'est un terrain
+        if (detectedSurface == "default" && terrainDetector != null && hit.collider.GetComponent<Terrain>() != null)
+        {
+            string terrainSurface = terrainDetector.GetCurrentTerrainSurface(hit.point);
+            if (!string.IsNullOrEmpty(terrainSurface))
+            {
+                detectedSurface = terrainSurface;
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep))
+                    Debug.Log($"🏔️ Surface détectée par TERRAIN LAYER: '{terrainSurface}' (priorité moyenne)");
+            }
+        }
+        
+        // MÉTHODE 3: En dernier recours, essaie le nom du GameObject (priorité basse)
         if (detectedSurface == "default")
         {
             string objectName = hit.collider.gameObject.name.ToLower();
             if (IsSurfaceNameRecognized(objectName))
             {
                 detectedSurface = objectName;
-                if (debugMode)
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep))
                     Debug.Log($"🦶 Surface détectée par nom d'objet: '{objectName}' (fallback)");
             }
             else
@@ -510,10 +527,10 @@ public class FootstepSystem : MonoBehaviour
                 if (!string.IsNullOrEmpty(keywordSurface))
                 {
                     detectedSurface = keywordSurface;
-                    if (debugMode)
+                    if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep))
                         Debug.Log($"🦶 Surface détectée par mot-clé objet: '{keywordSurface}' depuis '{objectName}'");
                 }
-                else if (debugMode)
+                else if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep))
                 {
                     string materialName = renderer?.material?.name ?? "aucun";
                     Debug.Log($"🦶 Surface non reconnue - Matériel: '{materialName}' | Objet: '{objectName}' → default");
@@ -603,7 +620,7 @@ public class FootstepSystem : MonoBehaviour
                 AudioClip[] clips = kvp.Value;
                 if (clips != null && clips.Length > 0)
                 {
-                    if (debugMode)
+                    if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep))
                         Debug.Log($"🎵 Son spécifique trouvé pour '{lowerSurface}' → {kvp.Key}");
                     return clips[Random.Range(0, clips.Length)];
                 }
@@ -616,13 +633,13 @@ public class FootstepSystem : MonoBehaviour
             var validSounds = defaultFootstepSounds.Where(clip => clip != null).ToArray();
             if (validSounds.Length > 0)
             {
-                if (debugMode)
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep))
                     Debug.Log($"🎵 Son par défaut utilisé pour '{lowerSurface}'");
                 return validSounds[Random.Range(0, validSounds.Length)];
             }
         }
         
-        if (debugMode)
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep))
             Debug.LogWarning($"🎵 Aucun son trouvé pour '{lowerSurface}'");
         return null;
     }
@@ -637,7 +654,7 @@ public class FootstepSystem : MonoBehaviour
     
     void OnGUI()
     {
-        if (!debugMode) return;
+        if (!GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep)) return;
         
         GUILayout.BeginArea(new Rect(10, 150, 300, 180));
         GUILayout.Label("=== FOOTSTEP DEBUG ===");
@@ -759,7 +776,7 @@ public class FootstepSystem : MonoBehaviour
         
         footstepParticles.Play();
         
-        if (debugMode)
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep))
         {
             Debug.Log($"🦘💨 Particules saut: {particlesPerStep * 2}");
         }
@@ -784,7 +801,7 @@ public class FootstepSystem : MonoBehaviour
         
         footstepParticles.Play();
         
-        if (debugMode)
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep))
         {
             Debug.Log($"🎯💨 Particules atterrissage: {particlesPerStep * 3}");
         }

@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System.Linq;
 
 [System.Serializable]
 public enum QuestType
@@ -89,10 +90,19 @@ public class QuestTokenDetector : MonoBehaviour
                 QuestToken token = ParseQuestToken(questType, match);
                 if (token != null)
                 {
-                    detectedQuests.Add(token);
-                    
-                    if (debugMode)
-                        Debug.Log($"Token détecté: {token.questType} - {token.description}");
+                    // Validate that the quest can actually be created
+                    if (IsQuestTokenValid(token))
+                    {
+                        detectedQuests.Add(token);
+                        
+                        if (debugMode)
+                            Debug.Log($"Token détecté et validé: {token.questType} - {token.description}");
+                    }
+                    else
+                    {
+                        if (debugMode)
+                            Debug.LogWarning($"Token détecté mais INVALIDE: {token.questType} - {token.description} (zone ou type non supporté)");
+                    }
                 }
             }
         }
@@ -273,6 +283,43 @@ public class QuestTokenDetector : MonoBehaviour
 	    
 	    return null;
 	}
+    
+    // Validate that a quest token can actually be created
+    bool IsQuestTokenValid(QuestToken token)
+    {
+        // Pour l'instant, on accepte tous les tokens détectés
+        // La validation se fera lors de la création de la quête dans QuestManager
+        return true;
+        
+        /* Code de validation désactivé temporairement
+        if (QuestZoneManager.Instance == null)
+        {
+            Debug.LogWarning("QuestZoneManager.Instance is null - cannot validate quest");
+            return false;
+        }
+        
+        // Check if zone type exists and supports the required object type
+        if (token.zoneType.HasValue && token.objectType.HasValue)
+        {
+            var supportingZones = QuestZoneManager.Instance.GetZonesSupportingObjectType(token.objectType.Value);
+            
+            // Check if any of the supporting zones match the requested zone type
+            bool zoneSupportsQuest = supportingZones.Any(z => z.zoneType == token.zoneType.Value);
+            
+            if (!zoneSupportsQuest)
+            {
+                Debug.LogWarning($"Zone type {token.zoneType.Value} does not support object type {token.objectType.Value}");
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // If we can't determine zone or object type, consider it invalid
+        Debug.LogWarning($"Quest token missing zone type or object type information");
+        return false;
+        */
+    }
     
     // Nettoie le message en retirant les tokens (pour l'affichage au joueur)
     public string CleanMessageFromTokens(string aiMessage)

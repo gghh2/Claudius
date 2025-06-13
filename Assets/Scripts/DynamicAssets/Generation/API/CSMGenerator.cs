@@ -49,7 +49,8 @@ namespace DynamicAssets.Generation.API
         {
             if (config != null)
             {
-                Debug.Log("🔌 CSMGenerator initialisé (Phase 2B.2)");
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                    Debug.Log("🔌 CSMGenerator initialisé (Phase 2B.2)");
                 
                 // Test automatique de connexion si config valide
                 if (config.IsValid())
@@ -94,7 +95,8 @@ namespace DynamicAssets.Generation.API
             }
             
             isTesting = true;
-            Debug.Log("🔍 Test de connexion CSM...");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                Debug.Log("🔍 Test de connexion CSM...");
             
             using (UnityWebRequest request = new UnityWebRequest())
             {
@@ -121,8 +123,11 @@ namespace DynamicAssets.Generation.API
                 if (request.result == UnityWebRequest.Result.Success)
                 {
                     isConnected = true;
-                    Debug.Log("✅ Connexion CSM réussie !");
-                    Debug.Log($"📊 Code réponse: {request.responseCode}");
+                    if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                    {
+                        Debug.Log("✅ Connexion CSM réussie !");
+                        Debug.Log($"📊 Code réponse: {request.responseCode}");
+                    }
                     
                     if (config.debugMode)
                     {
@@ -210,8 +215,11 @@ namespace DynamicAssets.Generation.API
                 return CSMResponse.CreateErrorResponse("Configuration invalide");
             }
             
-            Debug.Log($"🎨 Génération CSM demandée: {objectName}");
-            Debug.Log($"📝 Prompt: {prompt}");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+            {
+                Debug.Log($"🎨 Génération CSM demandée: {objectName}");
+                Debug.Log($"📝 Prompt: {prompt}");
+            }
             
             activeRequests++;
             totalRequestsSent++;
@@ -246,7 +254,8 @@ namespace DynamicAssets.Generation.API
         /// </summary>
         async Task<CSMResponse> GenerateRealModel(string prompt, string objectName)
         {
-            Debug.Log("🌐 === GÉNÉRATION RÉELLE CSM ===");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                Debug.Log("🌐 === GÉNÉRATION RÉELLE CSM ===");
             
             // Convertit le prompt en requête CSM formatée
             CSMRequest csmRequest = CSMPromptConverter.ConvertToCSMRequest(prompt, objectName, config);
@@ -259,7 +268,8 @@ namespace DynamicAssets.Generation.API
             
             // Prépare la requête HTTP
             string jsonData = csmRequest.ToJson();
-            Debug.Log($"📤 Envoi requête JSON: {jsonData}");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                Debug.Log($"📤 Envoi requête JSON: {jsonData}");
             
             // Délégue à la coroutine
             CSMResponse response = null;
@@ -299,7 +309,8 @@ namespace DynamicAssets.Generation.API
                 // Timeout de génération
                 request.timeout = (int)config.generationTimeout;
                 
-                Debug.Log($"🚀 Envoi requête CSM vers: {config.apiUrl}");
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                    Debug.Log($"🚀 Envoi requête CSM vers: {config.apiUrl}");
                 
                 // Envoi
                 yield return request.SendWebRequest();
@@ -308,7 +319,8 @@ namespace DynamicAssets.Generation.API
                 if (request.result == UnityWebRequest.Result.Success)
                 {
                     string responseText = request.downloadHandler.text;
-                    Debug.Log($"✅ Réponse CSM reçue: {responseText}");
+                    if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                        Debug.Log($"✅ Réponse CSM reçue: {responseText}");
                     
                     try
                     {
@@ -317,7 +329,8 @@ namespace DynamicAssets.Generation.API
                         if (csmResponse != null && csmResponse.IsValid())
                         {
                             successfulGenerations++;
-                            Debug.Log($"🎉 Génération réussie: {objectName}");
+                            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                                Debug.Log($"🎉 Génération réussie: {objectName}");
                             callback(csmResponse);
                         }
                         else
@@ -355,12 +368,16 @@ namespace DynamicAssets.Generation.API
         /// </summary>
         async Task<CSMResponse> GenerateSimulatedModel(string prompt, string objectName)
         {
-            Debug.Log("🧪 === GÉNÉRATION SIMULÉE ===");
-            Debug.Log($"Mode simulation utilisé car useRealAPI={useRealAPI}");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+            {
+                Debug.Log("🧪 === GÉNÉRATION SIMULÉE ===");
+                Debug.Log($"Mode simulation utilisé car useRealAPI={useRealAPI}");
+            }
             
             // Simule un délai de génération réaliste
             float simulatedTime = UnityEngine.Random.Range(45f, 180f);
-            Debug.Log($"⏳ Simulation génération pendant {simulatedTime:F1}s...");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                Debug.Log($"⏳ Simulation génération pendant {simulatedTime:F1}s...");
             
             await Task.Delay((int)(simulatedTime * 1000));
             
@@ -369,7 +386,8 @@ namespace DynamicAssets.Generation.API
             testResponse.generation_time_seconds = simulatedTime;
             
             successfulGenerations++;
-            Debug.Log($"✅ Génération simulée terminée: {objectName}");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                Debug.Log($"✅ Génération simulée terminée: {objectName}");
             
             return testResponse;
         }
@@ -379,7 +397,8 @@ namespace DynamicAssets.Generation.API
         /// </summary>
         public async Task<CSMResponse> GenerateModelFromItemName(string itemName)
         {
-            Debug.Log($"🔍 Génération depuis nom d'item: {itemName}");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                Debug.Log($"🔍 Génération depuis nom d'item: {itemName}");
             
             if (config == null)
             {
@@ -408,7 +427,8 @@ namespace DynamicAssets.Generation.API
         public void ToggleRealAPI()
         {
             useRealAPI = !useRealAPI;
-            Debug.Log($"🔄 Mode API: {(useRealAPI ? "RÉELLE" : "SIMULATION")}");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                Debug.Log($"🔄 Mode API: {(useRealAPI ? "RÉELLE" : "SIMULATION")}");
         }
         
         /// <summary>
@@ -417,7 +437,9 @@ namespace DynamicAssets.Generation.API
         [ContextMenu("Show Stats")]
         public void ShowStats()
         {
-            Debug.Log($@"📊 STATISTIQUES CSM GENERATOR (Phase 2B.2)
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+            {
+                Debug.Log($@"📊 STATISTIQUES CSM GENERATOR (Phase 2B.2)
 Configuration: {(config != null ? "✅" : "❌")}
 Connexion: {(isConnected ? "✅" : "❌")}
 Mode API: {(useRealAPI ? "RÉELLE" : "SIMULATION")}
@@ -427,6 +449,7 @@ Total envoyées: {totalRequestsSent}
 Succès: {successfulGenerations}
 Échecs: {failedGenerations}
 Taux succès: {(totalRequestsSent > 0 ? (successfulGenerations * 100f / totalRequestsSent):0):F1}%");
+            }
         }
         
         /// <summary>
@@ -441,7 +464,8 @@ Taux succès: {(totalRequestsSent > 0 ? (successfulGenerations * 100f / totalReq
                 return;
             }
             
-            Debug.Log("🧪 Test de génération CSM...");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                Debug.Log("🧪 Test de génération CSM...");
             
             CSMResponse response = await GenerateModel(
                 "simple blue cube, low-poly style", 
@@ -450,7 +474,8 @@ Taux succès: {(totalRequestsSent > 0 ? (successfulGenerations * 100f / totalReq
             
             if (response.IsSuccess())
             {
-                Debug.Log($"✅ Test génération réussi:\n{response}");
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                    Debug.Log($"✅ Test génération réussi:\n{response}");
             }
             else
             {
@@ -470,13 +495,15 @@ Taux succès: {(totalRequestsSent > 0 ? (successfulGenerations * 100f / totalReq
                 return;
             }
             
-            Debug.Log("🧪 Test génération d'item avec mapping...");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                Debug.Log("🧪 Test génération d'item avec mapping...");
             
             CSMResponse response = await GenerateModelFromItemName("cristal_energie");
             
             if (response.IsSuccess())
             {
-                Debug.Log($"✅ Test génération d'item réussi:\n{response}");
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                    Debug.Log($"✅ Test génération d'item réussi:\n{response}");
             }
             else
             {
@@ -493,7 +520,8 @@ Taux succès: {(totalRequestsSent > 0 ? (successfulGenerations * 100f / totalReq
             totalRequestsSent = 0;
             successfulGenerations = 0;
             failedGenerations = 0;
-            Debug.Log("📊 Statistiques réinitialisées");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                Debug.Log("📊 Statistiques réinitialisées");
         }
     }
 }

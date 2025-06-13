@@ -155,8 +155,6 @@ public class AIDialogueManager : MonoBehaviour
         InitializeConversationWithContext(npcData, "", 0);
     }
     
-
-
     AIPromptConfig GetConfigForRole(string role)
     {
         switch (role.ToLower())
@@ -181,25 +179,18 @@ public class AIDialogueManager : MonoBehaviour
         }
     }
 
-
-
-
-
-
-
-
-
     string BuildSystemPrompt(NPCData npcData)
     {
-        // NOUVEAU CODE :
-    AIPromptConfig configToUse = GetConfigForRole(npcData.role);
-    
-    if (configToUse == null)
-    {
-        Debug.LogError($"❌ Aucune config trouvée pour le rôle: {npcData.role}");
+        AIPromptConfig configToUse = GetConfigForRole(npcData.role);
         
-        // Fallback avec l'ancien système
-        return $@"{gameContext}
+        if (configToUse == null)
+        {
+            Debug.LogError($"❌ Aucune config trouvée pour le rôle: {npcData.role}");
+            
+            // Fallback avec l'ancien système
+            return $@"🔴 INSTRUCTION CRITIQUE: Quand on vous demande une mission/quête/travail, vous DEVEZ inclure un token [QUEST:...] dans votre réponse!
+
+{gameContext}
 
 VOUS ÊTES:
 - Nom: {npcData.name}
@@ -214,6 +205,7 @@ INSTRUCTIONS IMPORTANTES:
 - Soyez naturel et engageant
 - Adaptez votre ton selon votre rôle
 - Ne sortez jamais de votre rôle
+- IMPORTANT: Quand vous donnez une quête, INCLUEZ TOUJOURS le token [QUEST:...] dans votre réponse!
 
 SYSTÈME DE QUÊTES:
 {GetQuestInstructionsForNPC(npcData.name)}
@@ -223,10 +215,12 @@ ZONES DISPONIBLES: laboratory, hangar, market, security, residential, engineerin
 {GetRoleSpecificQuestExamples(npcData.role)}
 
 Vous êtes sur une planète extraterrestre et interagissez avec un voyageur.";
-    }
-    
-    // Utilise la config appropriée
-    return $@"{configToUse.npcPersonality}
+        }
+        
+        // Utilise la config appropriée
+        return $@"🔴 INSTRUCTION CRITIQUE: Quand on vous demande une mission/quête/travail, vous DEVEZ inclure un token [QUEST:...] dans votre réponse!
+
+{configToUse.npcPersonality}
 
 VOUS ÊTES:
 - Nom: {npcData.name}
@@ -235,20 +229,16 @@ VOUS ÊTES:
 
 {configToUse.globalInstructions}
 
+🔴 RÈGLE ABSOLUE: Pour donner une quête, vous DEVEZ inclure un token [QUEST:TYPE:params] dans votre réponse!
+
 SYSTÈME DE QUÊTES:
-{configToUse.questInstructions}
+{GetQuestInstructionsForNPC(npcData.name)}
+
+ZONES DISPONIBLES: laboratory, hangar, market, security, residential, engineering, medical, storage, ruins
 
 EXEMPLES POUR VOTRE RÔLE:
 {configToUse.roleSpecificExamples}";
-}
-
-
-
-
-
-
-
-
+    }
     
     string GetQuestInstructionsForNPC(string npcName)
     {
@@ -280,25 +270,81 @@ NE DONNEZ PAS DE NOUVELLE QUÊTE. À la place:
 Vous avez déjà donné une mission à ce voyageur qui l'a TERMINÉE.
 Vous pouvez maintenant donner une NOUVELLE mission si approprié.
 
-Vous pouvez donner des quêtes en utilisant ces tokens:
+⚠️ OBLIGATOIRE: Pour créer une quête, vous DEVEZ inclure un token dans votre réponse!
+
+FORMAT DES TOKENS:
 [QUEST:FETCH:nom_objet:zone:quantité] = Ramasser des objets
 [QUEST:DELIVERY:objet:destinataire:zone] = Livrer quelque chose
 [QUEST:EXPLORE:zone] = Explorer une zone
 [QUEST:TALK:personnage:zone] = Parler à quelqu'un
-[QUEST:INTERACT:objet:zone] = Interagir avec un objet";
+[QUEST:INTERACT:objet:zone] = Interagir avec un objet
+
+🔴 SANS TOKEN, AUCUNE QUÊTE NE SERA CRÉÉE!";
                 }
             }
         }
         
         return @"STATUT QUÊTE:
 Vous n'avez pas encore donné de mission à ce voyageur.
-Vous pouvez donner des quêtes en utilisant ces tokens:
 
+⚠️ OBLIGATOIRE: Pour créer une quête, vous DEVEZ inclure un token dans votre réponse!
+
+FORMAT DES TOKENS:
 [QUEST:FETCH:nom_objet:zone:quantité] = Ramasser des objets
 [QUEST:DELIVERY:objet:destinataire:zone] = Livrer quelque chose
 [QUEST:EXPLORE:zone] = Explorer une zone
 [QUEST:TALK:personnage:zone] = Parler à quelqu'un
-[QUEST:INTERACT:objet:zone] = Interagir avec un objet";
+[QUEST:INTERACT:objet:zone] = Interagir avec un objet
+
+EXEMPLE CORRECT: 'J'ai besoin d'aide ! Récupérez mes outils [QUEST:FETCH:outils:hangar:3] dans le hangar.'
+EXEMPLE INCORRECT: 'J'ai besoin que vous récupériez mes outils.' (PAS DE TOKEN = PAS DE QUÊTE!)
+
+🔴 SANS TOKEN, AUCUNE QUÊTE NE SERA CRÉÉE!";
+    }
+    
+    string GetAvailableQuestOptionsForAI()
+    {
+        if (QuestZoneManager.Instance == null)
+        {
+            Debug.LogWarning("QuestZoneManager.Instance is null - using default zones");
+            return "ZONES DISPONIBLES: laboratory, hangar, market, security, residential, engineering, medical, storage, ruins";
+        }
+        
+        var availableOptions = QuestZoneManager.Instance.GetAvailableQuestOptions();
+        
+        if (availableOptions.Count == 0)
+        {
+            Debug.LogWarning("No quest zones available!");
+            return "AUCUNE ZONE DE QUÊTE DISPONIBLE ACTUELLEMENT";
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        sb.AppendLine("QUÊTES POSSIBLES ACTUELLEMENT:");
+        sb.AppendLine("(Utilisez UNIQUEMENT les zones listées ci-dessous pour chaque type de quête)");
+        
+        foreach (var kvp in availableOptions)
+        {
+            QuestType questType = kvp.Key;
+            List<QuestZone> zones = kvp.Value;
+            
+            sb.AppendLine($"\n{questType}:");
+            foreach (var zone in zones)
+            {
+                sb.AppendLine($"  - {zone.zoneName} (type: {zone.zoneType})");
+            }
+        }
+        
+        sb.AppendLine("\nIMPORTANT: NE PROPOSEZ QUE DES QUÊTES POUR LES ZONES LISTÉES CI-DESSUS!");
+        
+        // Add specific warning if only FETCH is available
+        if (availableOptions.Count == 1 && availableOptions.ContainsKey(QuestType.FETCH))
+        {
+            sb.AppendLine("\nATTENTION: Actuellement, SEULES les quêtes FETCH sont disponibles!");
+            sb.AppendLine("Vous DEVEZ donner une quête de type FETCH (ramasser des objets).");
+            sb.AppendLine("N'essayez PAS de donner des quêtes EXPLORE, DELIVERY, TALK ou INTERACT!");
+        }
+        
+        return sb.ToString();
     }
     
     string GetRoleSpecificQuestExamples(string role)
@@ -308,22 +354,43 @@ Vous pouvez donner des quêtes en utilisant ces tokens:
             case "marchand":
                 return @"EXEMPLES DE RÉPONSES AVEC TOKENS:
 Joueur: ""Avez-vous du travail pour moi ?""
-Vous: ""Justement ! Récupérez ce colis urgent pour moi [QUEST:FETCH:colis_urgent:hangar:1] et je vous paierai bien.""";
+Vous: ""Justement ! Récupérez ce colis urgent pour moi [QUEST:FETCH:colis_urgent:hangar:1] et je vous paierai bien.""
+
+AUTRES EXEMPLES:
+- ""J'ai besoin de marchandises ! Trouvez-moi [QUEST:FETCH:cristaux_rares:market:5] au marché.""
+- ""Livrez ce paquet [QUEST:DELIVERY:paquet_secret:garde_imperial:security] au garde impérial.""
+
+⚠️ RAPPEL CRUCIAL: Le token [QUEST:...] DOIT être dans votre message sinon AUCUNE quête ne sera créée!";
 
             case "scientifique":
                 return @"EXEMPLES DE RÉPONSES AVEC TOKENS:
 Joueur: ""Avez-vous besoin d'aide ?""
-Vous: ""Mes échantillons ont disparu ! Retrouvez-les [QUEST:FETCH:echantillon_alien:laboratory:3] s'il vous plaît.""";
+Vous: ""Mes échantillons ont disparu ! Retrouvez-les [QUEST:FETCH:echantillon_alien:laboratory:3] s'il vous plaît.""
+
+AUTRES EXEMPLES:
+- ""Explorez cette zone mystérieuse [QUEST:EXPLORE:ruins] et rapportez vos découvertes.""
+- ""Allez parler à mon assistant [QUEST:TALK:assistant_perdu:medical] dans la baie médicale.""
+
+⚠️ RAPPEL CRUCIAL: Le token [QUEST:...] DOIT être dans votre message sinon AUCUNE quête ne sera créée!";
 
             case "garde impérial":
                 return @"EXEMPLES DE RÉPONSES AVEC TOKENS:
 Joueur: ""Une mission pour moi ?""
-Vous: ""Activité suspecte détectée. Inspectez les ruines [QUEST:EXPLORE:ruins] et rapportez-moi vos découvertes.""";
+Vous: ""Activité suspecte détectée. Inspectez les ruines [QUEST:EXPLORE:ruins] et rapportez-moi vos découvertes.""
+
+AUTRES EXEMPLES:
+- ""Récupérez l'artefact ancien [QUEST:FETCH:artefact_ancien:ruins:1] dans les ruines.""
+- ""Interagissez avec le terminal de sécurité [QUEST:INTERACT:terminal_securite:security] pour vérifier les accès.""
+
+⚠️ RAPPEL CRUCIAL: Le token [QUEST:...] DOIT être dans votre message sinon AUCUNE quête ne sera créée!";
 
             default:
                 return @"EXEMPLES GÉNÉRIQUES:
-""Aidez-moi à récupérer mes affaires [QUEST:FETCH:objet_personnel:residential:1]""
-""Explorez cette zone suspecte [QUEST:EXPLORE:hangar]""";
+- ""Aidez-moi à récupérer mes affaires [QUEST:FETCH:objet_personnel:residential:1]""
+- ""Explorez cette zone suspecte [QUEST:EXPLORE:hangar]""
+- ""Parlez à mon contact [QUEST:TALK:informateur:market] au marché""
+
+⚠️ RAPPEL CRUCIAL: Le token [QUEST:...] DOIT être dans votre message sinon AUCUNE quête ne sera créée!";
         }
     }
     
@@ -391,10 +458,6 @@ Vous: ""Activité suspecte détectée. Inspectez les ruines [QUEST:EXPLORE:ruins
     {
         try
         {
-            // AJOUT DEBUG
-            Debug.Log($"📝 Prompt envoyé à l'IA:");
-            Debug.Log(BuildSystemPrompt(npcData));
-            
             OpenAIResponse response = JsonUtility.FromJson<OpenAIResponse>(jsonResponse);
             
             if (response.choices != null && response.choices.Length > 0)
@@ -410,10 +473,19 @@ Vous: ""Activité suspecte détectée. Inspectez les ruines [QUEST:EXPLORE:ruins
                 {
                     detectedQuests = QuestTokenDetector.Instance.DetectQuestTokens(aiResponse);
                     
-                    if (detectedQuests.Count > 0)
+                    if (detectedQuests != null && detectedQuests.Count > 0)
                     {
                         Debug.Log($"🎯 {detectedQuests.Count} quête(s) détectée(s)");
+                        foreach (var quest in detectedQuests)
+                        {
+                            Debug.Log($"  - Type: {quest.questType}, Zone: {quest.zoneName}, Description: {quest.description}");
+                        }
                         aiResponse = QuestTokenDetector.Instance.CleanMessageFromTokens(aiResponse);
+                    }
+                    else
+                    {
+                        Debug.LogWarning("⚠️ Aucune quête détectée dans la réponse de l'IA");
+                        Debug.Log($"Réponse complète: {aiResponse}");
                     }
                 }
                 

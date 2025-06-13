@@ -50,11 +50,13 @@ namespace DynamicAssets.Generation.API
         
         void Start()
         {
-            Debug.Log("🔌 MeshyGenerator initialisé pour tests avec vraie API");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                Debug.Log("🔌 MeshyGenerator initialisé pour tests avec vraie API");
             
             if (config != null && config.IsValid())
             {
-                Debug.Log("✅ Configuration détectée - Prêt pour génération Meshy");
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                    Debug.Log("✅ Configuration détectée - Prêt pour génération Meshy");
             }
             else
             {
@@ -73,7 +75,8 @@ namespace DynamicAssets.Generation.API
                 return CSMResponse.CreateErrorResponse("Configuration invalide");
             }
             
-            Debug.Log($"🔍 === VÉRIFICATION CACHE POUR {objectName} ===");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                Debug.Log($"🔍 === VÉRIFICATION CACHE POUR {objectName} ===");
             
             // NOUVEAU : Vérifie d'abord le cache
             if (DynamicAssetManager.Instance != null)
@@ -83,7 +86,8 @@ namespace DynamicAssets.Generation.API
                     GameObject cachedPrefab = await DynamicAssetManager.Instance.GetQuestItemPrefab(objectName);
                     if (cachedPrefab != null)
                     {
-                        Debug.Log($"✅ OBJET TROUVÉ EN CACHE: {objectName} - Pas de génération nécessaire !");
+                        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+                            Debug.Log($"✅ OBJET TROUVÉ EN CACHE: {objectName} - Pas de génération nécessaire !");
                         
                         // Crée une réponse simulée pour indiquer que c'est du cache
                         return CreateCacheResponse(objectName, cachedPrefab.name);
@@ -95,10 +99,13 @@ namespace DynamicAssets.Generation.API
                 }
             }
             
-            Debug.Log($"📝 Objet non trouvé en cache - Génération Meshy nécessaire");
-            Debug.Log($"🎨 === GÉNÉRATION MESHY RÉELLE ===");
-            Debug.Log($"📝 Objet: {objectName}");
-            Debug.Log($"📝 Prompt: {prompt}");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.DynamicAssets))
+            {
+                Debug.Log($"📝 Objet non trouvé en cache - Génération Meshy nécessaire");
+                Debug.Log($"🎨 === GÉNÉRATION MESHY RÉELLE ===");
+                Debug.Log($"📝 Objet: {objectName}");
+                Debug.Log($"📝 Prompt: {prompt}");
+            }
             
             activeRequests++;
             totalRequestsSent++;

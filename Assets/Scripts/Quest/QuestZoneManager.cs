@@ -9,8 +9,7 @@ public class QuestZoneManager : MonoBehaviour
     [Header("Zone Management")]
     private List<QuestZone> allZones = new List<QuestZone>();
     
-    [Header("Debug")]
-    public bool debugMode = true;
+    // Debug est maintenant géré par GlobalDebugManager
     
     void Awake()
     {
@@ -30,7 +29,7 @@ public class QuestZoneManager : MonoBehaviour
         if (!allZones.Contains(zone))
         {
             allZones.Add(zone);
-            if (debugMode)
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
                 Debug.Log($"Zone enregistrée: {zone.zoneName} ({zone.zoneType})");
         }
     }
@@ -38,7 +37,7 @@ public class QuestZoneManager : MonoBehaviour
     public void UnregisterZone(QuestZone zone)
     {
         allZones.Remove(zone);
-        if (debugMode)
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
             Debug.Log($"Zone désenregistrée: {zone.zoneName}");
     }
     
@@ -89,8 +88,42 @@ public class QuestZoneManager : MonoBehaviour
             zone.ClearQuestObjects();
         }
         
-        if (debugMode)
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
             Debug.Log("Tous les objets de quête ont été nettoyés");
+    }
+    
+    // Get zones that support a specific object type
+    public List<QuestZone> GetZonesSupportingObjectType(QuestObjectType objectType)
+    {
+        return allZones.Where(z => z.supportedObjects.Contains(objectType)).ToList();
+    }
+    
+    // Get available quest types for AI generation
+    public Dictionary<QuestType, List<QuestZone>> GetAvailableQuestOptions()
+    {
+        Dictionary<QuestType, List<QuestZone>> availableOptions = new Dictionary<QuestType, List<QuestZone>>();
+        
+        // Map quest types to required object types
+        Dictionary<QuestType, QuestObjectType> questTypeMapping = new Dictionary<QuestType, QuestObjectType>
+        {
+            { QuestType.FETCH, QuestObjectType.Item },
+            { QuestType.DELIVERY, QuestObjectType.NPC },
+            { QuestType.EXPLORE, QuestObjectType.Marker },
+            { QuestType.TALK, QuestObjectType.NPC },
+            { QuestType.INTERACT, QuestObjectType.InteractableObject },
+            { QuestType.ESCORT, QuestObjectType.NPC }
+        };
+        
+        foreach (var mapping in questTypeMapping)
+        {
+            var supportingZones = GetZonesSupportingObjectType(mapping.Value);
+            if (supportingZones.Count > 0)
+            {
+                availableOptions[mapping.Key] = supportingZones;
+            }
+        }
+        
+        return availableOptions;
     }
     
     // Debug: affiche les stats des zones
@@ -103,13 +136,47 @@ public class QuestZoneManager : MonoBehaviour
             Debug.Log($"{zone.zoneName} ({zone.zoneType}) - {zone.supportedObjects.Count} types d'objets supportés");
         }
     }
+    
     [ContextMenu("List All Zones")]
-	public void ListAllZones()
-	{
-	    Debug.Log($"=== ZONES ENREGISTRÉES ({allZones.Count}) ===");
-	    foreach (QuestZone zone in allZones)
-	    {
-	        Debug.Log($"- {zone.zoneName} ({zone.zoneType})");
-	    }
-	}
+    public void ListAllZones()
+    {
+        Debug.Log($"=== ZONES ENREGISTRÉES ({allZones.Count}) ===");
+        foreach (QuestZone zone in allZones)
+        {
+            Debug.Log($"- {zone.zoneName} ({zone.zoneType})");
+        }
+    }
+    
+    [ContextMenu("Debug Quest Availability")]
+    public void DebugQuestAvailability()
+    {
+        Debug.Log("=== DISPONIBILITÉ DES QUÊTES PAR TYPE ===");
+        
+        var availableOptions = GetAvailableQuestOptions();
+        
+        if (availableOptions.Count == 0)
+        {
+            Debug.LogWarning("AUCUNE QUÊTE DISPONIBLE! Vérifiez la configuration des zones.");
+            return;
+        }
+        
+        foreach (var kvp in availableOptions)
+        {
+            Debug.Log($"\n{kvp.Key}: {kvp.Value.Count} zone(s) disponible(s)");
+            foreach (var zone in kvp.Value)
+            {
+                Debug.Log($"  - {zone.zoneName} ({zone.zoneType})");
+            }
+        }
+        
+        // Show quest types that are NOT available
+        Debug.Log("\n=== TYPES DE QUÊTES NON DISPONIBLES ===");
+        foreach (QuestType questType in System.Enum.GetValues(typeof(QuestType)))
+        {
+            if (!availableOptions.ContainsKey(questType))
+            {
+                Debug.LogWarning($"{questType} - Aucune zone ne supporte ce type!");
+            }
+        }
+    }
 }

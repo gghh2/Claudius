@@ -24,8 +24,7 @@ public class PlayerInventory : MonoBehaviour
     [Header("Inventory")]
     public List<InventoryItem> items = new List<InventoryItem>();
     
-    [Header("Debug")]
-    public bool debugMode = true;
+    // Debug est maintenant géré par GlobalDebugManager
     
     void Awake()
     {
@@ -33,7 +32,8 @@ public class PlayerInventory : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            Debug.Log("✅ PlayerInventory Instance créée");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
+                Debug.Log("✅ PlayerInventory Instance créée");
         }
         else
         {
@@ -54,10 +54,11 @@ public class PlayerInventory : MonoBehaviour
             items.Add(new InventoryItem(itemName, quantity, questId));
         }
         
-        if (debugMode)
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
+        {
             Debug.Log($"📦 INVENTAIRE: Ajouté {quantity}x {itemName} (Quête: {questId})");
-            
-        ShowInventory(); // Debug automatique
+            ShowInventory(); // Debug automatique
+        }
     }
     
     public bool RemoveItem(string itemName, int quantity = 1, string questId = "")
@@ -73,7 +74,7 @@ public class PlayerInventory : MonoBehaviour
                 items.Remove(item);
             }
             
-            if (debugMode)
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
                 Debug.Log($"📤 INVENTAIRE: Retiré {quantity}x {itemName}");
             
             return true;
@@ -87,10 +88,21 @@ public class PlayerInventory : MonoBehaviour
         InventoryItem item = items.FirstOrDefault(i => i.itemName == itemName && i.questId == questId);
         bool hasEnough = item != null && item.quantity >= requiredQuantity;
         
-        if (debugMode)
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
             Debug.Log($"🔍 VÉRIFICATION: {itemName} x{requiredQuantity} pour quête {questId} = {(hasEnough ? "OUI" : "NON")}");
             
         return hasEnough;
+    }
+    
+    public void RemoveQuestItem(string itemName, string questId)
+    {
+        InventoryItem item = items.FirstOrDefault(i => i.itemName == itemName && i.questId == questId);
+        if (item != null)
+        {
+            items.Remove(item);
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
+                Debug.Log($"📤 INVENTAIRE: Retiré objet de quête {itemName} (Quête annulée: {questId})");
+        }
     }
     
     public int GetItemQuantity(string itemName, string questId = "")

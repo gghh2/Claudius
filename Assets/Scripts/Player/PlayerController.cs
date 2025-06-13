@@ -25,7 +25,8 @@ public class PlayerController : MonoBehaviour
     [Header("Jump")]
     public float jumpForce = 12f;
     public LayerMask groundLayer = 1;
-    public float groundCheckDistance = 0.2f;
+    [Tooltip("Distance de détection du sol pour le saut")]
+    public float groundCheckDistance = 0.3f;
     [Range(1f, 3f)]
     public float fallGravityMultiplier = 2f;
     
@@ -46,6 +47,21 @@ public class PlayerController : MonoBehaviour
     public CameraFollow cameraFollow;
     public float sprintZoomMultiplier = 0.8f; // Multiplie le zoom actuel (0.8 = zoom out de 20%)
     
+    [Header("Step Climbing")]
+    [Tooltip("Hauteur maximale des marches que le joueur peut monter automatiquement")]
+    [Range(0.1f, 0.8f)]
+    public float maxStepHeight = 0.5f;
+    [Tooltip("Distance de détection des marches devant le joueur")]
+    [Range(0.1f, 0.5f)]
+    public float stepCheckDistance = 0.3f;
+    [Tooltip("Vitesse de montée des marches")]
+    [Range(1f, 10f)]
+    public float stepClimbSpeed = 5f;
+    [Tooltip("Active/désactive la montée automatique des marches")]
+    public bool enableStepClimbing = true;
+    
+    // Debug est maintenant géré par GlobalDebugManager
+    
     // Variables privées
     private Vector3 moveDirection;
     private Rigidbody rb;
@@ -55,6 +71,7 @@ public class PlayerController : MonoBehaviour
     private float currentMoveSpeed;
     private float targetMoveSpeed;
     private float savedCameraZoom = -1f; // Sauvegarde du zoom avant sprint
+    private bool isControlEnabled = true; // Pour gérer le contrôle pendant les dialogues
     
     // Variables d'input pour l'animator
     private float inputX;
@@ -135,20 +152,35 @@ public class PlayerController : MonoBehaviour
     
     void Update()
     {
-        HandleInput();
-        CheckGrounded();
-        UpdateSprint();
+        // La régénération de stamina continue même si les contrôles sont désactivés
         UpdateStamina();
-        UpdateAnimator();
-        ApplyJumpPhysics();
         
-        // Transition fluide de la vitesse
-        currentMoveSpeed = Mathf.Lerp(currentMoveSpeed, targetMoveSpeed, sprintTransitionSpeed);
+        // Le reste ne s'exécute que si les contrôles sont activés
+        if (isControlEnabled && enabled)
+        {
+            HandleInput();
+            CheckGrounded();
+            UpdateSprint();
+            UpdateAnimator();
+            ApplyJumpPhysics();
+            
+            // Transition fluide de la vitesse
+            currentMoveSpeed = Mathf.Lerp(currentMoveSpeed, targetMoveSpeed, sprintTransitionSpeed);
+        }
     }
     
     void FixedUpdate()
     {
-        MovePlayer();
+        if (isControlEnabled && enabled)
+        {
+            MovePlayer();
+            
+            // Vérifie et gère la montée automatique des marches
+            if (enableStepClimbing && moveDirection.magnitude > 0.1f)
+            {
+                CheckAndClimbStep();
+            }
+        }
     }
     
     void HandleInput()
@@ -237,12 +269,18 @@ public class PlayerController : MonoBehaviour
     {
         if (!useStamina) return;
         
-        if (isSprinting)
+        // Use unscaledDeltaTime so stamina regenerates even when game is paused
+        float deltaTime = Time.unscaledDeltaTime;
+        
+        if (isSprinting && isControlEnabled)
         {
-            // Consomme la stamina
-            currentStamina -= staminaDrainRate * Time.deltaTime;
-            currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
-            staminaRegenTimer = staminaRegenDelay;
+            // Consomme la stamina (only when not paused and controls enabled)
+            if (Time.timeScale > 0)
+            {
+                currentStamina -= staminaDrainRate * Time.deltaTime;
+                currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
+                staminaRegenTimer = staminaRegenDelay;
+            }
             
             // Force l'arrêt du sprint si plus de stamina
             if (currentStamina <= 0f)
@@ -252,14 +290,14 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            // Régénère la stamina après un délai
+            // Régénère la stamina même en pause
             if (staminaRegenTimer > 0f)
             {
-                staminaRegenTimer -= Time.deltaTime;
+                staminaRegenTimer -= deltaTime;
             }
             else
             {
-                currentStamina += staminaRegenRate * Time.deltaTime;
+                currentStamina += staminaRegenRate * deltaTime;
                 currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
             }
         }
@@ -355,7 +393,7 @@ public class PlayerController : MonoBehaviour
         animator.SetBool("IsSprinting", isSprinting);
         animator.SetFloat("SprintSpeed", isSprinting ? 1f : 0f);
         
-        if (Input.GetKeyDown(KeyCode.F1))
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player) && Input.GetKeyDown(KeyCode.F1))
         {
             Debug.Log($"🎭 Animator State: Speed={currentSpeed:F2}, IsMoving={isMoving}, IsSprinting={isSprinting}");
         }
@@ -422,7 +460,25 @@ public class PlayerController : MonoBehaviour
         }
         
         bool wasGrounded = isGrounded;
-        isGrounded = Physics.Raycast(rayStart, Vector3.down, groundCheckDistance + 0.1f, groundLayer);
+        
+        // AMÉLIORATION : Utilise plusieurs raycasts pour une meilleure détection sur les escaliers
+        bool centerGrounded = Physics.Raycast(rayStart, Vector3.down, groundCheckDistance + 0.1f, groundLayer);
+        
+        // Raycasts additionnels autour du personnage pour les surfaces irrégulières
+        float checkRadius = 0.2f;
+        bool frontGrounded = Physics.Raycast(rayStart + transform.forward * checkRadius, Vector3.down, groundCheckDistance + 0.2f, groundLayer);
+        bool backGrounded = Physics.Raycast(rayStart - transform.forward * checkRadius, Vector3.down, groundCheckDistance + 0.2f, groundLayer);
+        bool leftGrounded = Physics.Raycast(rayStart - transform.right * checkRadius, Vector3.down, groundCheckDistance + 0.2f, groundLayer);
+        bool rightGrounded = Physics.Raycast(rayStart + transform.right * checkRadius, Vector3.down, groundCheckDistance + 0.2f, groundLayer);
+        
+        // On est au sol si au moins un des raycasts touche le sol
+        isGrounded = centerGrounded || frontGrounded || backGrounded || leftGrounded || rightGrounded;
+        
+        // Alternative : Utiliser une SphereCast pour une détection plus large
+        if (!isGrounded)
+        {
+            isGrounded = Physics.SphereCast(rayStart, 0.15f, Vector3.down, out RaycastHit sphereHit, groundCheckDistance, groundLayer);
+        }
         
         if (!wasGrounded && isGrounded && footstepSystem != null)
         {
@@ -430,8 +486,23 @@ public class PlayerController : MonoBehaviour
             footstepSystem.PlayLandingParticles();
         }
         
-        Debug.DrawRay(rayStart, Vector3.down * (groundCheckDistance + 0.1f), 
-                     isGrounded ? Color.green : Color.red);
+        // Debug visuel amélioré
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
+        {
+            // Raycast central
+            Debug.DrawRay(rayStart, Vector3.down * (groundCheckDistance + 0.1f), 
+                         centerGrounded ? Color.green : Color.red);
+            
+            // Raycasts additionnels
+            Debug.DrawRay(rayStart + transform.forward * checkRadius, Vector3.down * (groundCheckDistance + 0.2f), 
+                         frontGrounded ? Color.green : Color.red);
+            Debug.DrawRay(rayStart - transform.forward * checkRadius, Vector3.down * (groundCheckDistance + 0.2f), 
+                         backGrounded ? Color.green : Color.red);
+            Debug.DrawRay(rayStart + transform.right * checkRadius, Vector3.down * (groundCheckDistance + 0.2f), 
+                         leftGrounded ? Color.green : Color.red);
+            Debug.DrawRay(rayStart - transform.right * checkRadius, Vector3.down * (groundCheckDistance + 0.2f), 
+                         rightGrounded ? Color.green : Color.red);
+        }
     }
     
     // Méthodes publiques
@@ -478,6 +549,19 @@ public class PlayerController : MonoBehaviour
         return useStamina ? (currentStamina / maxStamina) : 1f;
     }
     
+    // Nouvelles méthodes pour gérer le contrôle pendant les dialogues
+    public void DisableControl()
+    {
+        isControlEnabled = false;
+        moveDirection = Vector3.zero;
+        if (isSprinting) StopSprint();
+    }
+    
+    public void EnableControl()
+    {
+        isControlEnabled = true;
+    }
+    
     void FixModelPosition()
     {
         Transform spaceManModel = transform.Find("space_man_model");
@@ -510,9 +594,11 @@ public class PlayerController : MonoBehaviour
     
     void OnGUI()
     {
-        if (!Input.GetKey(KeyCode.F1)) return;
+        if (!GlobalDebugManager.IsDebugEnabled(DebugSystem.Player)) return;
         
-        GUILayout.BeginArea(new Rect(10, 10, 300, 200));
+        // Note: F1 est maintenant géré dans Update pour le debug logging
+        
+        GUILayout.BeginArea(new Rect(10, 10, 300, 250));
         GUILayout.Label("=== PLAYER DEBUG (F1) ===");
         GUILayout.Label($"Vitesse actuelle: {currentSpeed:F2}");
         GUILayout.Label($"Vitesse de déplacement: {currentMoveSpeed:F2}");
@@ -520,6 +606,11 @@ public class PlayerController : MonoBehaviour
         GUILayout.Label($"Direction: {moveDirection}");
         GUILayout.Label($"En mouvement: {(IsMoving() ? "✅" : "❌")}");
         GUILayout.Label($"Sprint: {(isSprinting ? "✅ ACTIF" : "❌")}");
+        
+        // Nouvelles infos de Step Climbing
+        GUILayout.Label($"--- Step Climbing ---");
+        GUILayout.Label($"Activé: {(enableStepClimbing ? "✅" : "❌")}");
+        GUILayout.Label($"Hauteur max: {maxStepHeight:F2}m");
         
         if (useStamina)
         {
@@ -550,5 +641,101 @@ public class PlayerController : MonoBehaviour
     public void ManualFixModelPosition()
     {
         FixModelPosition();
+    }
+    
+    /// <summary>
+    /// Vérifie s'il y a une marche devant le joueur et la monte automatiquement
+    /// </summary>
+    void CheckAndClimbStep()
+    {
+        // Position de départ du raycast (au niveau des pieds)
+        Vector3 rayOrigin = transform.position + Vector3.up * 0.05f;
+        
+        // Direction du mouvement
+        Vector3 rayDirection = moveDirection.normalized;
+        
+        // Premier raycast : vérifie s'il y a un obstacle devant
+        RaycastHit lowerHit;
+        if (Physics.Raycast(rayOrigin, rayDirection, out lowerHit, stepCheckDistance, groundLayer))
+        {
+            // Il y a un obstacle, vérifions si c'est une marche franchissable
+            
+            // Deuxième raycast : depuis plus haut pour vérifier la hauteur de l'obstacle
+            Vector3 upperRayOrigin = transform.position + Vector3.up * (maxStepHeight + 0.1f);
+            RaycastHit upperHit;
+            
+            // Si le raycast du haut ne touche rien, c'est qu'on peut passer au-dessus
+            if (!Physics.Raycast(upperRayOrigin, rayDirection, stepCheckDistance * 1.5f, groundLayer))
+            {
+                // Troisième raycast : vérifie la hauteur exacte de la marche
+                Vector3 stepCheckOrigin = lowerHit.point + Vector3.up * maxStepHeight + rayDirection * 0.1f;
+                RaycastHit stepTopHit;
+                
+                if (Physics.Raycast(stepCheckOrigin, Vector3.down, out stepTopHit, maxStepHeight, groundLayer))
+                {
+                    float stepHeight = stepTopHit.point.y - transform.position.y;
+                    
+                    // Si la hauteur est dans la plage acceptable
+                    if (stepHeight > 0.02f && stepHeight <= maxStepHeight)
+                    {
+                        // Monte la marche en douceur
+                        Vector3 targetPosition = transform.position;
+                        targetPosition.y = stepTopHit.point.y + 0.05f; // Petit offset pour éviter de rester coincé
+                        
+                        // Application du mouvement vertical
+                        rb.MovePosition(Vector3.Lerp(transform.position, targetPosition, Time.fixedDeltaTime * stepClimbSpeed));
+                        
+                        // Maintient la vélocité horizontale pour continuer le mouvement
+                        rb.velocity = new Vector3(rb.velocity.x, Mathf.Max(rb.velocity.y, 0f), rb.velocity.z);
+                        
+                        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
+                        {
+                            Debug.Log($"🪜 Montée de marche détectée - Hauteur: {stepHeight:F2}m");
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Debug visuel
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
+        {
+            // Raycast du bas (détection obstacle)
+            Debug.DrawRay(rayOrigin, rayDirection * stepCheckDistance, Color.red);
+            // Raycast du haut (vérification passage)
+            Debug.DrawRay(transform.position + Vector3.up * (maxStepHeight + 0.1f), rayDirection * stepCheckDistance * 1.5f, Color.yellow);
+        }
+    }
+    
+    /// <summary>
+    /// Alternative : Montée de marche par ajustement du collider
+    /// </summary>
+    void CheckStepWithCapsuleCast()
+    {
+        CapsuleCollider capsule = GetComponent<CapsuleCollider>();
+        if (capsule == null) return;
+        
+        float radius = capsule.radius;
+        float height = capsule.height;
+        Vector3 point1 = transform.position + capsule.center + Vector3.up * (height/2 - radius);
+        Vector3 point2 = transform.position + capsule.center - Vector3.up * (height/2 - radius);
+        
+        // CapsuleCast pour détecter les obstacles
+        RaycastHit hit;
+        if (Physics.CapsuleCast(point1, point2, radius * 0.9f, moveDirection, out hit, stepCheckDistance, groundLayer))
+        {
+            // Vérifie si on peut monter dessus
+            float obstacleHeight = hit.point.y - transform.position.y;
+            if (obstacleHeight > 0 && obstacleHeight <= maxStepHeight)
+            {
+                // Vérifie qu'il y a de la place au-dessus
+                Vector3 checkPos = transform.position + Vector3.up * (obstacleHeight + 0.1f);
+                if (!Physics.CheckCapsule(checkPos + point1, checkPos + point2, radius * 0.9f, groundLayer))
+                {
+                    // Monte la marche
+                    transform.position += Vector3.up * obstacleHeight;
+                }
+            }
+        }
     }
 }

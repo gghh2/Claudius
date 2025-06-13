@@ -27,12 +27,13 @@ public class JournalQuest
     public JournalQuest(QuestToken token, string npcName)
     {
         questId = token.questId;
-        questTitle = "Mission: " + token.description;
-        description = token.description;
-        giverNPCName = npcName;
+        // NOUVEAU: Formate la description pour le titre
+        questTitle = "Mission: " + TextFormatter.FormatDescription(token.description);
+        description = TextFormatter.FormatDescription(token.description);
+        giverNPCName = TextFormatter.FormatName(npcName);
         status = QuestStatus.InProgress;
         questType = token.questType;
-        zoneName = token.zoneName;
+        zoneName = TextFormatter.FormatName(token.zoneName);
         currentProgress = 0;
         maxProgress = token.quantity;
     }
@@ -165,6 +166,29 @@ public class QuestJournal : MonoBehaviour
     public List<JournalQuest> GetQuestsByStatus(QuestStatus status)
     {
         return allQuests.Where(q => q.status == status).ToList();
+    }
+    
+    public JournalQuest GetQuest(string questId)
+    {
+        return allQuests.FirstOrDefault(q => q.questId == questId);
+    }
+    
+    public void CancelQuest(string questId)
+    {
+        JournalQuest quest = allQuests.FirstOrDefault(q => q.questId == questId);
+        if (quest != null && quest.status == QuestStatus.InProgress)
+        {
+            quest.status = QuestStatus.Cancelled;
+            
+            if (debugMode)
+                Debug.Log($"❌ Quête annulée: {quest.questTitle}");
+            
+            // Nettoie la quête active dans le QuestManager
+            if (QuestManager.Instance != null)
+            {
+                QuestManager.Instance.CancelQuest(questId);
+            }
+        }
     }
     
     [ContextMenu("Show All Quests")]

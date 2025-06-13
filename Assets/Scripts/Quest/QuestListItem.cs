@@ -30,13 +30,13 @@ public class QuestListItem : MonoBehaviour
         
         // Affiche les informations de la quête
         if (questTitleText != null)
-            questTitleText.text = quest.questTitle;
+            questTitleText.text = quest.questTitle; // Déjà formaté dans JournalQuest
             
         if (questGiverText != null)
-            questGiverText.text = $"👤 {quest.giverNPCName}";
+            questGiverText.text = $"👤 {quest.giverNPCName}"; // Déjà formaté dans JournalQuest
             
         if (questLocationText != null)
-            questLocationText.text = $"📍 {quest.zoneName}";
+            questLocationText.text = $"📍 {quest.zoneName}"; // Déjà formaté dans JournalQuest
             
         if (questProgressText != null)
             questProgressText.text = $"📊 {quest.GetProgressText()}";

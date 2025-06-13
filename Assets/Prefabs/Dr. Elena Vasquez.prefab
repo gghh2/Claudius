@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 1504697991577378931}
   - component: {fileID: 1504697991577378930}
   - component: {fileID: 1504697991577378929}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Dr. Elena Vasquez
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -135,7 +135,7 @@ MonoBehaviour:
   waitTimeMax: 5
   movementRadius: 5
   showMovementArea: 1
-  debugMode: 0
+  showGizmos: 1
 --- !u!114 &1504697991577378930
 MonoBehaviour:
   m_ObjectHideFlags: 0

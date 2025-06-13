@@ -1,11 +1,10 @@
 using UnityEngine;
-using System.Collections.Generic;
 
 public class AudioDistanceManager : MonoBehaviour
 {
     public static AudioDistanceManager Instance { get; private set; }
     
-    [Header("===== CAMERA DISTANCE AUDIO CONTROL =====")]
+    [Header("===== CAMERA ZOOM AUDIO CONTROL =====")]
     
     [Header("References")]
     [Tooltip("The camera to track (auto-finds main camera if null)")]
@@ -48,20 +47,10 @@ public class AudioDistanceManager : MonoBehaviour
     [Tooltip("Smoothing speed")]
     public float smoothSpeed = 2f;
     
-    [Header("Debug")]
-    public bool debugMode = true;
-    public bool showDistanceGizmos = true;
-    
     // Private
     private float currentVolumeMultiplier = 1f;
     private float targetVolumeMultiplier = 1f;
-    private float lastZoomSize = 0f;
     private bool usingOrthographicMode = false;
-    
-    // Audio mixer groups (optional, for more control)
-    private UnityEngine.Audio.AudioMixerGroup ambientMixerGroup;
-    private UnityEngine.Audio.AudioMixerGroup sfxMixerGroup;
-    private UnityEngine.Audio.AudioMixerGroup voiceMixerGroup;
     
     void Awake()
     {
@@ -98,14 +87,6 @@ public class AudioDistanceManager : MonoBehaviour
         
         // Check if camera is orthographic
         usingOrthographicMode = targetCamera.orthographic;
-        if (usingOrthographicMode)
-        {
-            Debug.Log("📷 AudioDistanceManager: Using orthographic zoom-based volume control");
-        }
-        else
-        {
-            Debug.LogWarning("📷 AudioDistanceManager: Camera is not orthographic! Volume control may not work as expected.");
-        }
     }
     
     void Update()
@@ -170,20 +151,6 @@ public class AudioDistanceManager : MonoBehaviour
         
         // Apply volume changes
         ApplyVolumeMultiplier();
-        
-        // Debug
-        if (debugMode && Mathf.Abs(currentValue - lastZoomSize) > 0.1f)
-        {
-            lastZoomSize = currentValue;
-            if (usingOrthographicMode)
-            {
-                Debug.Log($"📷 Camera Zoom Size: {currentValue:F1} | Volume: {(currentVolumeMultiplier * 100):F0}%");
-            }
-            else
-            {
-                Debug.Log($"📷 Camera Distance: {currentValue:F1}m | Volume: {(currentVolumeMultiplier * 100):F0}%");
-            }
-        }
     }
     
     void ApplyVolumeMultiplier()
@@ -203,9 +170,6 @@ public class AudioDistanceManager : MonoBehaviour
         {
             SoundEffectsManager.Instance.SetDistanceMultiplier(currentVolumeMultiplier);
         }
-        
-        // Note: For NPC voices and player sounds, you'll need to add similar methods
-        // to those systems or use Audio Mixer groups
     }
     
     public float GetCurrentMultiplier()
@@ -217,54 +181,5 @@ public class AudioDistanceManager : MonoBehaviour
     {
         minZoomSize = Mathf.Max(0.1f, min);
         maxZoomSize = Mathf.Max(minZoomSize + 0.1f, max);
-    }
-    
-    // Keep old method for compatibility
-    public void SetDistanceRange(float min, float max)
-    {
-        Debug.LogWarning("SetDistanceRange is deprecated for orthographic cameras. Use SetZoomRange instead.");
-        SetZoomRange(min / 5f, max / 5f); // Rough conversion
-    }
-    
-    void OnDrawGizmos()
-    {
-        if (!showDistanceGizmos || playerTransform == null || targetCamera == null)
-            return;
-        
-        if (usingOrthographicMode)
-        {
-            // For orthographic cameras, show zoom levels as UI info
-            #if UNITY_EDITOR
-            Vector3 labelPos = targetCamera.transform.position + Vector3.up * 2f;
-            string zoomInfo = $"Zoom Size: {targetCamera.orthographicSize:F1}\n";
-            zoomInfo += $"Volume: {(currentVolumeMultiplier * 100):F0}%\n";
-            zoomInfo += $"Min Zoom (100%): {minZoomSize:F1}\n";
-            zoomInfo += $"Max Zoom ({(minVolumeMultiplier * 100):F0}%): {maxZoomSize:F1}";
-            
-            UnityEditor.Handles.Label(labelPos, zoomInfo);
-            
-            // Draw line from camera to player
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawLine(playerTransform.position, targetCamera.transform.position);
-            #endif
-        }
-        else
-        {
-            // Original distance-based visualization for perspective cameras
-            Gizmos.color = new Color(0f, 1f, 0f, 0.3f);
-            Gizmos.DrawWireSphere(playerTransform.position, minZoomSize * 5f);
-            
-            Gizmos.color = new Color(1f, 1f, 0f, 0.3f);
-            Gizmos.DrawWireSphere(playerTransform.position, maxZoomSize * 5f);
-            
-            float distance = Vector3.Distance(targetCamera.transform.position, playerTransform.position);
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawLine(playerTransform.position, targetCamera.transform.position);
-            
-            #if UNITY_EDITOR
-            Vector3 labelPos = targetCamera.transform.position + Vector3.up;
-            UnityEditor.Handles.Label(labelPos, $"Distance: {distance:F1}m\nVolume: {(currentVolumeMultiplier * 100):F0}%");
-            #endif
-        }
     }
 }

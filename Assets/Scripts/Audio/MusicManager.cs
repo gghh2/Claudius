@@ -44,13 +44,6 @@ public class MusicManager : MonoBehaviour
     [Tooltip("List of all music tracks in the game")]
     public List<MusicTrack> musicTracks = new List<MusicTrack>();
     
-    [Header("Audio Sources")]
-    [Tooltip("Primary audio source for music")]
-    private AudioSource primarySource;
-    
-    [Tooltip("Secondary audio source for crossfading")]
-    private AudioSource secondarySource;
-    
     [Header("Settings")]
     [Tooltip("Master music volume")]
     [Range(0f, 1f)]
@@ -65,15 +58,14 @@ public class MusicManager : MonoBehaviour
     [Header("Current State")]
     [SerializeField] private MusicTrack currentTrack;
     [SerializeField] private MusicZoneType currentZone = MusicZoneType.Menu;
-    [SerializeField] private bool isFading = false;
-    
-    [Header("Debug")]
-    public bool debugMode = true;
     
     // Private variables
+    private AudioSource primarySource;
+    private AudioSource secondarySource;
     private Coroutine fadeCoroutine;
     private AudioSource activeSource;
     private AudioSource inactiveSource;
+    private bool isFading = false;
     
     void Awake()
     {
@@ -105,9 +97,6 @@ public class MusicManager : MonoBehaviour
         
         activeSource = primarySource;
         inactiveSource = secondarySource;
-        
-        if (debugMode)
-            Debug.Log("🎵 MusicManager: Audio sources created");
     }
     
     void Start()
@@ -130,26 +119,15 @@ public class MusicManager : MonoBehaviour
         {
             PlayTrack(track);
         }
-        else
-        {
-            Debug.LogWarning($"🎵 Track '{trackName}' not found!");
-        }
     }
     
     public void PlayTrack(MusicTrack track)
     {
         if (track == null || track.audioClip == null)
-        {
-            Debug.LogError("🎵 Cannot play null track or clip!");
             return;
-        }
         
         if (currentTrack == track && activeSource.isPlaying)
-        {
-            if (debugMode)
-                Debug.Log($"🎵 Track '{track.trackName}' is already playing");
             return;
-        }
         
         if (fadeCoroutine != null)
         {
@@ -162,9 +140,6 @@ public class MusicManager : MonoBehaviour
     IEnumerator CrossfadeToTrack(MusicTrack newTrack)
     {
         isFading = true;
-        
-        if (debugMode)
-            Debug.Log($"🎵 Crossfading to: {newTrack.trackName}");
         
         // Setup the inactive source with new track
         inactiveSource.clip = newTrack.audioClip;
@@ -202,9 +177,6 @@ public class MusicManager : MonoBehaviour
         
         currentTrack = newTrack;
         isFading = false;
-        
-        if (debugMode)
-            Debug.Log($"🎵 Now playing: {newTrack.trackName}");
     }
     
     public void SetZone(MusicZoneType newZone)
@@ -213,9 +185,6 @@ public class MusicManager : MonoBehaviour
             return;
         
         currentZone = newZone;
-        
-        if (debugMode)
-            Debug.Log($"🎵 Entered zone: {newZone}");
         
         // Find appropriate track for this zone
         MusicTrack zoneTrack = GetTrackForZone(newZone);
@@ -236,10 +205,6 @@ public class MusicManager : MonoBehaviour
             return zoneTracks[Random.Range(0, zoneTracks.Count)];
         }
         
-        // No specific track for this zone
-        if (debugMode)
-            Debug.Log($"🎵 No specific track for zone: {zone}");
-        
         return null;
     }
     
@@ -253,19 +218,8 @@ public class MusicManager : MonoBehaviour
         MusicTrack victoryTrack = GetTrackForZone(MusicZoneType.Victory);
         if (victoryTrack != null)
         {
-            // Victory music typically doesn't loop
             victoryTrack.loop = false;
             PlayTrack(victoryTrack);
-        }
-    }
-    
-    public void PlayGameOverMusic()
-    {
-        MusicTrack gameOverTrack = GetTrackForZone(MusicZoneType.GameOver);
-        if (gameOverTrack != null)
-        {
-            gameOverTrack.loop = false;
-            PlayTrack(gameOverTrack);
         }
     }
     
@@ -325,8 +279,6 @@ public class MusicManager : MonoBehaviour
         if (activeSource.isPlaying)
         {
             activeSource.Pause();
-            if (debugMode)
-                Debug.Log("🎵 Music paused");
         }
     }
     
@@ -335,8 +287,6 @@ public class MusicManager : MonoBehaviour
         if (!activeSource.isPlaying && currentTrack != null)
         {
             activeSource.UnPause();
-            if (debugMode)
-                Debug.Log("🎵 Music resumed");
         }
     }
     
@@ -347,32 +297,5 @@ public class MusicManager : MonoBehaviour
         {
             masterVolume = PlayerPrefs.GetFloat("MusicVolume");
         }
-    }
-    
-    [ContextMenu("Debug Current State")]
-    public void DebugCurrentState()
-    {
-        Debug.Log("===== MUSIC MANAGER STATE =====");
-        Debug.Log($"Current Track: {(currentTrack != null ? currentTrack.trackName : "None")}");
-        Debug.Log($"Current Zone: {currentZone}");
-        Debug.Log($"Master Volume: {masterVolume}");
-        Debug.Log($"Is Fading: {isFading}");
-        Debug.Log($"Active Source Playing: {activeSource.isPlaying}");
-        Debug.Log($"Total Tracks: {musicTracks.Count}");
-        Debug.Log("===============================");
-    }
-    
-    [ContextMenu("List All Tracks")]
-    public void ListAllTracks()
-    {
-        Debug.Log("===== AVAILABLE MUSIC TRACKS =====");
-        foreach (var track in musicTracks)
-        {
-            string zones = track.playInZones != null && track.playInZones.Length > 0 
-                ? string.Join(", ", track.playInZones.Select(z => z.ToString())) 
-                : "No zones assigned";
-            Debug.Log($"• {track.trackName} - Volume: {track.volume} - Zones: {zones}");
-        }
-        Debug.Log("==================================");
     }
 }

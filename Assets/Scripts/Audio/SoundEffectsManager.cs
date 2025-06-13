@@ -44,14 +44,11 @@ public class SoundEffectsManager : MonoBehaviour
     [Tooltip("Default max distance for 3D sounds")]
     public float default3DMaxDistance = 20f;
     
-    [Header("Debug")]
-    public bool debugMode = false;
-    
     // Private
     private List<AudioSource> audioSourcePool = new List<AudioSource>();
     private Dictionary<string, SoundEffect> soundDictionary = new Dictionary<string, SoundEffect>();
     private int currentPlayingSounds = 0;
-    private float distanceMultiplier = 1f; // For camera distance attenuation
+    private float distanceMultiplier = 1f;
     
     void Awake()
     {
@@ -81,9 +78,6 @@ public class SoundEffectsManager : MonoBehaviour
             
             audioSourcePool.Add(source);
         }
-        
-        if (debugMode)
-            Debug.Log($"🔊 Created audio source pool with {poolSize} sources");
     }
     
     void BuildSoundDictionary()
@@ -116,25 +110,14 @@ public class SoundEffectsManager : MonoBehaviour
     public void PlaySound(SoundEffect sound, Vector3? position = null)
     {
         if (sound == null || sound.audioClip == null)
-        {
-            Debug.LogError("Cannot play null sound effect!");
             return;
-        }
         
         if (currentPlayingSounds >= maxSimultaneousSounds)
-        {
-            if (debugMode)
-                Debug.LogWarning("Maximum simultaneous sounds reached!");
             return;
-        }
         
         AudioSource source = GetAvailableAudioSource();
         if (source == null)
-        {
-            if (debugMode)
-                Debug.LogWarning("No available audio sources in pool!");
             return;
-        }
         
         // Configure audio source
         source.clip = sound.audioClip;
@@ -161,9 +144,6 @@ public class SoundEffectsManager : MonoBehaviour
         
         // Return to pool when finished
         StartCoroutine(ReturnToPool(source, sound.audioClip.length));
-        
-        if (debugMode)
-            Debug.Log($"🔊 Playing sound: {sound.soundName}");
     }
     
     public void PlayRandomSound(List<string> soundNames, Vector3? position = null)
@@ -216,7 +196,7 @@ public class SoundEffectsManager : MonoBehaviour
     
     System.Collections.IEnumerator ReturnToPool(AudioSource source, float delay)
     {
-        yield return new WaitForSeconds(delay + 0.1f); // Small buffer
+        yield return new WaitForSeconds(delay + 0.1f);
         
         source.Stop();
         source.clip = null;
@@ -227,8 +207,6 @@ public class SoundEffectsManager : MonoBehaviour
     public void SetMasterVolume(float volume)
     {
         masterVolume = Mathf.Clamp01(volume);
-        
-        // Save to PlayerPrefs
         PlayerPrefs.SetFloat("SFXVolume", masterVolume);
         PlayerPrefs.Save();
     }
@@ -258,34 +236,5 @@ public class SoundEffectsManager : MonoBehaviour
         {
             masterVolume = PlayerPrefs.GetFloat("SFXVolume");
         }
-    }
-    
-    [ContextMenu("Debug Pool Status")]
-    public void DebugPoolStatus()
-    {
-        int activeSources = 0;
-        foreach (var source in audioSourcePool)
-        {
-            if (source.gameObject.activeInHierarchy)
-                activeSources++;
-        }
-        
-        Debug.Log("===== AUDIO SOURCE POOL STATUS =====");
-        Debug.Log($"Total sources in pool: {audioSourcePool.Count}");
-        Debug.Log($"Active sources: {activeSources}");
-        Debug.Log($"Currently playing sounds: {currentPlayingSounds}");
-        Debug.Log($"Master Volume: {masterVolume}");
-        Debug.Log("====================================");
-    }
-    
-    [ContextMenu("List All Sound Effects")]
-    public void ListAllSoundEffects()
-    {
-        Debug.Log("===== AVAILABLE SOUND EFFECTS =====");
-        foreach (var sound in soundEffects)
-        {
-            Debug.Log($"• {sound.soundName} - Volume: {sound.volume} - 3D: {sound.is3D}");
-        }
-        Debug.Log("===================================");
     }
 }

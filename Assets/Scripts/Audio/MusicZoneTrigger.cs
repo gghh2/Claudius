@@ -13,16 +13,6 @@ public class MusicZoneTrigger : MonoBehaviour
     [Tooltip("Only trigger for objects with this tag")]
     public string triggerTag = "Player";
     
-    [Header("Visual Settings")]
-    [Tooltip("Show zone boundaries in editor")]
-    public bool showGizmos = true;
-    
-    [Tooltip("Gizmo color")]
-    public Color gizmoColor = new Color(0.5f, 0.5f, 1f, 0.3f);
-    
-    [Header("Debug")]
-    public bool debugMode = true;
-    
     private bool playerInZone = false;
     
     void Start()
@@ -45,9 +35,6 @@ public class MusicZoneTrigger : MonoBehaviour
         {
             playerInZone = true;
             
-            if (debugMode)
-                Debug.Log($"🎵 Player entered music zone: {zoneType}");
-            
             if (MusicManager.Instance != null)
             {
                 // If specific track is set, play it
@@ -69,34 +56,29 @@ public class MusicZoneTrigger : MonoBehaviour
         if (other.CompareTag(triggerTag) && playerInZone)
         {
             playerInZone = false;
-            
-            if (debugMode)
-                Debug.Log($"🎵 Player left music zone: {zoneType}");
         }
     }
     
     void OnDrawGizmos()
     {
-        if (!showGizmos) return;
-        
         Collider col = GetComponent<Collider>();
         if (col != null)
         {
-            Gizmos.color = gizmoColor;
+            Gizmos.color = new Color(0.5f, 0.5f, 1f, 0.3f);
             
             if (col is BoxCollider box)
             {
                 Matrix4x4 oldMatrix = Gizmos.matrix;
                 Gizmos.matrix = Matrix4x4.TRS(transform.position, transform.rotation, transform.lossyScale);
                 Gizmos.DrawCube(box.center, box.size);
-                Gizmos.color = new Color(gizmoColor.r, gizmoColor.g, gizmoColor.b, 1f);
+                Gizmos.color = new Color(0.5f, 0.5f, 1f, 1f);
                 Gizmos.DrawWireCube(box.center, box.size);
                 Gizmos.matrix = oldMatrix;
             }
             else if (col is SphereCollider sphere)
             {
                 Gizmos.DrawSphere(transform.position + sphere.center, sphere.radius * transform.lossyScale.x);
-                Gizmos.color = new Color(gizmoColor.r, gizmoColor.g, gizmoColor.b, 1f);
+                Gizmos.color = new Color(0.5f, 0.5f, 1f, 1f);
                 Gizmos.DrawWireSphere(transform.position + sphere.center, sphere.radius * transform.lossyScale.x);
             }
         }

@@ -41,22 +41,12 @@ public class AmbientSoundZone : MonoBehaviour
     [Tooltip("Destroy the audio source when leaving zone")]
     public bool destroyOnExit = true;
     
-    [Header("Visual")]
-    [Tooltip("Show zone in editor")]
-    public bool showGizmos = true;
-    
-    [Tooltip("Gizmo color")]
-    public Color gizmoColor = new Color(0f, 1f, 0.5f, 0.3f);
-    
-    [Header("Debug")]
-    public bool debugMode = true;
-    
     // Private
     private AudioSource audioSource;
     private Coroutine fadeCoroutine;
     private bool isPlayerInZone = false;
-    private float baseVolume = 1f; // Store the base volume
-    private float distanceMultiplier = 1f; // Multiplier from camera distance
+    private float baseVolume = 1f;
+    private float distanceMultiplier = 1f;
     
     void Start()
     {
@@ -79,10 +69,6 @@ public class AmbientSoundZone : MonoBehaviour
         if (other.CompareTag(triggerTag) && !isPlayerInZone)
         {
             isPlayerInZone = true;
-            
-            if (debugMode)
-                Debug.Log($"🔊 Player entered ambient zone: {gameObject.name}");
-            
             StartAmbientSound();
         }
     }
@@ -92,10 +78,6 @@ public class AmbientSoundZone : MonoBehaviour
         if (other.CompareTag(triggerTag) && isPlayerInZone)
         {
             isPlayerInZone = false;
-            
-            if (debugMode)
-                Debug.Log($"🔇 Player left ambient zone: {gameObject.name}");
-            
             StopAmbientSound();
         }
     }
@@ -160,7 +142,6 @@ public class AmbientSoundZone : MonoBehaviour
         {
             // 3D positioned but constant volume in zone
             audioSource.spatialBlend = 1f;
-            // Set min distance to a huge value so volume stays constant
             audioSource.minDistance = 1000f;
             audioSource.maxDistance = 1001f;
         }
@@ -262,27 +243,25 @@ public class AmbientSoundZone : MonoBehaviour
     // Editor visualization
     void OnDrawGizmos()
     {
-        if (!showGizmos) return;
-        
         Collider col = GetComponent<Collider>();
         if (col == null) return;
         
         // Draw trigger zone
-        Gizmos.color = gizmoColor;
+        Gizmos.color = new Color(0f, 1f, 0.5f, 0.3f);
         
         if (col is BoxCollider box)
         {
             Matrix4x4 oldMatrix = Gizmos.matrix;
             Gizmos.matrix = Matrix4x4.TRS(transform.position, transform.rotation, transform.lossyScale);
             Gizmos.DrawCube(box.center, box.size);
-            Gizmos.color = new Color(gizmoColor.r, gizmoColor.g, gizmoColor.b, 1f);
+            Gizmos.color = new Color(0f, 1f, 0.5f, 1f);
             Gizmos.DrawWireCube(box.center, box.size);
             Gizmos.matrix = oldMatrix;
         }
         else if (col is SphereCollider sphere)
         {
             Gizmos.DrawSphere(transform.position + sphere.center, sphere.radius * transform.lossyScale.x);
-            Gizmos.color = new Color(gizmoColor.r, gizmoColor.g, gizmoColor.b, 1f);
+            Gizmos.color = new Color(0f, 1f, 0.5f, 1f);
             Gizmos.DrawWireSphere(transform.position + sphere.center, sphere.radius * transform.lossyScale.x);
         }
         

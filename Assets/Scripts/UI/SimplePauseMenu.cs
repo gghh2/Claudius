@@ -11,7 +11,17 @@ public class SimplePauseMenu : MonoBehaviour
     public bool autoSaveSpawnPosition = true;
     
     [Header("Visual")]
+    [Tooltip("Background image for the pause menu (leave null for solid color)")]
+    public Texture2D backgroundImage;
+    
+    [Tooltip("Background color (used if no image is set)")]
     public Color backgroundColor = new Color(0, 0, 0, 0.8f);
+    
+    [Tooltip("Tint color applied to the background image")]
+    public Color backgroundImageTint = new Color(1, 1, 1, 0.9f);
+    
+    [Tooltip("How to scale the background image")]
+    public BackgroundScaleMode backgroundScaleMode = BackgroundScaleMode.StretchToFill;
     
     private bool isPaused = false;
     private GameObject player;
@@ -115,8 +125,8 @@ public class SimplePauseMenu : MonoBehaviour
         InitializeStyles();
         
         // Background
-        GUI.color = backgroundColor;
-        GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), Texture2D.whiteTexture);
+        DrawBackground();
+        
         GUI.color = Color.white;
         
         float centerX = Screen.width / 2f;
@@ -201,6 +211,103 @@ public class SimplePauseMenu : MonoBehaviour
         #else
             Application.Quit();
         #endif
+    }
+    
+    void DrawBackground()
+    {
+        Rect screenRect = new Rect(0, 0, Screen.width, Screen.height);
+        
+        if (backgroundImage != null)
+        {
+            // Use custom background image
+            GUI.color = backgroundImageTint;
+            
+            switch (backgroundScaleMode)
+            {
+                case BackgroundScaleMode.StretchToFill:
+                    GUI.DrawTexture(screenRect, backgroundImage);
+                    break;
+                    
+                case BackgroundScaleMode.ScaleToFit:
+                    DrawScaledTexture(screenRect, backgroundImage, true);
+                    break;
+                    
+                case BackgroundScaleMode.ScaleToFill:
+                    DrawScaledTexture(screenRect, backgroundImage, false);
+                    break;
+                    
+                case BackgroundScaleMode.Center:
+                    float x = (Screen.width - backgroundImage.width) / 2f;
+                    float y = (Screen.height - backgroundImage.height) / 2f;
+                    GUI.DrawTexture(new Rect(x, y, backgroundImage.width, backgroundImage.height), backgroundImage);
+                    break;
+            }
+        }
+        else
+        {
+            // Use solid color
+            GUI.color = backgroundColor;
+            GUI.DrawTexture(screenRect, Texture2D.whiteTexture);
+        }
+    }
+    
+    void DrawScaledTexture(Rect screenRect, Texture2D texture, bool scaleToFit)
+    {
+        float screenAspect = screenRect.width / screenRect.height;
+        float textureAspect = (float)texture.width / texture.height;
+        
+        Rect drawRect = new Rect();
+        
+        if (scaleToFit)
+        {
+            // Scale to fit (may have letterboxing)
+            if (screenAspect > textureAspect)
+            {
+                // Screen is wider - fit height
+                drawRect.height = screenRect.height;
+                drawRect.width = drawRect.height * textureAspect;
+                drawRect.x = (screenRect.width - drawRect.width) / 2f;
+                drawRect.y = 0;
+            }
+            else
+            {
+                // Screen is taller - fit width
+                drawRect.width = screenRect.width;
+                drawRect.height = drawRect.width / textureAspect;
+                drawRect.x = 0;
+                drawRect.y = (screenRect.height - drawRect.height) / 2f;
+            }
+        }
+        else
+        {
+            // Scale to fill (may crop)
+            if (screenAspect > textureAspect)
+            {
+                // Screen is wider - fit width
+                drawRect.width = screenRect.width;
+                drawRect.height = drawRect.width / textureAspect;
+                drawRect.x = 0;
+                drawRect.y = (screenRect.height - drawRect.height) / 2f;
+            }
+            else
+            {
+                // Screen is taller - fit height
+                drawRect.height = screenRect.height;
+                drawRect.width = drawRect.height * textureAspect;
+                drawRect.x = (screenRect.width - drawRect.width) / 2f;
+                drawRect.y = 0;
+            }
+        }
+        
+        GUI.DrawTexture(drawRect, texture);
+    }
+    
+    public enum BackgroundScaleMode
+    {
+        StretchToFill,  // Stretch to fill screen (may distort)
+        ScaleToFit,     // Scale maintaining aspect ratio (may have letterboxing)
+        ScaleToFill,    // Scale to fill screen maintaining aspect ratio (may crop)
+        Center          // Center at original size
     }
     
     public bool IsPaused() => isPaused;

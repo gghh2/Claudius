@@ -92,7 +92,35 @@ public class AIDialogueManager : MonoBehaviour
         
         string systemPrompt = BuildSystemPrompt(npcData);
         currentConversation.Add(new OpenAIMessage("system", systemPrompt));
-        currentConversation.Add(new OpenAIMessage("user", "Le joueur s'approche de vous. Saluez-le de manière naturelle selon votre personnalité."));
+        
+        // Check if there's an active quest with this NPC
+        string initialUserMessage = "Le joueur s'approche de vous. ";
+        
+        if (QuestJournal.Instance != null)
+        {
+            var activeQuests = QuestJournal.Instance.GetActiveQuests();
+            var npcActiveQuest = activeQuests.FirstOrDefault(q => q.giverNPCName == npcData.name);
+            
+            if (npcActiveQuest != null)
+            {
+                // Force the AI to talk about the active quest
+                string questDetails = $"quête '{npcActiveQuest.description}' (Progression: {npcActiveQuest.GetProgressText()})";
+                initialUserMessage = $"Le joueur qui a votre {questDetails} s'approche de vous. VOUS DEVEZ ABSOLUMENT lui demander comment se passe cette mission et l'encourager selon sa progression. NE proposez PAS de nouvelle quête.";
+                
+                // Add a system message to reinforce this
+                currentConversation.Add(new OpenAIMessage("system", $"RAPPEL IMPORTANT: Le joueur a une quête active avec vous: {questDetails}. Vous DEVEZ en parler en premier!"));
+            }
+            else
+            {
+                initialUserMessage = "Le joueur s'approche de vous. Saluez-le de manière naturelle selon votre personnalité.";
+            }
+        }
+        else
+        {
+            initialUserMessage = "Le joueur s'approche de vous. Saluez-le de manière naturelle selon votre personnalité.";
+        }
+        
+        currentConversation.Add(new OpenAIMessage("user", initialUserMessage));
         
         if (IsConfigured())
         {
@@ -183,13 +211,42 @@ public class AIDialogueManager : MonoBehaviour
     {
         AIPromptConfig configToUse = GetConfigForRole(npcData.role);
         
+        // Check for active quest FIRST
+        bool hasActiveQuest = false;
+        string activeQuestInfo = "";
+        
+        if (QuestJournal.Instance != null)
+        {
+            var activeQuests = QuestJournal.Instance.GetActiveQuests();
+            var npcActiveQuest = activeQuests.FirstOrDefault(q => q.giverNPCName == npcData.name);
+            
+            if (npcActiveQuest != null)
+            {
+                hasActiveQuest = true;
+                Debug.Log($"🎯 QUÊTE ACTIVE DÉTECTÉE: {npcActiveQuest.description} - Progression: {npcActiveQuest.GetProgressText()}");
+                activeQuestInfo = $@"
+🔴🔴🔴 ATTENTION PRIORITAIRE 🔴🔴🔴
+LE JOUEUR A UNE QUÊTE ACTIVE AVEC VOUS:
+- Quête: {npcActiveQuest.description}
+- Progression: {npcActiveQuest.GetProgressText()}
+
+VOUS DEVEZ OBLIGATOIREMENT:
+1. Commencer par demander des nouvelles de cette quête
+2. Montrer que vous vous en souvenez
+3. L'encourager selon sa progression
+4. NE PAS proposer de nouvelle quête
+🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴
+";
+            }
+        }
+        
         if (configToUse == null)
         {
             Debug.LogError($"❌ Aucune config trouvée pour le rôle: {npcData.role}");
             
             // Fallback avec l'ancien système
             return $@"🔴 INSTRUCTION CRITIQUE: Quand on vous demande une mission/quête/travail, vous DEVEZ inclure un token [QUEST:...] dans votre réponse!
-
+{activeQuestInfo}
 {gameContext}
 
 VOUS ÊTES:
@@ -219,7 +276,7 @@ Vous êtes sur une planète extraterrestre et interagissez avec un voyageur.";
         
         // Utilise la config appropriée
         return $@"🔴 INSTRUCTION CRITIQUE: Quand on vous demande une mission/quête/travail, vous DEVEZ inclure un token [QUEST:...] dans votre réponse!
-
+{activeQuestInfo}
 {configToUse.npcPersonality}
 
 VOUS ÊTES:
@@ -253,11 +310,19 @@ EXEMPLES POUR VOTRE RÔLE:
 Vous avez déjà donné une mission à ce voyageur: ""{npcActiveQuest.questTitle}""
 Progression: {npcActiveQuest.GetProgressText()}
 
-NE DONNEZ PAS DE NOUVELLE QUÊTE. À la place:
-- Demandez des nouvelles de la mission en cours
-- Encouragez le voyageur  
-- Donnez des conseils sur où chercher
-- Montrez votre préoccupation ou satisfaction selon le progrès";
+🚫 NE DONNEZ PAS DE NOUVELLE QUÊTE!
+
+✅ VOUS DEVEZ:
+- Demander comment se passe la mission
+- Montrer que vous vous souvenez de la quête donnée
+- Encourager le voyageur selon sa progression
+- Donner des conseils si la quête n'est pas terminée
+- Féliciter si la quête est complétée
+
+EXEMPLES:
+- Si progression 0%: 'Alors, avez-vous commencé à chercher [objet] ?'
+- Si progression partielle: 'Je vois que vous avez trouvé X sur Y ! Continuez !'
+- Si progression 100%: 'Excellent ! Vous avez tout trouvé ! Revenez me voir pour votre récompense !'";
             }
             else
             {

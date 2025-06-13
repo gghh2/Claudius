@@ -111,6 +111,18 @@ public class PlayerInventory : MonoBehaviour
         return item?.quantity ?? 0;
     }
     
+    // Get all items for a specific quest
+    public List<InventoryItem> GetQuestItems(string questId)
+    {
+        return items.Where(i => i.questId == questId).ToList();
+    }
+    
+    // Check if player has a specific item for a quest
+    public bool HasItem(string itemName, string questId)
+    {
+        return items.Any(i => i.itemName == itemName && i.questId == questId);
+    }
+    
     [ContextMenu("Show Inventory")]
     public void ShowInventory()
     {

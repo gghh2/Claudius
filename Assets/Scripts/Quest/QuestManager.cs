@@ -537,6 +537,16 @@ public class QuestManager : MonoBehaviour
             {
                 Debug.Log($"[QUEST] OBJECTIFS ACCOMPLIS ! Retournez voir {quest.giverNPCName} pour rendre la quête.");
                 
+                // NOUVEAU: Pour les quêtes FETCH à 1 objet, on ajoute l'objet à l'inventaire
+                if (quest.questData.questType == QuestType.FETCH && quest.questData.quantity == 1)
+                {
+                    if (PlayerInventory.Instance != null)
+                    {
+                        PlayerInventory.Instance.AddItem(quest.questData.objectName, 1, quest.questId);
+                        Debug.Log($"[QUEST] Objet ajouté à l'inventaire: {quest.questData.objectName}");
+                    }
+                }
+                
                 // OPTIONNEL : Afficher un message UI temporaire
                 // ShowTemporaryMessage($"Tous les {objectName} collectés ! Retournez voir {quest.giverNPCName}");
             }

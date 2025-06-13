@@ -294,6 +294,9 @@ public class DialogueUI : MonoBehaviour
         SetAIElementsVisibility(false);
         SetQuestButtonsVisibility(false);
         
+        // Check if player can turn in a completed quest
+        CheckForCompletableQuest(npcData);
+        
         FindObjectOfType<PlayerController>()?.DisableControl();
     }
     
@@ -318,6 +321,9 @@ public class DialogueUI : MonoBehaviour
         if (switchToAIButton != null)
             switchToAIButton.gameObject.SetActive(false);
         SetAIElementsVisibility(true);
+        
+        // Check if player can turn in a completed quest
+        CheckForCompletableQuest(npcData);
         
         FindObjectOfType<PlayerController>()?.DisableControl();
     }
@@ -351,36 +357,77 @@ public class DialogueUI : MonoBehaviour
     }
     
     string GetWelcomeMessage(NPCData npcData)
-{
-    // NOUVEAU : Vérifie d'abord s'il y a une quête active avec ce NPC
-    if (QuestJournal.Instance != null)
     {
-        var activeQuests = QuestJournal.Instance.GetActiveQuests();
-        var npcActiveQuest = activeQuests.FirstOrDefault(q => q.giverNPCName == npcData.name);
-        
-        if (npcActiveQuest != null)
+        // NOUVEAU : Vérifie d'abord s'il y a une quête active avec ce NPC
+        if (QuestJournal.Instance != null)
         {
-            // Il y a une quête active avec ce NPC - message personnalisé selon le rôle
-            switch (npcData.role.ToLower())
+            var activeQuests = QuestJournal.Instance.GetActiveQuests();
+            var npcActiveQuest = activeQuests.FirstOrDefault(q => q.giverNPCName == npcData.name);
+            
+            if (npcActiveQuest != null)
             {
-                case "marchand":
-                    return $"{npcData.name}: Alors, voyageur ! Avez-vous récupéré ce que je vous ai demandé ? Ma mission : « {npcActiveQuest.description} » - Progression : {npcActiveQuest.GetProgressText()}";
+                // Il y a une quête active avec ce NPC - message personnalisé selon le rôle
+                string progression = npcActiveQuest.GetProgressText();
+                string questDesc = npcActiveQuest.description;
                 
-                case "scientifique":
-                    return $"{npcData.name}: Ah, vous voilà ! Comment se passent vos recherches ? Mission en cours : « {npcActiveQuest.description} » - Avancement : {npcActiveQuest.GetProgressText()}";
-                
-                case "garde impérial":
-                    return $"{npcData.name}: Rapport de mission, voyageur ! Où en êtes-vous avec : « {npcActiveQuest.description} » ? Statut : {npcActiveQuest.GetProgressText()}";
-                
-                default:
-                    return $"{npcData.name}: Bonjour ! Comment avance votre mission : « {npcActiveQuest.description} » ? Progression : {npcActiveQuest.GetProgressText()}";
+                // Message différent selon la progression
+                if (npcActiveQuest.currentProgress == 0)
+                {
+                    switch (npcData.role.ToLower())
+                    {
+                        case "marchand":
+                            return $"{npcData.name}: Ah, vous revoilà ! Alors, avez-vous commencé à chercher ce que je vous ai demandé ? Mission : « {questDesc} »";
+                        
+                        case "scientifique":
+                            return $"{npcData.name}: Oh, c'est vous ! J'espère que vous n'avez pas oublié ma demande. Pour rappel : « {questDesc} »";
+                        
+                        case "garde impérial":
+                            return $"{npcData.name}: Voyageur ! Qu'en est-il de votre mission ? Je vous rappelle : « {questDesc} »";
+                        
+                        default:
+                            return $"{npcData.name}: Bonjour ! Avez-vous progressé sur ce que je vous ai demandé ? « {questDesc} »";
+                    }
+                }
+                else if (npcActiveQuest.currentProgress < npcActiveQuest.maxProgress)
+                {
+                    switch (npcData.role.ToLower())
+                    {
+                        case "marchand":
+                            return $"{npcData.name}: Excellent ! Je vois que vous avez déjà fait des progrès ! Mission : « {questDesc} » - Progression : {progression}";
+                        
+                        case "scientifique":
+                            return $"{npcData.name}: Fascinant ! Vos progrès sont remarquables ! Mission : « {questDesc} » - Avancement : {progression}";
+                        
+                        case "garde impérial":
+                            return $"{npcData.name}: Bien ! Vous progressez efficacement ! Mission : « {questDesc} » - Statut : {progression}";
+                        
+                        default:
+                            return $"{npcData.name}: Très bien ! Vous avancez bien ! Mission : « {questDesc} » - Progression : {progression}";
+                    }
+                }
+                else
+                {
+                    switch (npcData.role.ToLower())
+                    {
+                        case "marchand":
+                            return $"{npcData.name}: Formidable ! Il semble que vous ayez terminé ma mission ! « {questDesc} » - Avez-vous tout sur vous ?";
+                        
+                        case "scientifique":
+                            return $"{npcData.name}: Extraordinaire ! Vous avez réussi ! « {questDesc} » - Puis-je voir ce que vous avez trouvé ?";
+                        
+                        case "garde impérial":
+                            return $"{npcData.name}: Mission accomplie ! Excellent travail ! « {questDesc} » - Montrez-moi les résultats.";
+                        
+                        default:
+                            return $"{npcData.name}: Félicitations ! Vous avez terminé ! « {questDesc} » - Êtes-vous prêt à me remettre tout ça ?";
+                    }
+                }
             }
-        }
-        else
-        {
-            // Vérifie si une quête a été terminée avec ce NPC
-            var completedQuests = QuestJournal.Instance.GetCompletedQuests();
-            var npcCompletedQuest = completedQuests.FirstOrDefault(q => q.giverNPCName == npcData.name);
+            else
+            {
+                // Vérifie si une quête a été terminée avec ce NPC
+                var completedQuests = QuestJournal.Instance.GetCompletedQuests();
+                var npcCompletedQuest = completedQuests.FirstOrDefault(q => q.giverNPCName == npcData.name);
             
             if (npcCompletedQuest != null)
             {
@@ -961,6 +1008,65 @@ public class DialogueUI : MonoBehaviour
         
         if (dialoguePanel != null)
             dialoguePanel.SetActive(true);
+    }
+    
+    void CheckForCompletableQuest(NPCData npcData)
+    {
+        if (QuestJournal.Instance == null || QuestManager.Instance == null || PlayerInventory.Instance == null)
+            return;
+            
+        var activeQuests = QuestJournal.Instance.GetActiveQuests();
+        var npcActiveQuest = activeQuests.FirstOrDefault(q => q.giverNPCName == npcData.name);
+        
+        if (npcActiveQuest != null)
+        {
+            Debug.Log($"[UI] Checking quest: {npcActiveQuest.questTitle} - Type: {npcActiveQuest.questType} - Progress: {npcActiveQuest.currentProgress}/{npcActiveQuest.maxProgress}");
+            
+            // Check if quest is ready to turn in
+            if (npcActiveQuest.questType == QuestType.FETCH && 
+                npcActiveQuest.currentProgress >= npcActiveQuest.maxProgress)
+            {
+                Debug.Log($"[UI] FETCH quest ready to turn in: {npcActiveQuest.questTitle}");
+                
+                // Try to get quest data from QuestManager first
+                var activeQuestData = QuestManager.Instance.activeQuests.FirstOrDefault(q => q.questId == npcActiveQuest.questId);
+                
+                if (activeQuestData != null && activeQuestData.questData != null)
+                {
+                    Debug.Log($"[UI] Found active quest data - showing button for: {activeQuestData.questData.objectName} x{activeQuestData.questData.quantity}");
+                    ShowFetchQuestButton(
+                        npcActiveQuest.questId, 
+                        activeQuestData.questData.objectName, 
+                        activeQuestData.questData.quantity
+                    );
+                }
+                else
+                {
+                    // For single item quests, check inventory
+                    Debug.Log($"[UI] No active quest data found - checking inventory for completed quest items");
+                    
+                    // Get all quest items from inventory
+                    var questItems = PlayerInventory.Instance.GetQuestItems(npcActiveQuest.questId);
+                    
+                    if (questItems != null && questItems.Count > 0)
+                    {
+                        // Found quest items in inventory
+                        var firstItem = questItems[0];
+                        Debug.Log($"[UI] Found quest item in inventory: {firstItem.itemName} x{firstItem.quantity}");
+                        
+                        ShowFetchQuestButton(
+                            npcActiveQuest.questId,
+                            firstItem.itemName,
+                            firstItem.quantity
+                        );
+                    }
+                    else
+                    {
+                        Debug.LogError($"[UI] No quest items found in inventory for quest: {npcActiveQuest.questId}");
+                    }
+                }
+            }
+        }
     }
     
     // Méthode utile pour vérifier si l'UI est ouverte

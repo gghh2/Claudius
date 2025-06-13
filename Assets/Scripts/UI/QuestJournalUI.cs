@@ -220,29 +220,17 @@ public class QuestJournalUI : MonoBehaviour
     
     void UpdateTabAppearance()
     {
-        // Change l'apparence des onglets pour montrer lequel est actif
-        // (nous implémenterons ça avec les couleurs plus tard)
+        // Utilise l'état interactable pour montrer quel onglet est actif
+        // L'onglet actif devient non-interactable (utilisera la couleur Disabled du ColorBlock)
         
         if (activeQuestsTab != null)
-        {
-            ColorBlock colors = activeQuestsTab.colors;
-            colors.normalColor = (currentTab == QuestStatus.InProgress) ? Color.yellow : Color.white;
-            activeQuestsTab.colors = colors;
-        }
+            activeQuestsTab.interactable = (currentTab != QuestStatus.InProgress);
         
         if (completedQuestsTab != null)
-        {
-            ColorBlock colors = completedQuestsTab.colors;
-            colors.normalColor = (currentTab == QuestStatus.Completed) ? Color.green : Color.white;
-            completedQuestsTab.colors = colors;
-        }
+            completedQuestsTab.interactable = (currentTab != QuestStatus.Completed);
         
         if (cancelledQuestsTab != null)
-        {
-            ColorBlock colors = cancelledQuestsTab.colors;
-            colors.normalColor = (currentTab == QuestStatus.Cancelled) ? Color.gray : Color.white;
-            cancelledQuestsTab.colors = colors;
-        }
+            cancelledQuestsTab.interactable = (currentTab != QuestStatus.Cancelled);
     }
     
     // Méthode appelée quand on clique sur une quête dans la liste

@@ -51,6 +51,7 @@ public class SoundEffectsManager : MonoBehaviour
     private List<AudioSource> audioSourcePool = new List<AudioSource>();
     private Dictionary<string, SoundEffect> soundDictionary = new Dictionary<string, SoundEffect>();
     private int currentPlayingSounds = 0;
+    private float distanceMultiplier = 1f; // For camera distance attenuation
     
     void Awake()
     {
@@ -137,7 +138,7 @@ public class SoundEffectsManager : MonoBehaviour
         
         // Configure audio source
         source.clip = sound.audioClip;
-        source.volume = sound.volume * masterVolume;
+        source.volume = sound.volume * masterVolume * distanceMultiplier;
         source.pitch = sound.pitch + Random.Range(-sound.pitchVariation, sound.pitchVariation);
         source.spatialBlend = sound.is3D ? 1f : 0f;
         
@@ -230,6 +231,11 @@ public class SoundEffectsManager : MonoBehaviour
         // Save to PlayerPrefs
         PlayerPrefs.SetFloat("SFXVolume", masterVolume);
         PlayerPrefs.Save();
+    }
+    
+    public void SetDistanceMultiplier(float multiplier)
+    {
+        distanceMultiplier = multiplier;
     }
     
     public void StopAllSounds()

@@ -411,6 +411,12 @@ public class FootstepSystem : MonoBehaviour
         float finalVolume = footstepVolume + Random.Range(-volumeVariation, volumeVariation);
         finalVolume = Mathf.Clamp01(finalVolume);
         
+        // NOUVEAU : Applique le multiplicateur de distance de la caméra
+        if (AudioDistanceManager.Instance != null)
+        {
+            finalVolume *= AudioDistanceManager.Instance.GetCurrentMultiplier();
+        }
+        
         float finalPitch = basePitch + Random.Range(-pitchVariation, pitchVariation);
         finalPitch = Mathf.Clamp(finalPitch, 0.1f, 3f);
         
@@ -423,7 +429,7 @@ public class FootstepSystem : MonoBehaviour
         
         if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Footstep))
         {
-            Debug.Log($"🦶 PAS: {stepSound.name} | Surface: {currentSurface}");
+            Debug.Log($"🦶 PAS: {stepSound.name} | Surface: {currentSurface} | Volume: {finalVolume:F2}");
         }
     }
     
@@ -749,7 +755,15 @@ public class FootstepSystem : MonoBehaviour
     {
         footstepVolume = Mathf.Clamp01(volume);
         if (audioSource != null)
-            audioSource.volume = footstepVolume;
+        {
+            // NOUVEAU : Applique aussi le multiplicateur de distance
+            float finalVolume = footstepVolume;
+            if (AudioDistanceManager.Instance != null)
+            {
+                finalVolume *= AudioDistanceManager.Instance.GetCurrentMultiplier();
+            }
+            audioSource.volume = finalVolume;
+        }
     }
     
     public void ForceFootstep()

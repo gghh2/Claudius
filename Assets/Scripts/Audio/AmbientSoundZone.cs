@@ -55,6 +55,8 @@ public class AmbientSoundZone : MonoBehaviour
     private AudioSource audioSource;
     private Coroutine fadeCoroutine;
     private bool isPlayerInZone = false;
+    private float baseVolume = 1f; // Store the base volume
+    private float distanceMultiplier = 1f; // Multiplier from camera distance
     
     void Start()
     {
@@ -190,7 +192,8 @@ public class AmbientSoundZone : MonoBehaviour
         if (audioSource == null) yield break;
         
         float masterVolume = PlayerPrefs.GetFloat("AmbientVolume", 1f);
-        float targetVolume = volume * masterVolume;
+        baseVolume = volume * masterVolume;
+        float targetVolume = baseVolume * distanceMultiplier;
         float startVolume = audioSource.volume;
         float elapsed = 0f;
         
@@ -235,7 +238,18 @@ public class AmbientSoundZone : MonoBehaviour
         if (audioSource != null && audioSource.isPlaying)
         {
             float masterVolume = PlayerPrefs.GetFloat("AmbientVolume", 1f);
-            audioSource.volume = volume * masterVolume;
+            baseVolume = volume * masterVolume;
+            audioSource.volume = baseVolume * distanceMultiplier;
+        }
+    }
+    
+    // Set the distance multiplier from AudioDistanceManager
+    public void SetDistanceMultiplier(float multiplier)
+    {
+        distanceMultiplier = multiplier;
+        if (audioSource != null && audioSource.isPlaying)
+        {
+            audioSource.volume = baseVolume * distanceMultiplier;
         }
     }
     

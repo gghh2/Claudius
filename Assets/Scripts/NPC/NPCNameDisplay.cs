@@ -82,12 +82,11 @@ public class NPCNameDisplay : MonoBehaviour
             }
             
             // Configure pour que le texte soit lisible
-            nameText.fontStyle = FontStyles.Bold;
+            nameText.fontStyle = FontStyles.Normal;
             nameText.enableAutoSizing = false;
             
-            // Ajoute un outline pour la lisibilité
-            nameText.outlineWidth = 0.2f;
-            nameText.outlineColor = Color.black;
+            // Pas d'outline
+            nameText.outlineWidth = 0f;
         }
     }
     

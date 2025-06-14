@@ -81,12 +81,17 @@ public class NPCNameDisplay : MonoBehaviour
                 nameText.color = textColor;
             }
             
-            // Configure pour que le texte soit lisible
-            nameText.fontStyle = FontStyles.Normal;
+            // NOUVEAU: Force l'enlèvement du gras et de l'épaisseur
+            nameText.fontStyle = FontStyles.Normal; // Pas de gras, italique, etc.
             nameText.enableAutoSizing = false;
             
-            // Pas d'outline
+            // Pas d'outline (thickness)
             nameText.outlineWidth = 0f;
+            nameText.outlineColor = new Color32(0, 0, 0, 0); // Complètement transparent
+            
+            // Désactive aussi les autres effets
+            nameText.fontSharedMaterial.SetFloat("_OutlineWidth", 0f);
+            nameText.fontSharedMaterial.SetFloat("_FaceDilate", 0f); // Pas d'épaisseur supplémentaire
         }
     }
     
@@ -135,6 +140,10 @@ public class NPCNameDisplay : MonoBehaviour
         {
             // NOUVEAU: Formate le nom pour enlever les underscores
             nameText.text = TextFormatter.FormatName(newName);
+            
+            // NOUVEAU: Force l'enlèvement du gras à chaque changement
+            nameText.fontStyle = FontStyles.Normal;
+            nameText.outlineWidth = 0f;
         }
     }
     
@@ -151,6 +160,12 @@ public class NPCNameDisplay : MonoBehaviour
             {
                 nameText.color = npcScript.npcColor;
             }
+            
+            // NOUVEAU: Force l'enlèvement du gras à chaque rafraîchissement
+            nameText.fontStyle = FontStyles.Normal;
+            nameText.outlineWidth = 0f;
+            nameText.fontSharedMaterial.SetFloat("_OutlineWidth", 0f);
+            nameText.fontSharedMaterial.SetFloat("_FaceDilate", 0f);
             
             Debug.Log($"[NPCNameDisplay] Nom rafraîchi: {npcScript.npcName} -> {nameText.text}");
         }

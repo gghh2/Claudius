@@ -28,6 +28,9 @@ public class QuestListItem : MonoBehaviour
     {
         linkedQuest = quest;
         
+        // NOUVEAU : Force le style des textes (pas de gras)
+        RemoveBoldFromTexts();
+        
         // Affiche les informations de la quête
         if (questTitleText != null)
             questTitleText.text = quest.questTitle; // Déjà formaté dans JournalQuest
@@ -43,6 +46,28 @@ public class QuestListItem : MonoBehaviour
         
         // Change la couleur de fond selon le statut
         UpdateAppearance();
+    }
+    
+    // NOUVEAU : Méthode pour enlever le gras de tous les textes
+    void RemoveBoldFromTexts()
+    {
+        TextMeshProUGUI[] allTexts = { questTitleText, questGiverText, questLocationText, questProgressText };
+        
+        foreach (var textComponent in allTexts)
+        {
+            if (textComponent != null)
+            {
+                // Enlève le style Bold
+                textComponent.fontStyle &= ~FontStyles.Bold;
+                
+                // Si vous voulez aussi enlever l'outline
+                var outline = textComponent.GetComponent<UnityEngine.UI.Outline>();
+                if (outline != null)
+                {
+                    outline.enabled = false;
+                }
+            }
+        }
     }
     
     void UpdateAppearance()

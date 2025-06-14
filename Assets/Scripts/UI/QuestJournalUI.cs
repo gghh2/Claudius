@@ -260,7 +260,7 @@ public class QuestJournalUI : MonoBehaviour
             questDescriptionText.text = quest.description;
             
         if (questGiverText != null)
-            questGiverText.text = $"Donneur de quête: {quest.giverNPCName}";
+            questGiverText.text = $"Donneur de quête: {TextFormatter.FormatName(quest.giverNPCName)}";
             
         if (questProgressText != null)
             questProgressText.text = $"Progression: {quest.GetProgressText()}";

@@ -30,7 +30,7 @@ public class JournalQuest
         // NOUVEAU: Formate la description pour le titre
         questTitle = "Mission: " + TextFormatter.FormatDescription(token.description);
         description = TextFormatter.FormatDescription(token.description);
-        giverNPCName = TextFormatter.FormatName(npcName);
+        giverNPCName = npcName; // IMPORTANT: Ne PAS formater ici, garder le nom original
         status = QuestStatus.InProgress;
         questType = token.questType;
         zoneName = TextFormatter.FormatName(token.zoneName);

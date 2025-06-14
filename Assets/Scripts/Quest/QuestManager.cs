@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 [System.Serializable]
 public class ActiveQuest
@@ -16,7 +17,7 @@ public class ActiveQuest
     {
         questId = token.questId;
         questData = token;
-        giverNPCName = npcName;
+        giverNPCName = npcName; // NE PAS FORMATER ICI - garder le nom original
     }
 }
 
@@ -176,6 +177,35 @@ public class QuestManager : MonoBehaviour
     {
         QuestToken token = quest.questData;
         
+        // IMPORTANT FIX: Debug log to track quantity issues
+        if (debugMode)
+        {
+            Debug.Log($"[FETCH] Creating quest for {token.objectName} x{token.quantity}");
+            Debug.Log($"[FETCH] Original description: {token.description}");
+        }
+        
+        // SAFEGUARD: If quantity seems wrong based on description, fix it
+        // Additional check for "Trouvez 1" pattern
+        bool descriptionIndicatesOne = 
+            token.description.ToLower().Contains("un ") || 
+            token.description.ToLower().Contains("une ") ||
+            Regex.IsMatch(token.description, @"\btrouvez 1\b", RegexOptions.IgnoreCase) ||
+            (token.description.ToLower().Contains("1 ") && !token.description.Contains("10") && !token.description.Contains("11"));
+            
+        if (descriptionIndicatesOne)
+        {
+            if (token.quantity != 1)
+            {
+                Debug.LogWarning($"[FETCH] Quantity mismatch detected! Description says ONE but quantity is {token.quantity}. Forcing to 1.");
+                token.quantity = 1;
+                // Update the description to match
+                token.description = $"Trouvez 1 {token.objectName} dans {token.zoneName}";
+            }
+        }
+        
+        // FINAL SAFEGUARD: Log the final quantity that will be used
+        Debug.Log($"[FETCH] FINAL QUANTITY TO SPAWN: {token.quantity} for {token.objectName}");
+        
         // Trouve une zone compatible
         QuestZone targetZone = null;
         if (token.zoneType.HasValue)
@@ -201,6 +231,8 @@ public class QuestManager : MonoBehaviour
         }
         
         // Spawn les objets à collecter
+        Debug.Log($"[FETCH] Spawning {token.quantity} items of type {token.objectName}");
+        
         for (int i = 0; i < token.quantity; i++)
         {
             GameObject spawnedItem = targetZone.SpawnQuestObject(itemPrefab, QuestObjectType.Item);
@@ -217,8 +249,12 @@ public class QuestManager : MonoBehaviour
                 questObj.objectType = QuestObjectType.Item;
                 
                 quest.spawnedObjects.Add(spawnedItem);
+                
+                Debug.Log($"[FETCH] Item {i+1}/{token.quantity} spawned successfully at {spawnedItem.transform.position}");
             }
         }
+        
+        Debug.Log($"[FETCH] Total items spawned: {quest.spawnedObjects.Count}");
         
         return quest.spawnedObjects.Count > 0;
     }

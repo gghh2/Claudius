@@ -87,7 +87,7 @@ public class QuestTokenDetector : MonoBehaviour
             
             foreach (Match match in matches)
             {
-                QuestToken token = ParseQuestToken(questType, match);
+                QuestToken token = ParseQuestToken(questType, match, aiMessage);
                 if (token != null)
                 {
                     // Validate that the quest can actually be created
@@ -110,7 +110,7 @@ public class QuestTokenDetector : MonoBehaviour
         return detectedQuests;
     }
     
-    QuestToken ParseQuestToken(QuestType questType, Match match)
+    QuestToken ParseQuestToken(QuestType questType, Match match, string originalMessage)
     {
         try
         {
@@ -123,8 +123,72 @@ public class QuestTokenDetector : MonoBehaviour
                     // [QUEST:FETCH:cristal_energie:laboratory:3]
                     token.objectName = match.Groups[1].Value;
                     token.zoneName = match.Groups[2].Value;
-                    if (match.Groups[3].Success && int.TryParse(match.Groups[3].Value, out int qty))
-                        token.quantity = qty;
+                    
+                    // Parse the quantity if provided
+                    if (match.Groups[3].Success && !string.IsNullOrWhiteSpace(match.Groups[3].Value))
+                    {
+                        if (int.TryParse(match.Groups[3].Value, out int qty))
+                        {
+                            token.quantity = qty;
+                            if (debugMode)
+                                Debug.Log($"[QUEST] Quantity parsed from token: {qty}");
+                        }
+                        else
+                        {
+                            // Default to 1 if parsing fails
+                            token.quantity = 1;
+                            if (debugMode)
+                                Debug.LogWarning($"[QUEST] Failed to parse quantity '{match.Groups[3].Value}', defaulting to 1");
+                        }
+                    }
+                    else
+                    {
+                        // Default to 1 if no quantity specified
+                        token.quantity = 1;
+                        if (debugMode)
+                            Debug.Log("[QUEST] No quantity specified in token, defaulting to 1");
+                    }
+                    
+                    // IMPORTANT FIX: Override quantity if the NPC specifically mentions "UN" or "UNE"
+                    // Check the entire AI message context to ensure correct quantity
+                    string fullMessage = match.Value;
+                    string contextBefore = GetContextAroundMatch(originalMessage, match.Index, 200); // Increased context size
+                    string contextAfter = GetContextAfterMatch(originalMessage, match.Index + match.Length, 50);
+                    
+                    if (debugMode)
+                    {
+                        Debug.Log($"[QUEST] Token match: '{fullMessage}'");
+                        Debug.Log($"[QUEST] Context before: '{contextBefore}'");
+                        Debug.Log($"[QUEST] Context after: '{contextAfter}'");
+                    }
+                    
+                    // Pattern to detect singular item requests in French
+                    // Check both before and after the token for quantity indicators
+                    string fullContext = contextBefore + " " + fullMessage + " " + contextAfter;
+                    
+                    // More comprehensive singular detection patterns
+                    bool hasSingularIndicator = Regex.IsMatch(fullContext, 
+                        @"\b(un|une|1|single|one|seul|seule|unique)\s+" + Regex.Escape(token.objectName), 
+                        RegexOptions.IgnoreCase);
+                    
+                    bool hasPluralIndicator = Regex.IsMatch(fullContext, 
+                        @"\b(deux|trois|quatre|cinq|plusieurs|multiple|many|some|des|\d{2,})\b", 
+                        RegexOptions.IgnoreCase);
+                    
+                    if (hasSingularIndicator && !hasPluralIndicator)
+                    {
+                        if (token.quantity != 1)
+                        {
+                            if (debugMode)
+                                Debug.Log($"[QUEST] Overriding quantity from {token.quantity} to 1 for {token.objectName} based on context analysis");
+                            token.quantity = 1;
+                        }
+                    }
+                    else if (debugMode)
+                    {
+                        Debug.Log($"[QUEST] Keeping quantity as {token.quantity} (singular: {hasSingularIndicator}, plural: {hasPluralIndicator})");
+                    }
+                    
                     token.zoneType = ParseZoneType(token.zoneName);
                     token.objectType = QuestObjectType.Item;
                     token.description = $"Trouvez {token.quantity} {token.objectName} dans {token.zoneName}";
@@ -185,6 +249,37 @@ public class QuestTokenDetector : MonoBehaviour
             Debug.LogError($"Erreur parsing token {questType}: {e.Message}");
             return null;
         }
+    }
+    
+    // Helper method to get context around a regex match
+    string GetContextAroundMatch(string fullText, int matchIndex, int contextLength)
+    {
+        int startIndex = Mathf.Max(0, matchIndex - contextLength);
+        int length = Mathf.Min(contextLength, matchIndex - startIndex);
+        
+        if (startIndex >= 0 && startIndex < fullText.Length && length > 0)
+        {
+            return fullText.Substring(startIndex, length);
+        }
+        
+        return "";
+    }
+    
+    // Helper method to get context after a regex match
+    string GetContextAfterMatch(string fullText, int startIndex, int contextLength)
+    {
+        if (startIndex >= 0 && startIndex < fullText.Length)
+        {
+            int remainingLength = fullText.Length - startIndex;
+            int length = Mathf.Min(contextLength, remainingLength);
+            
+            if (length > 0)
+            {
+                return fullText.Substring(startIndex, length);
+            }
+        }
+        
+        return "";
     }
     
     QuestZoneType? ParseZoneType(string zoneName)

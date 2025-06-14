@@ -307,7 +307,7 @@ EXEMPLES POUR VOTRE RÔLE:
             if (npcActiveQuest != null)
             {
                 return $@"STATUT QUÊTE:
-Vous avez déjà donné une mission à ce voyageur: ""{npcActiveQuest.questTitle}""
+Vous avez déjà donné une mission à ce voyageur: '{npcActiveQuest.questTitle}'
 Progression: {npcActiveQuest.GetProgressText()}
 
 🚫 NE DONNEZ PAS DE NOUVELLE QUÊTE!
@@ -339,6 +339,10 @@ Vous pouvez maintenant donner une NOUVELLE mission si approprié.
 
 FORMAT DES TOKENS:
 [QUEST:FETCH:nom_objet:zone:quantité] = Ramasser des objets
+❗ IMPORTANT POUR FETCH: Si vous dites 'UN' ou 'UNE' objet, la quantité DOIT être 1, pas 2 !
+   Exemple CORRECT: 'Trouvez-moi UN cristal' → [QUEST:FETCH:cristal:laboratory:1]
+   Exemple INCORRECT: 'Trouvez-moi UN cristal' → [QUEST:FETCH:cristal:laboratory:2] ❌
+
 [QUEST:DELIVERY:objet:destinataire:zone] = Livrer quelque chose
 [QUEST:EXPLORE:zone] = Explorer une zone
 [QUEST:TALK:personnage:zone] = Parler à quelqu'un
@@ -356,6 +360,10 @@ Vous n'avez pas encore donné de mission à ce voyageur.
 
 FORMAT DES TOKENS:
 [QUEST:FETCH:nom_objet:zone:quantité] = Ramasser des objets
+❗ IMPORTANT POUR FETCH: Si vous dites 'UN' ou 'UNE' objet, la quantité DOIT être 1, pas 2 !
+   Exemple CORRECT: 'Trouvez-moi UN cristal' → [QUEST:FETCH:cristal:laboratory:1]
+   Exemple INCORRECT: 'Trouvez-moi UN cristal' → [QUEST:FETCH:cristal:laboratory:2] ❌
+
 [QUEST:DELIVERY:objet:destinataire:zone] = Livrer quelque chose
 [QUEST:EXPLORE:zone] = Explorer une zone
 [QUEST:TALK:personnage:zone] = Parler à quelqu'un
@@ -418,42 +426,58 @@ EXEMPLE INCORRECT: 'J'ai besoin que vous récupériez mes outils.' (PAS DE TOKEN
         {
             case "marchand":
                 return @"EXEMPLES DE RÉPONSES AVEC TOKENS:
-Joueur: ""Avez-vous du travail pour moi ?""
-Vous: ""Justement ! Récupérez ce colis urgent pour moi [QUEST:FETCH:colis_urgent:hangar:1] et je vous paierai bien.""
+Joueur: 'Avez-vous du travail pour moi ?'
+Vous: 'Justement ! Récupérez ce colis urgent pour moi [QUEST:FETCH:colis_urgent:hangar:1] et je vous paierai bien.'
 
 AUTRES EXEMPLES:
-- ""J'ai besoin de marchandises ! Trouvez-moi [QUEST:FETCH:cristaux_rares:market:5] au marché.""
-- ""Livrez ce paquet [QUEST:DELIVERY:paquet_secret:garde_imperial:security] au garde impérial.""
+- 'J'ai besoin d'UN seul cristal rare ! Trouvez-le [QUEST:FETCH:cristal_rare:market:1] au marché.' ✅
+- 'J'ai besoin de marchandises ! Trouvez-moi [QUEST:FETCH:cristaux_rares:market:5] au marché.'
+- 'Livrez ce paquet [QUEST:DELIVERY:paquet_secret:garde_imperial:security] au garde impérial.'
+
+❌ ERREUR COMMUNE: 'Trouvez-moi UN cristal' avec [QUEST:FETCH:cristal:zone:2] - Si c'est UN, mettez 1 !
+🔴 RÈGLE ABSOLUE: UN/UNE = 1, DES/PLUSIEURS = 2+
 
 ⚠️ RAPPEL CRUCIAL: Le token [QUEST:...] DOIT être dans votre message sinon AUCUNE quête ne sera créée!";
 
             case "scientifique":
                 return @"EXEMPLES DE RÉPONSES AVEC TOKENS:
-Joueur: ""Avez-vous besoin d'aide ?""
-Vous: ""Mes échantillons ont disparu ! Retrouvez-les [QUEST:FETCH:echantillon_alien:laboratory:3] s'il vous plaît.""
+Joueur: 'Avez-vous besoin d'aide ?'
+Vous: 'Mon échantillon UNIQUE a disparu ! Retrouvez-le [QUEST:FETCH:echantillon_alien:laboratory:1] s'il vous plaît.' ✅
 
 AUTRES EXEMPLES:
-- ""Explorez cette zone mystérieuse [QUEST:EXPLORE:ruins] et rapportez vos découvertes.""
-- ""Allez parler à mon assistant [QUEST:TALK:assistant_perdu:medical] dans la baie médicale.""
+- 'J'ai perdu UN prototype ! [QUEST:FETCH:prototype_experimental:laboratory:1]' ✅
+- 'Mes TROIS échantillons ont disparu ! [QUEST:FETCH:echantillon_test:laboratory:3]' ✅
+- 'Explorez cette zone mystérieuse [QUEST:EXPLORE:ruins] et rapportez vos découvertes.'
+- 'Allez parler à mon assistant [QUEST:TALK:assistant_perdu:medical] dans la baie médicale.'
+
+🔴 ATTENTION: UN/UNE objet = quantité 1, pas 2 !
 
 ⚠️ RAPPEL CRUCIAL: Le token [QUEST:...] DOIT être dans votre message sinon AUCUNE quête ne sera créée!";
 
             case "garde impérial":
                 return @"EXEMPLES DE RÉPONSES AVEC TOKENS:
-Joueur: ""Une mission pour moi ?""
-Vous: ""Activité suspecte détectée. Inspectez les ruines [QUEST:EXPLORE:ruins] et rapportez-moi vos découvertes.""
+Joueur: 'Une mission pour moi ?'
+Vous: 'Zone suspecte détectée. Inspectez [QUEST:EXPLORE:ruins] et faites votre rapport.'
 
 AUTRES EXEMPLES:
-- ""Récupérez l'artefact ancien [QUEST:FETCH:artefact_ancien:ruins:1] dans les ruines.""
-- ""Interagissez avec le terminal de sécurité [QUEST:INTERACT:terminal_securite:security] pour vérifier les accès.""
+- 'Récupérez L'UNIQUE artefact [QUEST:FETCH:artefact_ancien:ruins:1]' ✅ (L'UNIQUE = 1)
+- 'Trouvez UNE preuve [QUEST:FETCH:preuve_infiltration:security:1]' ✅ (UNE = 1)
+- 'Collectez TOUS les rapports, il y en a cinq [QUEST:FETCH:rapport_securite:security:5]' ✅
+- 'Interagissez avec le terminal de sécurité [QUEST:INTERACT:terminal_securite:security] pour vérifier les accès.'
+
+🔴 RÈGLE MILITAIRE: Soyez PRÉCIS sur les quantités !
 
 ⚠️ RAPPEL CRUCIAL: Le token [QUEST:...] DOIT être dans votre message sinon AUCUNE quête ne sera créée!";
 
             default:
                 return @"EXEMPLES GÉNÉRIQUES:
-- ""Aidez-moi à récupérer mes affaires [QUEST:FETCH:objet_personnel:residential:1]""
-- ""Explorez cette zone suspecte [QUEST:EXPLORE:hangar]""
-- ""Parlez à mon contact [QUEST:TALK:informateur:market] au marché""
+- 'Récupérez MON objet perdu [QUEST:FETCH:objet_personnel:residential:1]' ✅ (MON = 1)
+- 'J'ai perdu MES TROIS clés [QUEST:FETCH:cle_perdue:residential:3]' ✅ (TROIS = 3)
+- 'Trouvez UNE pièce rare [QUEST:FETCH:piece_rare:storage:1]' ✅ (UNE = 1, PAS 2!)
+- 'Explorez cette zone suspecte [QUEST:EXPLORE:hangar]'
+- 'Parlez à mon contact [QUEST:TALK:informateur:market] au marché'
+
+💡 MÉMO: UN/UNE/MON/MA = 1 | DES/MES/PLUSIEURS = 2+
 
 ⚠️ RAPPEL CRUCIAL: Le token [QUEST:...] DOIT être dans votre message sinon AUCUNE quête ne sera créée!";
         }

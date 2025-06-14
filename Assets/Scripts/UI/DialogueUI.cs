@@ -160,6 +160,14 @@ public class DialogueUI : MonoBehaviour
         {
             acceptQuestButton.onClick.AddListener(AcceptQuests);
             acceptQuestButton.gameObject.SetActive(false);
+            
+            // NOUVEAU : Ajoute le raccourci dans le texte du bouton
+            var acceptButtonText = acceptQuestButton.GetComponentInChildren<TextMeshProUGUI>();
+            if (acceptButtonText != null && !acceptButtonText.text.Contains("[A]"))
+            {
+                acceptButtonText.text = "[A] " + acceptButtonText.text;
+            }
+            
             Debug.Log("[UI] Accept button configured and hidden");
         }
         else
@@ -171,6 +179,14 @@ public class DialogueUI : MonoBehaviour
         {
             declineQuestButton.onClick.AddListener(DeclineQuests);
             declineQuestButton.gameObject.SetActive(false);
+            
+            // NOUVEAU : Ajoute le raccourci dans le texte du bouton
+            var declineButtonText = declineQuestButton.GetComponentInChildren<TextMeshProUGUI>();
+            if (declineButtonText != null && !declineButtonText.text.Contains("[R]"))
+            {
+                declineButtonText.text = "[R] " + declineButtonText.text;
+            }
+            
             Debug.Log("[UI] Decline button configured and hidden");
         }
         else
@@ -227,6 +243,27 @@ public class DialogueUI : MonoBehaviour
                         Event.current?.Use();
                     }
                 }
+            }
+        }
+        
+        // NOUVEAU : Gestion des raccourcis pour les quêtes
+        if (pendingQuests.Count > 0 && acceptQuestButton != null && acceptQuestButton.gameObject.activeInHierarchy)
+        {
+            // A pour Accepter
+            if (Input.GetKeyDown(KeyCode.A))
+            {
+                Debug.Log("[UI] Touche A pressée - Acceptation des quêtes");
+                // Anime visuellement le bouton
+                StartCoroutine(AnimateButtonPress(acceptQuestButton));
+                AcceptQuests();
+            }
+            // R pour Refuser
+            else if (Input.GetKeyDown(KeyCode.R))
+            {
+                Debug.Log("[UI] Touche R pressée - Refus des quêtes");
+                // Anime visuellement le bouton
+                StartCoroutine(AnimateButtonPress(declineQuestButton));
+                DeclineQuests();
             }
         }
     }
@@ -720,7 +757,8 @@ public class DialogueUI : MonoBehaviour
 	            string formattedDescription = TextFormatter.FormatName(quest.description);
 	            questInfo += $"• {formattedDescription}\n";
 	        }
-	        questInfo += "Acceptez-vous cette mission ?";
+	        questInfo += "\nAcceptez-vous cette mission ?\n";
+	        questInfo += "\n[A] Accepter    [R] Refuser";
         
         ShowText(currentFullText + questInfo);
 	    }
@@ -1097,6 +1135,26 @@ public class DialogueUI : MonoBehaviour
     public bool IsDialogueOpen()
     {
         return dialoguePanel != null && dialoguePanel.activeInHierarchy;
+    }
+    
+    // NOUVEAU : Animation visuelle pour simuler un clic de bouton
+    IEnumerator AnimateButtonPress(Button button)
+    {
+        if (button != null)
+        {
+            // Récupère la couleur normale
+            ColorBlock colors = button.colors;
+            Color normalColor = colors.normalColor;
+            
+            // Applique temporairement la couleur "pressed"
+            button.targetGraphic.color = colors.pressedColor;
+            
+            // Attend un court instant
+            yield return new WaitForSeconds(0.1f);
+            
+            // Restaure la couleur normale
+            button.targetGraphic.color = normalColor;
+        }
     }
     
     public void CloseDialogue()

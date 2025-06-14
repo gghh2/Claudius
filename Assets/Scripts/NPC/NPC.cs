@@ -212,14 +212,13 @@ public class NPC : MonoBehaviour
         
         // Cherche une quête FETCH active avec ce NPC
         var activeQuests = QuestJournal.Instance.GetActiveQuests();
-        // NOUVEAU: Compare avec le nom formaté car giverNPCName est formaté dans JournalQuest
-        string formattedNPCName = TextFormatter.FormatName(npcName);
+        // IMPORTANT: Compare avec le nom original, pas formaté
         
-        Debug.Log($"[FETCH] Recherche quête pour NPC: '{npcName}' (formaté: '{formattedNPCName}')");
+        Debug.Log($"[FETCH] Recherche quête pour NPC: '{npcName}'");
         Debug.Log($"[FETCH] Quêtes actives: {activeQuests.Count}");
         
         var fetchQuest = activeQuests.FirstOrDefault(q => 
-            q.giverNPCName == formattedNPCName && 
+            q.giverNPCName == npcName && 
             q.questType == QuestType.FETCH);
         
         if (fetchQuest != null)
@@ -259,7 +258,7 @@ public class NPC : MonoBehaviour
         }
         else
         {
-            Debug.Log($"[FETCH] Aucune quête FETCH trouvée pour '{formattedNPCName}'");
+            Debug.Log($"[FETCH] Aucune quête FETCH trouvée pour '{npcName}'");
             foreach (var quest in activeQuests)
             {
                 Debug.Log($"  - Quête: {quest.questTitle}, Donneur: '{quest.giverNPCName}', Type: {quest.questType}");
@@ -304,12 +303,15 @@ public class NPC : MonoBehaviour
                         break;
                     
                     if (!string.IsNullOrEmpty(objectName))
-                        objectName += "_";
-                    objectName += words[j].ToLower();
+                        objectName += " "; // Utilise espace au lieu de underscore
+                    objectName += words[j];
                 }
                 
-                Debug.Log($"[EXTRACT] Description: '{description}' -> Objet: '{objectName}'");
-                return objectName;
+                // Convertit en format avec underscores pour correspondre au système interne
+                string internalName = objectName.Replace(" ", "_").ToLower();
+                
+                Debug.Log($"[EXTRACT] Description: '{description}' -> Objet formaté: '{objectName}' -> Objet interne: '{internalName}'");
+                return internalName;
             }
         }
         

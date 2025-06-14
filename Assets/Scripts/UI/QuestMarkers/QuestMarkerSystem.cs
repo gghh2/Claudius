@@ -1,50 +1,43 @@
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections.Generic;
 using TMPro;
+using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
-/// Quest marker system that displays directional arrows on screen edges
-/// Points to quest zones where objectives are located
+/// Système de marqueurs de quête optimisé
+/// Pointe directement vers les objectifs de quête actifs
 /// </summary>
 public class QuestMarkerSystem : MonoBehaviour
 {
     [Header("Configuration")]
-    [Tooltip("Configuration asset for quest markers")]
-    public QuestMarkerConfig config;
+    [SerializeField] private float hideDistance = 10f;
+    [SerializeField] private float edgeOffset = 50f;
+    [SerializeField] private float markerSize = 50f;
+    [SerializeField] private Color markerColor = Color.yellow;
+    [SerializeField] private bool showDistance = true;
+    [SerializeField] private bool enablePulse = true;
+    [SerializeField] private float pulseSpeed = 2f;
+    [SerializeField] private float pulseAmount = 0.1f;
     
-    [Header("Runtime Settings (Override Config)")]
-    [Tooltip("Prefab for the UI arrow indicator on screen edges")]
-    public GameObject uiArrowPrefab;
-    
-    // Config cache
-    private float markerSize;
-    private float edgeOffset;
-    private Color markerColor;
-    private bool showDistance;
-    private float hideDistance;
-    private bool enablePulse;
-    private float pulseSpeed;
-    private float pulseAmount;
-    private bool debugMode;
-    
-    // Private variables
+    // Composants
     private Camera mainCamera;
     private Transform player;
-    private Dictionary<string, GameObject> activeMarkers = new Dictionary<string, GameObject>();
     private Canvas markerCanvas;
+    private Dictionary<string, QuestMarker> activeMarkers = new Dictionary<string, QuestMarker>();
     
-    // Singleton
+    // Instance singleton
     public static QuestMarkerSystem Instance { get; private set; }
+    
+    #region Unity Lifecycle
     
     void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-            CreateMarkerCanvas();
-            LoadConfiguration();
+            DontDestroyOnLoad(gameObject);
+            InitializeSystem();
         }
         else
         {
@@ -52,614 +45,382 @@ public class QuestMarkerSystem : MonoBehaviour
         }
     }
     
-    void LoadConfiguration()
+    void Update()
     {
-        // Try to load config from Resources if not assigned
-        if (config == null)
-        {
-            config = Resources.Load<QuestMarkerConfig>("QuestMarkerConfig");
-        }
+        if (!IsSystemReady()) return;
         
-        // If still no config, use default values
-        if (config != null)
-        {
-            markerSize = config.markerSize;
-            edgeOffset = config.edgeOffset;
-            markerColor = config.markerColor;
-            showDistance = config.showDistance;
-            hideDistance = config.hideDistance;
-            enablePulse = config.enablePulse;
-            pulseSpeed = config.pulseSpeed;
-            pulseAmount = config.pulseAmount;
-            debugMode = config.debugMode;
-            
-            if (debugMode)
-                Debug.Log("[QuestMarkerSystem] Configuration loaded from asset");
-        }
-        else
-        {
-            // Default values
-            markerSize = 60f;
-            edgeOffset = 50f;
-            markerColor = Color.yellow;
-            showDistance = true;
-            hideDistance = 10f;
-            enablePulse = true;
-            pulseSpeed = 2f;
-            pulseAmount = 0.2f;
-            debugMode = false;
-            
-            Debug.LogWarning("[QuestMarkerSystem] No configuration found in Resources/QuestMarkerConfig");
-        }
+        UpdateMarkers();
+        
+        if (enablePulse)
+            AnimateMarkers();
     }
     
-    void Start()
+    #endregion
+    
+    #region Initialization
+    
+    private void InitializeSystem()
     {
         mainCamera = Camera.main;
+        player = GameObject.FindGameObjectWithTag("Player")?.transform;
         
-        // Find player
-        PlayerController playerController = FindObjectOfType<PlayerController>();
-        if (playerController != null)
-        {
-            player = playerController.transform;
-        }
-        else
-        {
-            Debug.LogError("[QuestMarkerSystem] PlayerController not found!");
-        }
+        CreateMarkerCanvas();
         
-        // Create default UI arrow prefab if none assigned
-        if (uiArrowPrefab == null)
-        {
-            CreateDefaultUIArrowPrefab();
-        }
-        
-        // Check if QuestZone tag exists, create it if not
-        CheckAndCreateQuestZoneTag();
-        
-        // Auto-tag quest zones if needed
-        AutoTagQuestZones();
+        if (player == null)
+            Debug.LogWarning("[QuestMarkerSystem] Joueur avec tag 'Player' non trouvé!");
     }
     
-    void CheckAndCreateQuestZoneTag()
+    private void CreateMarkerCanvas()
     {
-        // Unity doesn't allow creating tags at runtime through normal API
-        // But we can check if zones exist
-        GameObject[] existingTagged = GameObject.FindGameObjectsWithTag("QuestZone");
-        if (existingTagged.Length == 0)
-        {
-            Debug.LogWarning("[QuestMarkerSystem] No GameObjects with 'QuestZone' tag found. Please ensure your quest zones have the 'QuestZone' tag.");
-        }
-    }
-    
-    void AutoTagQuestZones()
-    {
-        // Find all QuestZone components and check their tags
-        QuestZone[] allZones = FindObjectsOfType<QuestZone>();
-        int taggedCount = 0;
+        GameObject canvasObj = new GameObject("QuestMarkerCanvas");
+        canvasObj.transform.SetParent(transform);
         
-        foreach (QuestZone zone in allZones)
-        {
-            if (zone.gameObject.CompareTag("QuestZone"))
-            {
-                taggedCount++;
-            }
-            else if (debugMode)
-            {
-                Debug.LogWarning($"[QuestMarkerSystem] Zone '{zone.zoneName}' needs 'QuestZone' tag");
-            }
-        }
-        
-        if (debugMode)
-            Debug.Log($"[QuestMarkerSystem] Found {allZones.Length} zones, {taggedCount} properly tagged");
-    }
-    
-    void CreateMarkerCanvas()
-    {
-        // Create a separate canvas for markers
-        GameObject canvasGO = new GameObject("QuestMarkerCanvas");
-        canvasGO.transform.SetParent(transform);
-        
-        markerCanvas = canvasGO.AddComponent<Canvas>();
+        markerCanvas = canvasObj.AddComponent<Canvas>();
         markerCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        markerCanvas.sortingOrder = 100; // Make sure it's on top
+        markerCanvas.sortingOrder = 100;
         
-        canvasGO.AddComponent<CanvasScaler>();
-        canvasGO.AddComponent<GraphicRaycaster>();
+        CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
+        
+        canvasObj.AddComponent<GraphicRaycaster>();
     }
     
-    void CreateDefaultUIArrowPrefab()
+    private bool IsSystemReady()
     {
-        // Create a simple arrow UI indicator prefab
-        uiArrowPrefab = new GameObject("UIArrowPrefab");
-        uiArrowPrefab.SetActive(false);
+        return player != null && mainCamera != null && markerCanvas != null;
+    }
+    
+    #endregion
+    
+    #region Marker Management
+    
+    private void UpdateMarkers()
+    {
+        Dictionary<string, MarkerTarget> currentTargets = GetActiveQuestTargets();
         
-        // Add RectTransform
-        RectTransform rectTransform = uiArrowPrefab.AddComponent<RectTransform>();
-        rectTransform.sizeDelta = new Vector2(markerSize, markerSize);
-        
-        // Add image component for arrow
-        Image arrow = uiArrowPrefab.AddComponent<Image>();
-        
-        // Create a simple arrow sprite programmatically
-        Texture2D arrowTexture = new Texture2D(64, 64);
-        Color[] pixels = new Color[64 * 64];
-        
-        // Create a more visible arrow shape
-        for (int y = 0; y < 64; y++)
+        // Met à jour ou crée les marqueurs
+        foreach (var kvp in currentTargets)
         {
-            for (int x = 0; x < 64; x++)
-            {
-                pixels[y * 64 + x] = Color.clear;
-            }
+            UpdateOrCreateMarker(kvp.Key, kvp.Value);
         }
         
-        // Draw arrow pointing up (triangle shape)
-        for (int y = 16; y < 48; y++)
+        // Nettoie les marqueurs obsolètes
+        CleanupInactiveMarkers(currentTargets.Keys);
+    }
+    
+    private Dictionary<string, MarkerTarget> GetActiveQuestTargets()
+    {
+        var targets = new Dictionary<string, MarkerTarget>();
+        
+        if (QuestManager.Instance == null) return targets;
+        
+        foreach (var quest in QuestManager.Instance.activeQuests)
         {
-            int width = (48 - y) / 2;
-            int centerX = 32;
-            
-            for (int x = centerX - width; x <= centerX + width; x++)
+            // Quête complétée mais pas rendue : pointer vers le NPC donneur
+            if (quest.currentProgress >= quest.questData.quantity && !quest.isCompleted)
             {
-                if (x >= 0 && x < 64)
+                AddReturnTarget(targets, quest);
+                continue;
+            }
+            
+            // Sinon, pointer vers les objectifs
+            foreach (var obj in quest.spawnedObjects)
+            {
+                if (obj != null && obj.activeInHierarchy)
                 {
-                    pixels[y * 64 + x] = Color.white;
+                    QuestObject questObj = obj.GetComponent<QuestObject>();
+                    if (questObj != null && !questObj.isCollected)
+                    {
+                        string key = $"{quest.questId}_{obj.GetInstanceID()}";
+                        targets[key] = new MarkerTarget
+                        {
+                            position = obj.transform.position,
+                            displayName = GetObjectDisplayName(questObj, quest),
+                            questType = quest.questData.questType,
+                            priority = GetQuestPriority(quest.questData.questType)
+                        };
+                    }
                 }
             }
         }
         
-        // Add arrow tail
-        for (int y = 8; y < 24; y++)
-        {
-            for (int x = 28; x < 36; x++)
-            {
-                pixels[y * 64 + x] = Color.white;
-            }
-        }
-        
-        arrowTexture.SetPixels(pixels);
-        arrowTexture.Apply();
-        arrowTexture.filterMode = FilterMode.Point; // Keep it crisp
-        
-        // Convert to sprite
-        arrow.sprite = Sprite.Create(arrowTexture, 
-            new Rect(0, 0, 64, 64), 
-            new Vector2(0.5f, 0.5f));
-        
-        arrow.color = markerColor; // Use the configured color
-        
-        // Add outline for better visibility
-        Outline outline = uiArrowPrefab.AddComponent<Outline>();
-        outline.effectColor = Color.black;
-        outline.effectDistance = new Vector2(2, 2);
-        
-        // Add distance text
-        GameObject distanceGO = new GameObject("DistanceText");
-        distanceGO.transform.SetParent(uiArrowPrefab.transform, false);
-        
-        RectTransform textRect = distanceGO.AddComponent<RectTransform>();
-        textRect.anchoredPosition = new Vector2(0, -40);
-        textRect.sizeDelta = new Vector2(100, 30);
-        
-        TextMeshProUGUI distanceText = distanceGO.AddComponent<TextMeshProUGUI>();
-        distanceText.text = "0m";
-        distanceText.fontSize = 18;
-        distanceText.alignment = TextAlignmentOptions.Center;
-        distanceText.color = Color.white;
-        distanceText.fontStyle = FontStyles.Bold;
-        
-        // Add outline to text for better readability
-        distanceText.outlineWidth = 0.3f;
-        distanceText.outlineColor = Color.black;
+        return targets;
     }
     
-    void Update()
+    private void AddReturnTarget(Dictionary<string, MarkerTarget> targets, ActiveQuest quest)
     {
-        if (player == null || mainCamera == null)
-            return;
-        
-        UpdateQuestMarkers();
-        AnimateMarkers();
-    }
-    
-    void UpdateQuestMarkers()
-    {
-        if (player == null || mainCamera == null) return;
-        
-        // Get all active quest objects
-        QuestObject[] questObjects = FindObjectsOfType<QuestObject>();
-        
-        // Track which zones have active quests (use HashSet to avoid duplicates)
-        HashSet<QuestZone> zonesWithActiveQuests = new HashSet<QuestZone>();
-        
-        // Track objects without zones
-        List<QuestObject> orphanObjects = new List<QuestObject>();
-        
-        foreach (QuestObject questObj in questObjects)
+        GameObject[] npcs = GameObject.FindGameObjectsWithTag("NPC");
+        foreach (var npc in npcs)
         {
-            // Skip if already collected
-            if (questObj.isCollected) continue;
-            
-            // Check if this quest object belongs to an active quest
-            if (!IsQuestActive(questObj.questId))
-                continue;
-            
-            // Find which zone this object is in
-            QuestZone zone = questObj.GetComponentInParent<QuestZone>();
-            if (zone == null)
+            NPC npcComponent = npc.GetComponent<NPC>();
+            if (npcComponent != null && npcComponent.npcName == quest.giverNPCName)
             {
-                // Try to find zone by proximity
-                zone = FindNearestQuestZone(questObj.transform.position);
-            }
-            
-            if (zone != null)
-            {
-                // Add zone to set (automatically handles duplicates)
-                zonesWithActiveQuests.Add(zone);
-            }
-            else
-            {
-                // Track orphan objects
-                orphanObjects.Add(questObj);
+                string key = $"{quest.questId}_return";
+                targets[key] = new MarkerTarget
+                {
+                    position = npc.transform.position,
+                    displayName = $"Retourner voir {quest.giverNPCName}",
+                    questType = quest.questData.questType,
+                    priority = 10 // Haute priorité pour les retours
+                };
+                break;
             }
         }
-        
-        // Update ONE marker per zone
-        foreach (QuestZone zone in zonesWithActiveQuests)
-        {
-            UpdateMarkerForZone(zone);
-        }
-        
-        // Update markers for orphan objects
-        foreach (QuestObject orphan in orphanObjects)
-        {
-            UpdateMarkerForObject(orphan);
-        }
-        
-        // Remove markers for completed quests
-        CleanupInactiveMarkers(zonesWithActiveQuests, orphanObjects);
     }
     
-    bool IsQuestActive(string questId)
+    private string GetObjectDisplayName(QuestObject questObj, ActiveQuest quest)
     {
-        if (QuestJournal.Instance == null) return false;
-        
-        var activeQuests = QuestJournal.Instance.GetActiveQuests();
-        foreach (var quest in activeQuests)
+        switch (quest.questData.questType)
         {
-            if (quest.questId == questId)
-                return true;
+            case QuestType.FETCH:
+                return $"Collecter: {questObj.objectName}";
+            case QuestType.DELIVERY:
+                return $"Livrer à: {questObj.objectName}";
+            case QuestType.EXPLORE:
+                return $"Explorer: {questObj.objectName}";
+            case QuestType.TALK:
+                return $"Parler à: {questObj.objectName}";
+            case QuestType.INTERACT:
+                return $"Interagir: {questObj.objectName}";
+            default:
+                return questObj.objectName;
         }
-        
-        return false;
     }
     
-    QuestZone FindNearestQuestZone(Vector3 position)
+    private int GetQuestPriority(QuestType type)
     {
-        QuestZone[] allZones = FindObjectsOfType<QuestZone>();
-        QuestZone nearest = null;
-        float nearestDistance = float.MaxValue;
-        
-        foreach (QuestZone zone in allZones)
+        switch (type)
         {
-            float distance = Vector3.Distance(position, zone.transform.position);
-            // Use spawnRadius instead of collider bounds
-            if (distance < nearestDistance && distance <= zone.spawnRadius)
-            {
-                nearest = zone;
-                nearestDistance = distance;
-            }
+            case QuestType.TALK: return 5;
+            case QuestType.DELIVERY: return 4;
+            case QuestType.FETCH: return 3;
+            case QuestType.EXPLORE: return 2;
+            case QuestType.INTERACT: return 1;
+            default: return 0;
         }
-        
-        return nearest;
     }
     
-    void UpdateMarkerForObject(QuestObject questObj)
+    #endregion
+    
+    #region Marker Creation and Update
+    
+    private void UpdateOrCreateMarker(string markerId, MarkerTarget target)
     {
-        string markerId = "Obj_" + questObj.questId + "_" + questObj.objectName;
+        float distance = Vector3.Distance(player.position, target.position);
         
-        // Pour les marqueurs d'exploration, utilise la position au sol
-        Vector3 targetPosition;
-        if (questObj.objectType == QuestObjectType.Marker)
-        {
-            targetPosition = GetGroundPosition(questObj.transform.position);
-        }
-        else
-        {
-            targetPosition = questObj.transform.position;
-        }
-        
-        // Calculate distance
-        float distance = Vector3.Distance(player.position, targetPosition);
-        
-        // Get or create marker
-        GameObject marker = GetOrCreateMarker(markerId);
-        
-        // Hide marker if very close
+        // Cache si trop proche
         if (distance < hideDistance)
         {
-            marker.SetActive(false);
+            if (activeMarkers.ContainsKey(markerId))
+                activeMarkers[markerId].gameObject.SetActive(false);
             return;
         }
         
-        marker.SetActive(true);
-        UpdateMarkerPosition(marker, targetPosition, distance);
+        QuestMarker marker = GetOrCreateMarker(markerId);
+        marker.gameObject.SetActive(true);
+        
+        UpdateMarkerPosition(marker, target, distance);
     }
     
-    Vector3 GetGroundPosition(Vector3 position)
-    {
-        // Raycast down from position to find ground
-        Vector3 rayStart = new Vector3(position.x, position.y + 50f, position.z);
-        
-        if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit, 100f))
-        {
-            // Return ground position with small offset
-            return hit.point + Vector3.up * 0.5f;
-        }
-        
-        // If no ground found from above, try from the position itself
-        if (Physics.Raycast(position + Vector3.up * 2f, Vector3.down, out RaycastHit hit2, 50f))
-        {
-            return hit2.point + Vector3.up * 0.5f;
-        }
-        
-        // Final fallback: assume ground is at y=0
-        Debug.LogWarning($"[QuestMarkerSystem] Could not find ground for marker at {position}. Using y=0.");
-        return new Vector3(position.x, 0f, position.z);
-    }
-    
-    void UpdateMarkerForZone(QuestZone zone)
-    {
-        string markerId = "Zone_" + zone.zoneName;
-        
-        // Pour les zones, utilise une position au sol plutôt que transform.position
-        Vector3 targetPosition = GetGroundPositionForZone(zone);
-        
-        // Calculate distance to zone center
-        float distance = Vector3.Distance(player.position, targetPosition);
-        
-        // Get or create marker
-        GameObject marker = GetOrCreateMarker(markerId);
-        
-        // Hide marker if very close to zone
-        if (distance < hideDistance)
-        {
-            marker.SetActive(false);
-            return;
-        }
-        
-        marker.SetActive(true);
-        UpdateMarkerPosition(marker, targetPosition, distance);
-    }
-    
-    Vector3 GetGroundPositionForZone(QuestZone zone)
-    {
-        // Start from zone position
-        Vector3 zonePos = zone.transform.position;
-        
-        // Raycast down from high above to find ground
-        Vector3 rayStart = new Vector3(zonePos.x, zonePos.y + 50f, zonePos.z);
-        
-        if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit, 100f))
-        {
-            // Return ground position with small offset
-            return hit.point + Vector3.up * 0.5f;
-        }
-        
-        // If no ground found, try from zone position
-        if (Physics.Raycast(zonePos + Vector3.up * 2f, Vector3.down, out RaycastHit hit2, 10f))
-        {
-            return hit2.point + Vector3.up * 0.5f;
-        }
-        
-        // Fallback: use zone position but lower it
-        return new Vector3(zonePos.x, zonePos.y - 2f, zonePos.z);
-    }
-    
-    void UpdateMarkerPosition(GameObject marker, Vector3 targetPosition, float distance)
-    {
-        // Calculate screen position
-        Vector3 screenPos = mainCamera.WorldToScreenPoint(targetPosition);
-        
-        // Check if object is behind camera
-        bool isBehind = screenPos.z < 0;
-        if (isBehind)
-        {
-            // Flip position if behind
-            screenPos.x = Screen.width - screenPos.x;
-            screenPos.y = Screen.height - screenPos.y;
-            screenPos.z = -screenPos.z;
-        }
-        
-        // Clamp to screen edges - ALWAYS show on edge
-        Vector2 clampedPos = new Vector2(screenPos.x, screenPos.y);
-        
-        // Calculate center of screen
-        Vector2 screenCenter = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
-        
-        // Direction from center to target
-        Vector2 direction = (clampedPos - screenCenter).normalized;
-        
-        // If direction is zero (target at screen center), use a default direction
-        if (direction.magnitude < 0.01f)
-        {
-            direction = Vector2.up;
-        }
-        
-        // Calculate the edge position
-        float halfWidth = Screen.width * 0.5f - edgeOffset;
-        float halfHeight = Screen.height * 0.5f - edgeOffset;
-        
-        // Find intersection with screen edge
-        float tX = Mathf.Abs(direction.x) > 0.01f ? halfWidth / Mathf.Abs(direction.x) : float.MaxValue;
-        float tY = Mathf.Abs(direction.y) > 0.01f ? halfHeight / Mathf.Abs(direction.y) : float.MaxValue;
-        float t = Mathf.Min(tX, tY);
-        
-        // Position on edge
-        clampedPos = screenCenter + direction * t;
-        
-        // Apply to marker
-        marker.transform.position = clampedPos;
-        
-        // Rotate arrow to point toward target
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        marker.transform.rotation = Quaternion.Euler(0, 0, angle - 90); // -90 because arrow points up
-        
-        // Update distance text
-        if (showDistance)
-        {
-            TextMeshProUGUI distanceText = marker.GetComponentInChildren<TextMeshProUGUI>();
-            if (distanceText != null)
-            {
-                distanceText.text = $"{Mathf.RoundToInt(distance)}m";
-                distanceText.color = Color.white;
-            }
-        }
-    }
-    
-
-    GameObject GetOrCreateMarker(string markerId)
+    private QuestMarker GetOrCreateMarker(string markerId)
     {
         if (!activeMarkers.ContainsKey(markerId))
         {
-            // Create new UI arrow indicator
-            GameObject marker = Instantiate(uiArrowPrefab, markerCanvas.transform);
-            marker.name = "QuestMarker_" + markerId;
-            
-            // Set size
-            RectTransform rect = marker.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(markerSize, markerSize);
-            
-            // Set color
-            Image arrow = marker.GetComponent<Image>();
-            arrow.color = markerColor;
-            
+            GameObject markerObj = CreateMarkerGameObject(markerId);
+            QuestMarker marker = new QuestMarker
+            {
+                gameObject = markerObj,
+                image = markerObj.GetComponent<Image>(),
+                distanceText = markerObj.GetComponentInChildren<TextMeshProUGUI>(),
+                rectTransform = markerObj.GetComponent<RectTransform>()
+            };
             activeMarkers[markerId] = marker;
         }
         
         return activeMarkers[markerId];
     }
     
-    void AnimateMarkers()
+    private GameObject CreateMarkerGameObject(string markerId)
     {
-        if (!enablePulse) return;
+        GameObject marker = new GameObject($"Marker_{markerId}");
+        marker.transform.SetParent(markerCanvas.transform);
         
+        // Configuration du RectTransform
+        RectTransform rect = marker.AddComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(markerSize, markerSize);
+        
+        // Image du marqueur
+        Image img = marker.AddComponent<Image>();
+        img.color = markerColor;
+        img.raycastTarget = false;
+        
+        // Outline pour la visibilité
+        Outline outline = marker.AddComponent<Outline>();
+        outline.effectColor = Color.black;
+        outline.effectDistance = new Vector2(2, 2);
+        
+        // Texte de distance
+        if (showDistance)
+        {
+            GameObject textObj = new GameObject("Distance");
+            textObj.transform.SetParent(marker.transform);
+            
+            RectTransform textRect = textObj.AddComponent<RectTransform>();
+            textRect.anchoredPosition = new Vector2(0, -markerSize * 0.6f);
+            textRect.sizeDelta = new Vector2(100, 30);
+            
+            TextMeshProUGUI text = textObj.AddComponent<TextMeshProUGUI>();
+            text.text = "0m";
+            text.fontSize = 14;
+            text.alignment = TextAlignmentOptions.Center;
+            text.color = Color.white;
+            text.outlineWidth = 0.2f;
+            text.outlineColor = Color.black;
+        }
+        
+        return marker;
+    }
+    
+    private void UpdateMarkerPosition(QuestMarker marker, MarkerTarget target, float distance)
+    {
+        Vector3 screenPos = mainCamera.WorldToViewportPoint(target.position);
+        
+        // Gestion des objets derrière la caméra
+        if (screenPos.z < 0)
+        {
+            screenPos.x = 1 - screenPos.x;
+            screenPos.y = 1 - screenPos.y;
+            screenPos.z = 0;
+        }
+        
+        // Vérifie si dans le viewport visible
+        bool isVisible = screenPos.x > 0.1f && screenPos.x < 0.9f && 
+                        screenPos.y > 0.1f && screenPos.y < 0.9f && 
+                        screenPos.z > 0;
+        
+        if (isVisible)
+        {
+            marker.gameObject.SetActive(false);
+            return;
+        }
+        
+        // Calcul de la position sur le bord
+        Vector2 screenCenter = new Vector2(0.5f, 0.5f);
+        Vector2 direction = new Vector2(screenPos.x - 0.5f, screenPos.y - 0.5f).normalized;
+        
+        float marginX = edgeOffset / Screen.width;
+        float marginY = edgeOffset / Screen.height;
+        
+        float tX = Mathf.Abs(direction.x) > 0.001f ? (0.5f - marginX) / Mathf.Abs(direction.x) : float.MaxValue;
+        float tY = Mathf.Abs(direction.y) > 0.001f ? (0.5f - marginY) / Mathf.Abs(direction.y) : float.MaxValue;
+        float t = Mathf.Min(tX, tY);
+        
+        Vector2 edgePos = screenCenter + direction * t;
+        Vector2 screenPosition = new Vector2(edgePos.x * Screen.width, edgePos.y * Screen.height);
+        
+        // Applique la position et rotation
+        marker.gameObject.transform.position = screenPosition;
+        
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        marker.gameObject.transform.rotation = Quaternion.Euler(0, 0, angle - 90);
+        
+        // Met à jour la distance
+        if (marker.distanceText != null)
+        {
+            marker.distanceText.text = $"{Mathf.RoundToInt(distance)}m";
+        }
+    }
+    
+    #endregion
+    
+    #region Animation
+    
+    private void AnimateMarkers()
+    {
         float scale = 1f + Mathf.Sin(Time.time * pulseSpeed) * pulseAmount;
         
         foreach (var marker in activeMarkers.Values)
         {
-            if (marker.activeSelf)
+            if (marker.gameObject.activeSelf)
             {
-                marker.transform.localScale = Vector3.one * scale;
+                marker.rectTransform.localScale = Vector3.one * scale;
             }
         }
     }
     
-    void CleanupInactiveMarkers(HashSet<QuestZone> activeZones, List<QuestObject> orphanObjects)
+    #endregion
+    
+    #region Cleanup
+    
+    private void CleanupInactiveMarkers(IEnumerable<string> activeIds)
     {
-        List<string> markersToRemove = new List<string>();
+        HashSet<string> activeSet = new HashSet<string>(activeIds);
+        List<string> toRemove = new List<string>();
         
         foreach (var kvp in activeMarkers)
         {
-            bool shouldKeep = false;
-            
-            // Check if it's a zone marker
-            if (kvp.Key.StartsWith("Zone_"))
+            if (!activeSet.Contains(kvp.Key))
             {
-                // Check if this zone is still active
-                foreach (QuestZone zone in activeZones)
-                {
-                    string zoneMarkerId = "Zone_" + zone.zoneName;
-                    if (kvp.Key == zoneMarkerId)
-                    {
-                        shouldKeep = true;
-                        break;
-                    }
-                }
-            }
-            // Check if it's an object marker
-            else if (kvp.Key.StartsWith("Obj_"))
-            {
-                // Check if this object is still in orphan list
-                foreach (QuestObject obj in orphanObjects)
-                {
-                    string objMarkerId = "Obj_" + obj.questId + "_" + obj.objectName;
-                    if (kvp.Key == objMarkerId)
-                    {
-                        shouldKeep = true;
-                        break;
-                    }
-                }
-            }
-            
-            if (!shouldKeep)
-            {
-                markersToRemove.Add(kvp.Key);
+                toRemove.Add(kvp.Key);
             }
         }
         
-        // Remove inactive markers
-        foreach (string markerId in markersToRemove)
+        foreach (string key in toRemove)
         {
-            if (activeMarkers[markerId] != null)
+            if (activeMarkers[key].gameObject != null)
             {
-                Destroy(activeMarkers[markerId]);
+                Destroy(activeMarkers[key].gameObject);
             }
-            activeMarkers.Remove(markerId);
+            activeMarkers.Remove(key);
         }
     }
     
-    /// <summary>
-    /// Reload configuration from asset (useful for runtime testing)
-    /// </summary>
-    [ContextMenu("Reload Configuration")]
-    public void ReloadConfiguration()
-    {
-        LoadConfiguration();
-        
-        // Update existing markers with new config
-        foreach (var marker in activeMarkers.Values)
-        {
-            if (marker != null)
-            {
-                // Update size
-                RectTransform rect = marker.GetComponent<RectTransform>();
-                if (rect != null)
-                    rect.sizeDelta = new Vector2(markerSize, markerSize);
-                
-                // Update color
-                Image arrow = marker.GetComponent<Image>();
-                if (arrow != null)
-                    arrow.color = markerColor;
-            }
-        }
-        
-        Debug.Log("[QuestMarkerSystem] Configuration reloaded and applied to existing markers");
-    }
+    #endregion
+    
+    #region Public API
     
     /// <summary>
-    /// Force refresh all markers (useful after quest updates)
+    /// Force le rafraîchissement de tous les marqueurs
     /// </summary>
     public void RefreshMarkers()
     {
-        // Clear all existing markers
         foreach (var marker in activeMarkers.Values)
         {
-            if (marker != null)
-                Destroy(marker);
+            if (marker.gameObject != null)
+                Destroy(marker.gameObject);
         }
         activeMarkers.Clear();
     }
     
     /// <summary>
-    /// Toggle marker visibility
+    /// Active ou désactive l'affichage des marqueurs
     /// </summary>
     public void SetMarkersVisible(bool visible)
     {
         if (markerCanvas != null)
-        {
             markerCanvas.gameObject.SetActive(visible);
-        }
     }
+    
+    #endregion
+    
+    #region Data Structures
+    
+    private class MarkerTarget
+    {
+        public Vector3 position;
+        public string displayName;
+        public QuestType questType;
+        public int priority;
+    }
+    
+    private class QuestMarker
+    {
+        public GameObject gameObject;
+        public Image image;
+        public TextMeshProUGUI distanceText;
+        public RectTransform rectTransform;
+    }
+    
+    #endregion
 }

@@ -9,15 +9,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d9a5874e1503a8643b9b8fe29d677a5a, type: 3}
+  m_Script: {fileID: 0}
   m_Name: QuestMarkerConfig
-  m_EditorClassIdentifier: 
-  markerSize: 40
-  edgeOffset: 20
+  m_EditorClassIdentifier: Assembly-CSharp::QuestMarkerConfig
+  markerSize: 60
+  edgeOffset: 50
   markerColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   showDistance: 1
-  hideDistance: 15
-  enablePulse: 0
+  hideDistance: 10
+  enablePulse: 1
   pulseSpeed: 2
   pulseAmount: 0.2
   debugMode: 0

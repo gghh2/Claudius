@@ -10,6 +10,16 @@ public class SimplePauseMenu : MonoBehaviour
     public Vector3 spawnRotation = Vector3.zero;
     public bool autoSaveSpawnPosition = true;
     
+    [Header("Debug Controls")]
+    [Tooltip("Show debug sliders in pause menu")]
+    public bool showDebugControls = true;
+    
+    [Tooltip("Min/Max values for jump height slider")]
+    public Vector2 jumpHeightRange = new Vector2(8f, 150f);
+    
+    [Tooltip("Min/Max values for move speed slider")]
+    public Vector2 moveSpeedRange = new Vector2(1f, 50f);
+    
     [Header("Visual")]
     [Tooltip("Background image for the pause menu (leave null for solid color)")]
     public Texture2D backgroundImage;
@@ -28,6 +38,10 @@ public class SimplePauseMenu : MonoBehaviour
     private PlayerController playerController;
     private bool cursorWasLocked = false;
     
+    // Sliders values
+    private float currentJumpHeight = 8f;
+    private float currentMoveSpeed = 10f;
+    
     private GUIStyle titleStyle;
     private GUIStyle buttonStyle;
     private GUIStyle controlsStyle;
@@ -44,6 +58,13 @@ public class SimplePauseMenu : MonoBehaviour
             {
                 spawnPosition = player.transform.position;
                 spawnRotation = player.transform.eulerAngles;
+            }
+            
+            // Get current values from player
+            if (playerController != null)
+            {
+                currentJumpHeight = playerController.jumpForce;
+                currentMoveSpeed = playerController.moveSpeed;
             }
         }
     }
@@ -176,6 +197,12 @@ public class SimplePauseMenu : MonoBehaviour
                          "Menu Pause : Échap";
         
         GUI.Box(new Rect(centerX + 200, centerY - 150, 350, 400), controls, controlsStyle);
+        
+        // Debug sliders
+        if (showDebugControls && playerController != null)
+        {
+            DrawDebugSliders();
+        }
     }
     
     void ResetPlayerPosition()
@@ -201,6 +228,53 @@ public class SimplePauseMenu : MonoBehaviour
             }
             
             Resume();
+        }
+    }
+    
+    void DrawDebugSliders()
+    {
+        float sliderWidth = 300;
+        float sliderHeight = 30;
+        float labelWidth = 150;
+        float valueWidth = 50;
+        float startX = 20;
+        float startY = Screen.height - 150;
+        
+        // Background box
+        GUI.Box(new Rect(startX - 10, startY - 40, sliderWidth + labelWidth + valueWidth + 40, 140), "Paramètres de Debug", controlsStyle);
+        
+        // Jump Height Slider
+        GUI.Label(new Rect(startX, startY, labelWidth, sliderHeight), "Hauteur de saut:");
+        currentJumpHeight = GUI.HorizontalSlider(
+            new Rect(startX + labelWidth, startY + 5, sliderWidth, sliderHeight),
+            currentJumpHeight,
+            jumpHeightRange.x,
+            jumpHeightRange.y
+        );
+        GUI.Label(new Rect(startX + labelWidth + sliderWidth + 10, startY, valueWidth, sliderHeight), currentJumpHeight.ToString("F1"));
+        
+        // Move Speed Slider
+        GUI.Label(new Rect(startX, startY + 40, labelWidth, sliderHeight), "Vitesse de déplacement:");
+        currentMoveSpeed = GUI.HorizontalSlider(
+            new Rect(startX + labelWidth, startY + 45, sliderWidth, sliderHeight),
+            currentMoveSpeed,
+            moveSpeedRange.x,
+            moveSpeedRange.y
+        );
+        GUI.Label(new Rect(startX + labelWidth + sliderWidth + 10, startY + 40, valueWidth, sliderHeight), currentMoveSpeed.ToString("F1"));
+        
+        // Reset button
+        if (GUI.Button(new Rect(startX + labelWidth, startY + 80, 100, 25), "Réinitialiser"))
+        {
+            currentJumpHeight = 8f;
+            currentMoveSpeed = 10f;
+        }
+        
+        // Apply values to player
+        if (playerController != null)
+        {
+            playerController.jumpForce = currentJumpHeight;
+            playerController.moveSpeed = currentMoveSpeed;
         }
     }
     

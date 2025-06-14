@@ -2375,7 +2375,7 @@ MonoBehaviour:
   volume: 1
   is3DSound: 0
   fadeDuration: 2
-  minDistance: 8.84
+  minDistance: 9.05
   maxDistance: 18.36
   useDistanceInZone: 0
   triggerTag: Player
@@ -7132,7 +7132,7 @@ MonoBehaviour:
   musicTracks:
   - trackName: Theme
     audioClip: {fileID: 8300000, guid: 90765560a89f5a147bff6d9af7c57af3, type: 3}
-    volume: 0.01
+    volume: 0.05
     loop: 0
     playInZones: 
   masterVolume: 0.7
@@ -8897,7 +8897,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 611810925}
   m_Direction: 0
   m_Value: 0
-  m_Size: 0.99999994
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -12102,7 +12102,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 9410445}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.93519664
+  m_Size: 0.99614555
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -14328,7 +14328,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1628671277}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.51788
+  m_Size: 0.9999874
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -15334,7 +15334,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.00019901748}
+  m_AnchoredPosition: {x: 0, y: 0.000022621489}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1536727519

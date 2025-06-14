@@ -120,7 +120,16 @@ public class DialogueUI : MonoBehaviour
             sendButton.onClick.AddListener(SendPlayerMessage);
             
         if (switchToAIButton != null)
+        {
             switchToAIButton.onClick.AddListener(SwitchToAIMode);
+            
+            // NOUVEAU : Ajoute une indication pour la touche M
+            var switchButtonText = switchToAIButton.GetComponentInChildren<TextMeshProUGUI>();
+            if (switchButtonText != null && !switchButtonText.text.Contains("[M]"))
+            {
+                switchButtonText.text += " / [M] Travail";
+            }
+        }
             
         // Configure l'InputField pour gérer Enter correctement
         if (playerInputField != null)
@@ -244,6 +253,22 @@ public class DialogueUI : MonoBehaviour
                     }
                 }
             }
+            
+            // NOUVEAU : Touche M pour demander du travail en mode IA
+            if (Input.GetKeyDown(KeyCode.M))
+            {
+                Debug.Log("[UI] Touche M pressée - Demande automatique de travail");
+                AskForWork();
+            }
+        }
+        
+        // NOUVEAU : Touche M pour passer en mode IA et demander du travail (mode classique)
+        if (!isAIMode && dialoguePanel.activeInHierarchy && Input.GetKeyDown(KeyCode.M))
+        {
+            Debug.Log("[UI] Touche M pressée - Passage en mode IA et demande de travail");
+            SwitchToAIMode();
+            // Attend un frame avant d'envoyer la demande
+            StartCoroutine(AskForWorkDelayed());
         }
         
         // NOUVEAU : Gestion des raccourcis pour les quêtes
@@ -577,6 +602,12 @@ public class DialogueUI : MonoBehaviour
         // Colore le texte si c'est une réplique du NPC
         string coloredText = ColorizeNPCText(text);
         dialogueText.text = coloredText;
+        
+        // NOUVEAU : Ajoute l'aide pour la touche M si on est en mode IA
+        if (isAIMode && !coloredText.Contains("[M]"))
+        {
+            dialogueText.text = coloredText + "\n\n<size=14><color=#888888><i>[M] Demander du travail</i></color></size>";
+        }
         
         isCurrentlyDisplaying = false;
         
@@ -1135,6 +1166,85 @@ public class DialogueUI : MonoBehaviour
     public bool IsDialogueOpen()
     {
         return dialoguePanel != null && dialoguePanel.activeInHierarchy;
+    }
+    
+    // NOUVEAU : Méthode pour demander automatiquement du travail
+    void AskForWork()
+    {
+        if (isAIMode && !isSendingMessage && playerInputField != null)
+        {
+            // Messages variés selon le rôle du NPC
+            string workRequest = GetWorkRequestMessage();
+            
+            // Remplit automatiquement le champ de texte
+            playerInputField.text = workRequest;
+            
+            // Simule un petit délai avant l'envoi pour que ce soit visible
+            StartCoroutine(SendMessageDelayed(0.2f));
+        }
+    }
+    
+    // Génère un message approprié selon le type de NPC
+    string GetWorkRequestMessage()
+    {
+        if (currentNPC == null) return "Avez-vous du travail pour moi ?";
+        
+        // Messages variés selon le rôle
+        switch (currentNPC.role.ToLower())
+        {
+            case "marchand":
+                string[] merchantRequests = {
+                    "Avez-vous du travail pour moi ?",
+                    "J'aimerais gagner quelques crédits. Avez-vous une mission ?",
+                    "Y a-t-il quelque chose que je pourrais faire pour vous ?",
+                    "Auriez-vous besoin d'aide pour récupérer des marchandises ?"
+                };
+                return merchantRequests[Random.Range(0, merchantRequests.Length)];
+            
+            case "scientifique":
+                string[] scientistRequests = {
+                    "Avez-vous des recherches auxquelles je pourrais contribuer ?",
+                    "Y a-t-il des échantillons que vous aimeriez que je collecte ?",
+                    "Puis-je vous aider dans vos expériences ?",
+                    "Avez-vous besoin d'assistance pour vos travaux scientifiques ?"
+                };
+                return scientistRequests[Random.Range(0, scientistRequests.Length)];
+            
+            case "garde impérial":
+                string[] guardRequests = {
+                    "L'Empire a-t-il besoin de mes services ?",
+                    "Y a-t-il des missions de sécurité disponibles ?",
+                    "Comment puis-je servir l'Empire aujourd'hui ?",
+                    "Avez-vous des ordres de mission pour moi ?"
+                };
+                return guardRequests[Random.Range(0, guardRequests.Length)];
+            
+            default:
+                string[] defaultRequests = {
+                    "Avez-vous du travail pour moi ?",
+                    "Y a-t-il quelque chose que je pourrais faire pour vous aider ?",
+                    "Auriez-vous une mission à me confier ?",
+                    "Je cherche du travail. Avez-vous quelque chose ?"
+                };
+                return defaultRequests[Random.Range(0, defaultRequests.Length)];
+        }
+    }
+    
+    // Envoie le message après un délai
+    IEnumerator SendMessageDelayed(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        SendPlayerMessage();
+    }
+    
+    // Pour le mode classique : attend que le mode IA soit activé
+    IEnumerator AskForWorkDelayed()
+    {
+        // Attend 2 frames pour être sûr que le mode IA est bien initialisé
+        yield return null;
+        yield return null;
+        
+        AskForWork();
     }
     
     // NOUVEAU : Animation visuelle pour simuler un clic de bouton

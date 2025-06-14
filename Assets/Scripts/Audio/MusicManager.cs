@@ -55,6 +55,16 @@ public class MusicManager : MonoBehaviour
     [Tooltip("Default track to play on start")]
     public string defaultTrackName = "Main Theme";
     
+    [Header("Random Play Settings")]
+    [Tooltip("Enable random track selection")]
+    public bool enableRandomPlay = false;
+    
+    [Tooltip("Avoid repeating the same track")]
+    public bool avoidRepeats = true;
+    
+    [Tooltip("Play random track when current track ends (non-looping tracks only)")]
+    public bool autoPlayNextRandom = true;
+    
     [Header("Current State")]
     [SerializeField] private MusicTrack currentTrack;
     [SerializeField] private MusicZoneType currentZone = MusicZoneType.Menu;
@@ -66,6 +76,8 @@ public class MusicManager : MonoBehaviour
     private AudioSource activeSource;
     private AudioSource inactiveSource;
     private bool isFading = false;
+    private List<MusicTrack> recentlyPlayedTracks = new List<MusicTrack>();
+    private int maxRecentTracks = 3; // Number of tracks to remember for avoid repeats
     
     void Awake()
     {
@@ -101,14 +113,31 @@ public class MusicManager : MonoBehaviour
     
     void Start()
     {
-        // Play default track if specified
-        if (!string.IsNullOrEmpty(defaultTrackName))
+        // Play default track or random if enabled
+        if (enableRandomPlay)
+        {
+            PlayRandomTrack();
+        }
+        else if (!string.IsNullOrEmpty(defaultTrackName))
         {
             PlayTrackByName(defaultTrackName);
         }
         else if (musicTracks.Count > 0)
         {
             PlayTrack(musicTracks[0]);
+        }
+    }
+    
+    void Update()
+    {
+        // Check if we need to play next random track
+        if (autoPlayNextRandom && enableRandomPlay && activeSource != null && currentTrack != null)
+        {
+            // If track is not looping and has finished playing
+            if (!currentTrack.loop && !activeSource.isPlaying && !isFading)
+            {
+                PlayRandomTrack();
+            }
         }
     }
     
@@ -287,6 +316,99 @@ public class MusicManager : MonoBehaviour
         if (!activeSource.isPlaying && currentTrack != null)
         {
             activeSource.UnPause();
+        }
+    }
+    
+    public void PlayRandomTrack()
+    {
+        if (musicTracks == null || musicTracks.Count == 0)
+            return;
+        
+        List<MusicTrack> availableTracks = new List<MusicTrack>(musicTracks);
+        
+        // Remove recently played tracks if avoiding repeats
+        if (avoidRepeats && availableTracks.Count > maxRecentTracks)
+        {
+            foreach (var recentTrack in recentlyPlayedTracks)
+            {
+                availableTracks.Remove(recentTrack);
+            }
+        }
+        
+        // Remove current track from available tracks
+        if (currentTrack != null)
+        {
+            availableTracks.Remove(currentTrack);
+        }
+        
+        // If no tracks available (all recently played), reset
+        if (availableTracks.Count == 0)
+        {
+            availableTracks = new List<MusicTrack>(musicTracks);
+            if (currentTrack != null)
+                availableTracks.Remove(currentTrack);
+        }
+        
+        // Select random track
+        if (availableTracks.Count > 0)
+        {
+            MusicTrack randomTrack = availableTracks[Random.Range(0, availableTracks.Count)];
+            PlayTrack(randomTrack);
+            
+            // Update recently played list
+            if (avoidRepeats)
+            {
+                recentlyPlayedTracks.Add(randomTrack);
+                if (recentlyPlayedTracks.Count > maxRecentTracks)
+                {
+                    recentlyPlayedTracks.RemoveAt(0);
+                }
+            }
+        }
+    }
+    
+    public void PlayRandomTrackFromZone(MusicZoneType zone)
+    {
+        var zoneTracks = musicTracks.Where(t => t.playInZones != null && t.playInZones.Contains(zone)).ToList();
+        
+        if (zoneTracks.Count > 0)
+        {
+            MusicTrack randomTrack = zoneTracks[Random.Range(0, zoneTracks.Count)];
+            PlayTrack(randomTrack);
+        }
+    }
+    
+    public void ToggleRandomPlay()
+    {
+        enableRandomPlay = !enableRandomPlay;
+    }
+    
+    public void PlayNextTrack()
+    {
+        if (enableRandomPlay)
+        {
+            PlayRandomTrack();
+        }
+        else
+        {
+            // Play next in list
+            if (musicTracks.Count > 0 && currentTrack != null)
+            {
+                int currentIndex = musicTracks.IndexOf(currentTrack);
+                int nextIndex = (currentIndex + 1) % musicTracks.Count;
+                PlayTrack(musicTracks[nextIndex]);
+            }
+        }
+    }
+    
+    public void PlayPreviousTrack()
+    {
+        if (musicTracks.Count > 0 && currentTrack != null)
+        {
+            int currentIndex = musicTracks.IndexOf(currentTrack);
+            int prevIndex = currentIndex - 1;
+            if (prevIndex < 0) prevIndex = musicTracks.Count - 1;
+            PlayTrack(musicTracks[prevIndex]);
         }
     }
     

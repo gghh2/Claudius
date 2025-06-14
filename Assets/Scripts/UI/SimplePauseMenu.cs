@@ -47,6 +47,10 @@ public class SimplePauseMenu : MonoBehaviour
     private GUIStyle controlsStyle;
     private bool stylesInitialized = false;
     
+    // Pour l'animation du bouton respawn
+    private bool respawnButtonPressed = false;
+    private float respawnButtonPressTime = 0f;
+    
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player");
@@ -108,6 +112,21 @@ public class SimplePauseMenu : MonoBehaviour
                 Resume();
             else
                 Pause();
+        }
+        
+        // NOUVEAU : Touche R pour respawn quand le menu est ouvert
+        if (isPaused && Input.GetKeyDown(KeyCode.R))
+        {
+            Debug.Log("[PAUSE] Touche R pressée - Respawn du joueur");
+            respawnButtonPressed = true;
+            respawnButtonPressTime = Time.unscaledTime;
+            ResetPlayerPosition();
+        }
+        
+        // Gère l'animation du bouton
+        if (respawnButtonPressed && Time.unscaledTime - respawnButtonPressTime > 0.1f)
+        {
+            respawnButtonPressed = false;
         }
     }
     
@@ -180,11 +199,19 @@ public class SimplePauseMenu : MonoBehaviour
             Resume();
         }
         
+        // Animation du bouton respawn quand on appuie sur R
+        if (respawnButtonPressed)
+        {
+            GUI.color = new Color(0.7f, 0.7f, 0.7f, 1f); // Couleur plus sombre pour simuler le clic
+        }
+        
         if (GUI.Button(new Rect(centerX - buttonWidth/2, buttonsStartY + buttonHeight + spacing, buttonWidth, buttonHeight), 
-                       "RETOUR AU SPAWN", buttonStyle))
+                       "[R] RETOUR AU SPAWN", buttonStyle))
         {
             ResetPlayerPosition();
         }
+        
+        GUI.color = Color.white; // Reset la couleur
         
         if (GUI.Button(new Rect(centerX - buttonWidth/2, buttonsStartY + (buttonHeight + spacing) * 2, buttonWidth, buttonHeight), 
                        "QUITTER LE JEU", buttonStyle))
@@ -206,7 +233,8 @@ public class SimplePauseMenu : MonoBehaviour
                          "Inventaire : I / Tab\n" +
                          "Journal : J\n\n" +
                          "— SYSTÈME —\n" +
-                         "Menu Pause : Échap";
+                         "Menu Pause : Échap\n" +
+                         "Respawn (en pause) : R";
         
         GUI.Box(new Rect(centerX + 200, centerY - 150, 350, 400), controls, controlsStyle);
         

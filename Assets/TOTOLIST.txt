@@ -5,6 +5,10 @@ UI
 √ Avoir un menu pour quitter / afficher les touches
 √ Création menu Pause
 √ Menu pause n'apaprait pas lors du build ans run
+√ Je ne veux pas couleur onglet par défaut, que ça utilise les paramètre de l'inspector
+- Que le marker ne soit actif que si on a qu'une quête / ou qu'on a choisi de follow une quête
+√ Le glow sur les noms  Thickness à enleevr et le mode Gras
+√ Avoir le background du menu pause en image dispo dans inspector
 
 
 ========================================
@@ -40,6 +44,8 @@ INVENTAIRE
 ========================================
 SOUND DESIGN
 - Assigner les sons au Compagnion Poule
+√ Que tous les bruits généré par NPC, Utilisateur, Companions, Environnement soit fonction de la distance de la caméra par rapport à la source du son.
+√ Avoir une musique par défaut au lancement du jeu
 
 =========================================
 DEBUG
@@ -70,6 +76,9 @@ AIDialogueManager.cs
 
 =======================================
 QUETES
+√ Faire A : accepte la quête
+√ Faire R : Refuse la quête
+
 
 - en cours Redisigner Ecran des quêtes (chevauchement)
 √ Les sons des quêtes sont trop fort
@@ -79,18 +88,24 @@ QUETES
 
 Type de Quête :
 ---------------
+- Interidction de créer un doublon de PNJ
 
 √ Quand on rend une quête avec le message de remerciement du NPC, le bouton Terminer doit fermer la conversation.
 
 FETCH : √
+- On a deux objet dans l'inventaire
 
 DELIVERY : √
-- Le nom de la quête reste affichée sous le PNJ une fois rendue
+√ Le nom de la quête reste affichée sous le PNJ une fois rendue
+- Si on demande une quête, le NPC de destination créé un doublon du PNJ donneur de quête
+- 
 
 EXPLORE : 
 Oui mais - Que les zones à explorer soit plus ou moins lognue
 √ Que quand une zone à explorer fonctionne ça fasse bien ce qui est prévu.
 - Si un NPC nous demande d'explorer pour telle raison, alors une fois l'exploration faite il faut une explications, des données de notre exploration
+√ Maarker trop haut, pas posé au sol
+
 
 
 TALK : 

@@ -62,6 +62,16 @@ public class QuestObject : MonoBehaviour
     private Camera mainCamera;
     private SphereCollider triggerCollider;
     
+    void Awake()
+    {
+        // Pour les marqueurs d'exploration, positionne au sol dès que possible
+        if (objectType == QuestObjectType.Marker)
+        {
+            Debug.Log($"🎯 [MARKER AWAKE] Positionnement précoce du marqueur {objectName}");
+            PositionMarkerOnGround();
+        }
+    }
+    
     void Start()
     {
         objectRenderer = GetComponent<Renderer>();
@@ -69,6 +79,12 @@ public class QuestObject : MonoBehaviour
         
         if (debugMode)
             Debug.Log($"🔧 QuestObject Start() - {objectName} ({objectType})");
+        
+        // Pour les marqueurs d'exploration, s'assure qu'ils sont au sol
+        if (objectType == QuestObjectType.Marker)
+        {
+            PositionMarkerOnGround();
+        }
         
         // Setup du collider trigger
         SetupTriggerCollider();
@@ -88,6 +104,87 @@ public class QuestObject : MonoBehaviour
         
         if (debugMode)
             Debug.Log($"✅ Objet de quête configuré: {objectName} - Trigger radius: {triggerRadius}");
+    }
+    
+    void PositionMarkerOnGround()
+    {
+        Vector3 currentPos = transform.position;
+        Debug.Log($"🎯 [MARKER GROUND CHECK] Position initiale: {currentPos}");
+        
+        Vector3 rayStart = new Vector3(currentPos.x, currentPos.y + 50f, currentPos.z);
+        
+        // Layer mask pour ignorer les triggers et zones
+        // On veut seulement les objets solides (terrain, bâtiments, etc.)
+        int layerMask = ~0; // Commence avec tous les layers
+        
+        // Ignore les layers communs pour les triggers
+        // NOTE: Ajustez ces layers selon votre projet
+        int ignoreLayer1 = LayerMask.NameToLayer("Ignore Raycast");
+        int ignoreLayer2 = LayerMask.NameToLayer("UI");
+        int ignoreLayer3 = LayerMask.NameToLayer("TransparentFX");
+        
+        if (ignoreLayer1 >= 0) layerMask &= ~(1 << ignoreLayer1);
+        if (ignoreLayer2 >= 0) layerMask &= ~(1 << ignoreLayer2);
+        if (ignoreLayer3 >= 0) layerMask &= ~(1 << ignoreLayer3);
+        
+        // Alternative: utiliser QueryTriggerInteraction pour ignorer TOUS les triggers
+        RaycastHit hit;
+        if (Physics.Raycast(rayStart, Vector3.down, out hit, 100f, layerMask, QueryTriggerInteraction.Ignore))
+        {
+            // Vérifie que c'est bien un sol valide et pas un trigger qui serait passé
+            if (!hit.collider.isTrigger)
+            {
+                transform.position = hit.point + Vector3.up * 0.1f;
+                Debug.Log($"🎯 [MARKER GROUNDED] Repositionné au sol: {hit.point} (hit: {hit.collider.name}, layer: {LayerMask.LayerToName(hit.collider.gameObject.layer)})");
+                return;
+            }
+            else
+            {
+                Debug.LogWarning($"🎯 [MARKER] Hit un trigger! {hit.collider.name} - on continue la recherche");
+            }
+        }
+        
+        Debug.LogWarning($"🎯 [MARKER GROUND CHECK] Premier raycast échoué depuis Y={rayStart.y}");
+        
+        // Deuxième essai depuis plus bas
+        rayStart = currentPos + Vector3.up * 2f;
+        if (Physics.Raycast(rayStart, Vector3.down, out hit, 50f, layerMask, QueryTriggerInteraction.Ignore))
+        {
+            if (!hit.collider.isTrigger)
+            {
+                transform.position = hit.point + Vector3.up * 0.1f;
+                Debug.Log($"🎯 [MARKER GROUNDED] Repositionné au sol (2e essai): {hit.point} (hit: {hit.collider.name})");
+                return;
+            }
+        }
+        
+        // Troisième essai: RaycastAll pour trouver le VRAI sol
+        Debug.Log($"🎯 [MARKER] Essai avec RaycastAll pour ignorer les triggers...");
+        rayStart = new Vector3(currentPos.x, currentPos.y + 50f, currentPos.z);
+        RaycastHit[] hits = Physics.RaycastAll(rayStart, Vector3.down, 100f, layerMask);
+        
+        // Trie par distance et trouve le premier non-trigger
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        
+        foreach (RaycastHit hitInfo in hits)
+        {
+            if (!hitInfo.collider.isTrigger)
+            {
+                transform.position = hitInfo.point + Vector3.up * 0.1f;
+                Debug.Log($"🎯 [MARKER GROUNDED via RaycastAll] Sol trouvé: {hitInfo.point} (hit: {hitInfo.collider.name})");
+                return;
+            }
+            else
+            {
+                Debug.Log($"🎯 [MARKER] RaycastAll - Ignoré trigger: {hitInfo.collider.name}");
+            }
+        }
+        
+        // Fallback final
+        transform.position = new Vector3(currentPos.x, 0f, currentPos.z);
+        Debug.LogWarning($"🎯 [MARKER FALLBACK] Aucun sol non-trigger trouvé! Position à y=0");
+        
+        Debug.Log($"🎯 [MARKER FINAL] Position finale: {transform.position}");
     }
     
     // NOUVEAU: Vérification debug

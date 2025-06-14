@@ -113,6 +113,12 @@ public class QuestJournalUI : MonoBehaviour
             journalPanel.SetActive(true);
             isJournalOpen = true;
             
+            // Notify UIManager
+            if (UIManager.Instance != null)
+            {
+                UIManager.Instance.SetPanelState(UIPanelNames.QuestJournal, true);
+            }
+            
             // Désactive le mouvement du joueur
             PlayerController player = FindObjectOfType<PlayerController>();
             if (player != null)
@@ -131,6 +137,12 @@ public class QuestJournalUI : MonoBehaviour
         {
             journalPanel.SetActive(false);
             isJournalOpen = false;
+            
+            // Notify UIManager
+            if (UIManager.Instance != null)
+            {
+                UIManager.Instance.SetPanelState(UIPanelNames.QuestJournal, false);
+            }
             
             // Réactive le mouvement du joueur
             PlayerController player = FindObjectOfType<PlayerController>();

@@ -271,6 +271,12 @@ public class DialogueUI : MonoBehaviour
         
         dialoguePanel.SetActive(true);
         
+        // Notify UIManager
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.SetPanelState(UIPanelNames.Dialogue, true);
+        }
+        
         // Applique la couleur du NPC au nom
         npcNameText.text = TextFormatter.FormatName(currentNPC.name);
         npcNameText.color = GetNPCColor(currentNPC.name);
@@ -307,6 +313,12 @@ public class DialogueUI : MonoBehaviour
         isAIMode = true;
         
         dialoguePanel.SetActive(true);
+        
+        // Notify UIManager
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.SetPanelState(UIPanelNames.Dialogue, true);
+        }
         
         // Applique la couleur du NPC
         npcNameText.text = TextFormatter.FormatName(currentNPC.name);
@@ -978,6 +990,12 @@ public class DialogueUI : MonoBehaviour
                 dialoguePanel.SetActive(false);
                 historyPanel.SetActive(true);
                 
+                // Notify UIManager
+                if (UIManager.Instance != null)
+                {
+                    UIManager.Instance.SetPanelState(UIPanelNames.DialogueHistory, true);
+                }
+                
                 string historyContent = $"<size=24><color=yellow>=== Historique avec {currentNPC.name} ===</color></size>\n\n";
                 
                 for (int i = 0; i < history.messages.Count; i++)
@@ -1005,6 +1023,12 @@ public class DialogueUI : MonoBehaviour
     {
         if (historyPanel != null)
             historyPanel.SetActive(false);
+        
+        // Notify UIManager
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.SetPanelState(UIPanelNames.DialogueHistory, false);
+        }
         
         if (dialoguePanel != null)
             dialoguePanel.SetActive(true);
@@ -1081,6 +1105,12 @@ public class DialogueUI : MonoBehaviour
         ClearPendingQuests(); // Nettoie les quêtes en attente
         
         dialoguePanel.SetActive(false);
+        
+        // Notify UIManager
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.SetPanelState(UIPanelNames.Dialogue, false);
+        }
         FindObjectOfType<PlayerController>()?.EnableControl();
         
         // REPREND le mouvement et réaffiche les noms

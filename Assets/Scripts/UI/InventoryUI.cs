@@ -65,6 +65,12 @@ public class InventoryUI : MonoBehaviour
         gameObject.SetActive(true);
         isOpen = true;
         
+        // Notify UIManager
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.SetPanelState(UIPanelNames.Inventory, true);
+        }
+        
         // Désactive le mouvement du joueur
         PlayerController player = FindObjectOfType<PlayerController>();
         if (player != null)
@@ -78,10 +84,16 @@ public class InventoryUI : MonoBehaviour
         Debug.Log("📦 Inventaire ouvert");
     }
     
-    void CloseInventory()
+    public void CloseInventory()
     {
         gameObject.SetActive(false);
         isOpen = false;
+        
+        // Notify UIManager
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.SetPanelState(UIPanelNames.Inventory, false);
+        }
         
         // Réactive le mouvement du joueur
         PlayerController player = FindObjectOfType<PlayerController>();

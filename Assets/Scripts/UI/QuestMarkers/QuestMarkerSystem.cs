@@ -15,8 +15,8 @@ public class QuestMarkerSystem : MonoBehaviour
     public QuestMarkerConfig config;
     
     [Header("Runtime Settings (Override Config)")]
-    [Tooltip("Prefab for the quest marker arrow")]
-    public GameObject markerPrefab;
+    [Tooltip("Prefab for the UI arrow indicator on screen edges")]
+    public GameObject uiArrowPrefab;
     
     // Config cache
     private float markerSize;
@@ -108,10 +108,10 @@ public class QuestMarkerSystem : MonoBehaviour
             Debug.LogError("[QuestMarkerSystem] PlayerController not found!");
         }
         
-        // Create default marker prefab if none assigned
-        if (markerPrefab == null)
+        // Create default UI arrow prefab if none assigned
+        if (uiArrowPrefab == null)
         {
-            CreateDefaultMarkerPrefab();
+            CreateDefaultUIArrowPrefab();
         }
         
         // Check if QuestZone tag exists, create it if not
@@ -168,18 +168,18 @@ public class QuestMarkerSystem : MonoBehaviour
         canvasGO.AddComponent<GraphicRaycaster>();
     }
     
-    void CreateDefaultMarkerPrefab()
+    void CreateDefaultUIArrowPrefab()
     {
-        // Create a simple arrow marker prefab
-        markerPrefab = new GameObject("MarkerPrefab");
-        markerPrefab.SetActive(false);
+        // Create a simple arrow UI indicator prefab
+        uiArrowPrefab = new GameObject("UIArrowPrefab");
+        uiArrowPrefab.SetActive(false);
         
         // Add RectTransform
-        RectTransform rectTransform = markerPrefab.AddComponent<RectTransform>();
+        RectTransform rectTransform = uiArrowPrefab.AddComponent<RectTransform>();
         rectTransform.sizeDelta = new Vector2(markerSize, markerSize);
         
         // Add image component for arrow
-        Image arrow = markerPrefab.AddComponent<Image>();
+        Image arrow = uiArrowPrefab.AddComponent<Image>();
         
         // Create a simple arrow sprite programmatically
         Texture2D arrowTexture = new Texture2D(64, 64);
@@ -230,13 +230,13 @@ public class QuestMarkerSystem : MonoBehaviour
         arrow.color = markerColor; // Use the configured color
         
         // Add outline for better visibility
-        Outline outline = markerPrefab.AddComponent<Outline>();
+        Outline outline = uiArrowPrefab.AddComponent<Outline>();
         outline.effectColor = Color.black;
         outline.effectDistance = new Vector2(2, 2);
         
         // Add distance text
         GameObject distanceGO = new GameObject("DistanceText");
-        distanceGO.transform.SetParent(markerPrefab.transform, false);
+        distanceGO.transform.SetParent(uiArrowPrefab.transform, false);
         
         RectTransform textRect = distanceGO.AddComponent<RectTransform>();
         textRect.anchoredPosition = new Vector2(0, -40);
@@ -359,8 +359,19 @@ public class QuestMarkerSystem : MonoBehaviour
     {
         string markerId = "Obj_" + questObj.questId + "_" + questObj.objectName;
         
+        // Pour les marqueurs d'exploration, utilise la position au sol
+        Vector3 targetPosition;
+        if (questObj.objectType == QuestObjectType.Marker)
+        {
+            targetPosition = GetGroundPosition(questObj.transform.position);
+        }
+        else
+        {
+            targetPosition = questObj.transform.position;
+        }
+        
         // Calculate distance
-        float distance = Vector3.Distance(player.position, questObj.transform.position);
+        float distance = Vector3.Distance(player.position, targetPosition);
         
         // Get or create marker
         GameObject marker = GetOrCreateMarker(markerId);
@@ -373,15 +384,40 @@ public class QuestMarkerSystem : MonoBehaviour
         }
         
         marker.SetActive(true);
-        UpdateMarkerPosition(marker, questObj.transform.position, distance);
+        UpdateMarkerPosition(marker, targetPosition, distance);
+    }
+    
+    Vector3 GetGroundPosition(Vector3 position)
+    {
+        // Raycast down from position to find ground
+        Vector3 rayStart = new Vector3(position.x, position.y + 50f, position.z);
+        
+        if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit, 100f))
+        {
+            // Return ground position with small offset
+            return hit.point + Vector3.up * 0.5f;
+        }
+        
+        // If no ground found from above, try from the position itself
+        if (Physics.Raycast(position + Vector3.up * 2f, Vector3.down, out RaycastHit hit2, 50f))
+        {
+            return hit2.point + Vector3.up * 0.5f;
+        }
+        
+        // Final fallback: assume ground is at y=0
+        Debug.LogWarning($"[QuestMarkerSystem] Could not find ground for marker at {position}. Using y=0.");
+        return new Vector3(position.x, 0f, position.z);
     }
     
     void UpdateMarkerForZone(QuestZone zone)
     {
         string markerId = "Zone_" + zone.zoneName;
         
+        // Pour les zones, utilise une position au sol plutôt que transform.position
+        Vector3 targetPosition = GetGroundPositionForZone(zone);
+        
         // Calculate distance to zone center
-        float distance = Vector3.Distance(player.position, zone.transform.position);
+        float distance = Vector3.Distance(player.position, targetPosition);
         
         // Get or create marker
         GameObject marker = GetOrCreateMarker(markerId);
@@ -394,7 +430,31 @@ public class QuestMarkerSystem : MonoBehaviour
         }
         
         marker.SetActive(true);
-        UpdateMarkerPosition(marker, zone.transform.position, distance);
+        UpdateMarkerPosition(marker, targetPosition, distance);
+    }
+    
+    Vector3 GetGroundPositionForZone(QuestZone zone)
+    {
+        // Start from zone position
+        Vector3 zonePos = zone.transform.position;
+        
+        // Raycast down from high above to find ground
+        Vector3 rayStart = new Vector3(zonePos.x, zonePos.y + 50f, zonePos.z);
+        
+        if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit, 100f))
+        {
+            // Return ground position with small offset
+            return hit.point + Vector3.up * 0.5f;
+        }
+        
+        // If no ground found, try from zone position
+        if (Physics.Raycast(zonePos + Vector3.up * 2f, Vector3.down, out RaycastHit hit2, 10f))
+        {
+            return hit2.point + Vector3.up * 0.5f;
+        }
+        
+        // Fallback: use zone position but lower it
+        return new Vector3(zonePos.x, zonePos.y - 2f, zonePos.z);
     }
     
     void UpdateMarkerPosition(GameObject marker, Vector3 targetPosition, float distance)
@@ -463,8 +523,8 @@ public class QuestMarkerSystem : MonoBehaviour
     {
         if (!activeMarkers.ContainsKey(markerId))
         {
-            // Create new marker
-            GameObject marker = Instantiate(markerPrefab, markerCanvas.transform);
+            // Create new UI arrow indicator
+            GameObject marker = Instantiate(uiArrowPrefab, markerCanvas.transform);
             marker.name = "QuestMarker_" + markerId;
             
             // Set size

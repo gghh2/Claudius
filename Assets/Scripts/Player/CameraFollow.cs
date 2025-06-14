@@ -82,61 +82,49 @@ public class CameraFollow : MonoBehaviour
 
 
     void HandleZoomInput()
-	{
-	    if (!enableZoom) return;
-	    
-	    // BONUS : Désactive le zoom si dialogue ouvert OU historique ouvert
-	    if (DialogueUI.Instance != null)
-	    {
-	        bool dialogueOpen = DialogueUI.Instance.IsDialogueOpen();
-	        
-	        // Vérifie aussi si l'historique est ouvert (bonus)
-	        bool historyOpen = false;
-	        if (DialogueUI.Instance.historyPanel != null)
-	        {
-	            historyOpen = DialogueUI.Instance.historyPanel.activeInHierarchy;
-	        }
-	        
-	        if (dialogueOpen || historyOpen)
-	        {
-	            return; // Pas de zoom pendant les dialogues ou l'historique
-	        }
-	    }
-	    
-	    // ALTERNATIVE ROBUSTE : Gestion de la molette ET des raccourcis
-	    
-	    // Récupère l'input de la molette
-	    float scrollInput = Input.GetAxis("Mouse ScrollWheel");
-	    
-	    if (scrollInput != 0f)
-	    {
-	        // Ajuste le zoom cible
-	        targetSize -= scrollInput * zoomSpeed;
-	        targetSize = Mathf.Clamp(targetSize, minSize, maxSize);
-	        
-	        //Debug.Log($"Zoom - Taille cible: {targetSize:F1}");
-	    }
-	    
-	    // Raccourcis clavier (aussi désactivés pendant les dialogues)
-	    if (Input.GetKeyDown(KeyCode.R))
-	    {
-	        ResetZoom();
-	        //Debug.Log("Zoom resetté");
-	    }
-	    
-	    // BONUS SUPPLÉMENTAIRE : Raccourcis + et - pour le zoom
-	    if (Input.GetKey(KeyCode.Plus) || Input.GetKey(KeyCode.KeypadPlus))
-	    {
-	        targetSize -= Time.deltaTime * zoomSpeed; // + pour zoom avant
-	        targetSize = Mathf.Clamp(targetSize, minSize, maxSize);
-	    }
-	    
-	    if (Input.GetKey(KeyCode.Minus) || Input.GetKey(KeyCode.KeypadMinus))
-	    {
-	        targetSize += Time.deltaTime * zoomSpeed; // - pour zoom arrière
-	        targetSize = Mathf.Clamp(targetSize, minSize, maxSize);
-	    }
-	}
+    {
+        if (!enableZoom) return;
+        
+        // Check if any UI is open through UIManager
+        if (UIManager.Instance != null && UIManager.Instance.IsAnyUIOpen())
+        {
+            return; // No zoom when any UI panel is open
+        }
+        
+        // ALTERNATIVE ROBUSTE : Gestion de la molette ET des raccourcis
+        
+        // Récupère l'input de la molette
+        float scrollInput = Input.GetAxis("Mouse ScrollWheel");
+        
+        if (scrollInput != 0f)
+        {
+            // Ajuste le zoom cible
+            targetSize -= scrollInput * zoomSpeed;
+            targetSize = Mathf.Clamp(targetSize, minSize, maxSize);
+            
+            //Debug.Log($"Zoom - Taille cible: {targetSize:F1}");
+        }
+        
+        // Raccourcis clavier (aussi désactivés pendant les dialogues)
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            ResetZoom();
+            //Debug.Log("Zoom resetté");
+        }
+        
+        // BONUS SUPPLÉMENTAIRE : Raccourcis + et - pour le zoom
+        if (Input.GetKey(KeyCode.Plus) || Input.GetKey(KeyCode.KeypadPlus))
+        {
+            targetSize -= Time.deltaTime * zoomSpeed; // + pour zoom avant
+            targetSize = Mathf.Clamp(targetSize, minSize, maxSize);
+        }
+        
+        if (Input.GetKey(KeyCode.Minus) || Input.GetKey(KeyCode.KeypadMinus))
+        {
+            targetSize += Time.deltaTime * zoomSpeed; // - pour zoom arrière
+            targetSize = Mathf.Clamp(targetSize, minSize, maxSize);
+        }
+    }
     
     void UpdateCameraZoom()
     {

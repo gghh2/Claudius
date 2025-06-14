@@ -120,16 +120,35 @@ public class QuestZone : MonoBehaviour
     
     Vector3 FindGroundPosition(Vector3 position)
     {
-        Vector3 rayStart = new Vector3(position.x, transform.position.y + 20f, position.z);
+        // Start higher above the position to ensure we're above any terrain
+        Vector3 rayStart = new Vector3(position.x, position.y + 50f, position.z);
         
-        if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit, 30f))
+        // Raycast down to find ground - IGNORE TRIGGERS
+        if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit, 100f, ~0, QueryTriggerInteraction.Ignore))
         {
-            return hit.point + Vector3.up * 0.1f;
+            // Vérifie que ce n'est pas un trigger (double sécurité)
+            if (!hit.collider.isTrigger)
+            {
+                // Return hit point with small offset above ground
+                return hit.point + Vector3.up * 0.1f;
+            }
         }
-        else
+        
+        // If first raycast fails, try RaycastAll to find first non-trigger
+        RaycastHit[] hits = Physics.RaycastAll(rayStart, Vector3.down, 100f);
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        
+        foreach (RaycastHit hitInfo in hits)
         {
-            return new Vector3(position.x, transform.position.y - 1f, position.z);
+            if (!hitInfo.collider.isTrigger)
+            {
+                return hitInfo.point + Vector3.up * 0.1f;
+            }
         }
+        
+        // Final fallback: return position at a reasonable height
+        Debug.LogWarning($"[QuestZone] Could not find non-trigger ground at position {position}. Using fallback.");
+        return new Vector3(position.x, 0f, position.z);
     }
     
     bool IsPointValid(Vector3 point)

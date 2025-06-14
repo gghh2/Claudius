@@ -116,6 +116,12 @@ public class SimplePauseMenu : MonoBehaviour
         isPaused = true;
         Time.timeScale = 0f;
         
+        // Notify UIManager
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.SetPanelState(UIPanelNames.PauseMenu, true);
+        }
+        
         cursorWasLocked = Cursor.lockState == CursorLockMode.Locked;
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
@@ -128,6 +134,12 @@ public class SimplePauseMenu : MonoBehaviour
     {
         isPaused = false;
         Time.timeScale = 1f;
+        
+        // Notify UIManager
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.SetPanelState(UIPanelNames.PauseMenu, false);
+        }
         
         if (cursorWasLocked)
         {

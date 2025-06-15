@@ -652,7 +652,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 940d55d4117386f4f9398ea3ff52d4cd, type: 3}
       propertyPath: m_RootOrder
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 940d55d4117386f4f9398ea3ff52d4cd, type: 3}
       propertyPath: m_LocalScale.x
@@ -1392,14 +1392,15 @@ MonoBehaviour:
   description: "Ruines anciennes myst\xE9rieuses avec artefacts cach\xE9s"
   supportedObjects: 0000000003000000
   zoneColor: {r: 0.6, g: 0.5, b: 0.4, a: 1}
-  spawnRadius: 13.8
+  spawnRadius: 16.7
   maxSpawnPoints: 6
   showSpawnArea: 1
   obstacleLayer:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 64
   spawnPriority: 5
   maxSimultaneousQuests: 3
+  debugMode: 1
 --- !u!114 &138895384
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1430,10 +1431,10 @@ SphereCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 138895381}
   m_Material: {fileID: 0}
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 23.7
+  m_Radius: 21.25
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &149425597
 GameObject:
@@ -2249,6 +2250,7 @@ GameObject:
   m_Component:
   - component: {fileID: 250261918}
   - component: {fileID: 250261919}
+  - component: {fileID: 250261920}
   m_Layer: 0
   m_Name: Zone_Laboratoire_01
   m_TagString: QuestZone
@@ -2294,9 +2296,23 @@ MonoBehaviour:
   showSpawnArea: 1
   obstacleLayer:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 64
   spawnPriority: 4
   maxSimultaneousQuests: 3
+  debugMode: 0
+--- !u!135 &250261920
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 250261917}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 7.73
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!4 &258641232 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5718677893221934858, guid: 5abcda3154061c54e819166bbf804dd1, type: 3}
@@ -2312,6 +2328,14 @@ PrefabInstance:
     - target: {fileID: 4755308479114269226, guid: c1280e545e2c2e74da1f1286ad544c78, type: 3}
       propertyPath: m_Name
       value: 'column '
+      objectReference: {fileID: 0}
+    - target: {fileID: 4755308479114269226, guid: c1280e545e2c2e74da1f1286ad544c78, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4755308479114269226, guid: c1280e545e2c2e74da1f1286ad544c78, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
       objectReference: {fileID: 0}
     - target: {fileID: 5383472200042023056, guid: c1280e545e2c2e74da1f1286ad544c78, type: 3}
       propertyPath: m_RootOrder
@@ -2442,9 +2466,10 @@ MonoBehaviour:
   showSpawnArea: 1
   obstacleLayer:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 64
   spawnPriority: 5
   maxSimultaneousQuests: 3
+  debugMode: 1
 --- !u!135 &270119668
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -3465,6 +3490,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1803155613}
   - {fileID: 1680797264}
   - {fileID: 334323211}
   - {fileID: 937668741}
@@ -3472,7 +3498,6 @@ Transform:
   - {fileID: 2130773684}
   - {fileID: 1586740280}
   - {fileID: 1961024798}
-  - {fileID: 1803155613}
   - {fileID: 55169765}
   m_Father: {fileID: 1010550628}
   m_RootOrder: 10
@@ -4006,6 +4031,14 @@ PrefabInstance:
     - target: {fileID: 4755308479114269226, guid: c1280e545e2c2e74da1f1286ad544c78, type: 3}
       propertyPath: m_Name
       value: column  (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 4755308479114269226, guid: c1280e545e2c2e74da1f1286ad544c78, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4755308479114269226, guid: c1280e545e2c2e74da1f1286ad544c78, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
       objectReference: {fileID: 0}
     - target: {fileID: 5383472200042023056, guid: c1280e545e2c2e74da1f1286ad544c78, type: 3}
       propertyPath: m_RootOrder
@@ -5465,6 +5498,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Magic_tower
       objectReference: {fileID: 0}
+    - target: {fileID: 3620288926239275376, guid: 69a7f8204eba8c2459af15bcda85bd38, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 3620288926239275376, guid: 69a7f8204eba8c2459af15bcda85bd38, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
+      objectReference: {fileID: 0}
     - target: {fileID: 4140507028277027786, guid: 69a7f8204eba8c2459af15bcda85bd38, type: 3}
       propertyPath: m_RootOrder
       value: 8
@@ -5536,7 +5577,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 940d55d4117386f4f9398ea3ff52d4cd, type: 3}
       propertyPath: m_RootOrder
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 940d55d4117386f4f9398ea3ff52d4cd, type: 3}
       propertyPath: m_LocalScale.x
@@ -6179,7 +6220,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
-    m_TransformParent: {fileID: 1287445307}
+    m_TransformParent: {fileID: 1497730569}
     m_Modifications:
     - target: {fileID: 115042, guid: 64b3f36e835346747865afbf6cf62acf, type: 3}
       propertyPath: m_Name
@@ -6187,11 +6228,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 464552, guid: 64b3f36e835346747865afbf6cf62acf, type: 3}
       propertyPath: m_RootOrder
-      value: 4
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 464552, guid: 64b3f36e835346747865afbf6cf62acf, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -8.2
+      value: -8.199997
       objectReference: {fileID: 0}
     - target: {fileID: 464552, guid: 64b3f36e835346747865afbf6cf62acf, type: 3}
       propertyPath: m_LocalPosition.y
@@ -7475,7 +7516,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
-    m_TransformParent: {fileID: 1287445307}
+    m_TransformParent: {fileID: 1497730569}
     m_Modifications:
     - target: {fileID: 1475898794373419257, guid: f4a55a18a50d3f9409759dac5283d0d7, type: 3}
       propertyPath: m_Name
@@ -7483,7 +7524,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6098021094289881770, guid: f4a55a18a50d3f9409759dac5283d0d7, type: 3}
       propertyPath: m_RootOrder
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6098021094289881770, guid: f4a55a18a50d3f9409759dac5283d0d7, type: 3}
       propertyPath: m_LocalScale.x
@@ -7499,7 +7540,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6098021094289881770, guid: f4a55a18a50d3f9409759dac5283d0d7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.106
+      value: 1.1060028
       objectReference: {fileID: 0}
     - target: {fileID: 6098021094289881770, guid: f4a55a18a50d3f9409759dac5283d0d7, type: 3}
       propertyPath: m_LocalPosition.y
@@ -7658,9 +7699,10 @@ MonoBehaviour:
   showSpawnArea: 1
   obstacleLayer:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 64
   spawnPriority: 4
   maxSimultaneousQuests: 3
+  debugMode: 0
 --- !u!4 &839646716 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 460554, guid: d2eb17f175564e84c8ad78ac03232e29, type: 3}
@@ -7679,7 +7721,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 940d55d4117386f4f9398ea3ff52d4cd, type: 3}
       propertyPath: m_RootOrder
-      value: 4
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 940d55d4117386f4f9398ea3ff52d4cd, type: 3}
       propertyPath: m_LocalScale.x
@@ -8093,6 +8135,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: column  (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 4755308479114269226, guid: c1280e545e2c2e74da1f1286ad544c78, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4755308479114269226, guid: c1280e545e2c2e74da1f1286ad544c78, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
+      objectReference: {fileID: 0}
     - target: {fileID: 5383472200042023056, guid: c1280e545e2c2e74da1f1286ad544c78, type: 3}
       propertyPath: m_RootOrder
       value: 5
@@ -8321,9 +8371,10 @@ MonoBehaviour:
   showSpawnArea: 1
   obstacleLayer:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 64
   spawnPriority: 7
   maxSimultaneousQuests: 3
+  debugMode: 0
 --- !u!4 &935169188 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8395507114581389048, guid: 9dfcdb348ccd9b44ba41c57c025d8c45, type: 3}
@@ -8590,6 +8641,14 @@ PrefabInstance:
     - target: {fileID: 8326155566024071883, guid: 412f0ac0219b2ff4f86ea74cf1754dbc, type: 3}
       propertyPath: m_Name
       value: wall 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8326155566024071883, guid: 412f0ac0219b2ff4f86ea74cf1754dbc, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 8326155566024071883, guid: 412f0ac0219b2ff4f86ea74cf1754dbc, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 412f0ac0219b2ff4f86ea74cf1754dbc, type: 3}
@@ -9934,7 +9993,7 @@ Transform:
   - {fileID: 1669091724}
   - {fileID: 2020359531}
   - {fileID: 1361670982}
-  - {fileID: 1287445307}
+  - {fileID: 1497730569}
   - {fileID: 782628376}
   - {fileID: 1697655605}
   - {fileID: 1973865252}
@@ -10993,7 +11052,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 940d55d4117386f4f9398ea3ff52d4cd, type: 3}
       propertyPath: m_RootOrder
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 940d55d4117386f4f9398ea3ff52d4cd, type: 3}
       propertyPath: m_LocalScale.x
@@ -11059,6 +11118,14 @@ PrefabInstance:
     - target: {fileID: 2684695994064820914, guid: 86509780b07285a44a69b1eb089a3ed1, type: 3}
       propertyPath: m_Name
       value: SM_Rocks_04 (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 2684695994064820914, guid: 86509780b07285a44a69b1eb089a3ed1, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2684695994064820914, guid: 86509780b07285a44a69b1eb089a3ed1, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
       objectReference: {fileID: 0}
     - target: {fileID: 6235409801154746877, guid: 86509780b07285a44a69b1eb089a3ed1, type: 3}
       propertyPath: m_RootOrder
@@ -11441,6 +11508,14 @@ PrefabInstance:
     - target: {fileID: 3169527364461488152, guid: 2f9b8727929df0a4fb585a1f064aab3d, type: 3}
       propertyPath: m_Name
       value: wall 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3169527364461488152, guid: 2f9b8727929df0a4fb585a1f064aab3d, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 3169527364461488152, guid: 2f9b8727929df0a4fb585a1f064aab3d, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2f9b8727929df0a4fb585a1f064aab3d, type: 3}
@@ -12222,6 +12297,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: wall 3
       objectReference: {fileID: 0}
+    - target: {fileID: 4656891183985686885, guid: 8e2d54dcdfb4a464297c867a4c365352, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4656891183985686885, guid: 8e2d54dcdfb4a464297c867a4c365352, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
+      objectReference: {fileID: 0}
     - target: {fileID: 5255636116000418932, guid: 8e2d54dcdfb4a464297c867a4c365352, type: 3}
       propertyPath: m_RootOrder
       value: 2
@@ -12471,6 +12554,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: wall 2 (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 8326155566024071883, guid: 412f0ac0219b2ff4f86ea74cf1754dbc, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 8326155566024071883, guid: 412f0ac0219b2ff4f86ea74cf1754dbc, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 412f0ac0219b2ff4f86ea74cf1754dbc, type: 3}
 --- !u!1 &1272881648
@@ -12635,6 +12726,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1287445307}
   - component: {fileID: 1287445308}
+  - component: {fileID: 1287445309}
   m_Layer: 0
   m_Name: Zone_Security_01
   m_TagString: QuestZone
@@ -12650,17 +12742,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1287445306}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -16.67, y: 0.099999905, z: 1.13}
-  m_LocalScale: {x: 0.25, y: 1, z: 0.25}
+  m_LocalPosition: {x: -7.61, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 929617696}
-  - {fileID: 1708600212}
-  - {fileID: 839646716}
-  - {fileID: 1905406629}
-  - {fileID: 813646633}
-  m_Father: {fileID: 1010550628}
-  m_RootOrder: 4
+  m_Children: []
+  m_Father: {fileID: 1497730569}
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1287445308
 MonoBehaviour:
@@ -12684,9 +12771,23 @@ MonoBehaviour:
   showSpawnArea: 1
   obstacleLayer:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 64
   spawnPriority: 2
   maxSimultaneousQuests: 3
+  debugMode: 0
+--- !u!135 &1287445309
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1287445306}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 15.77
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1001 &1291359006
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13696,6 +13797,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1394971749}
   - component: {fileID: 1394971750}
+  - component: {fileID: 1394971751}
   m_Layer: 0
   m_Name: Zone_Hangar_01
   m_TagString: QuestZone
@@ -13736,13 +13838,27 @@ MonoBehaviour:
   supportedObjects: 01000000020000000300000000000000
   zoneColor: {r: 0, g: 1, b: 0.15767026, a: 1}
   spawnRadius: 15.6
-  maxSpawnPoints: 5
+  maxSpawnPoints: 3
   showSpawnArea: 1
   obstacleLayer:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 64
   spawnPriority: 8
   maxSimultaneousQuests: 3
+  debugMode: 0
+--- !u!135 &1394971751
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1394971748}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 15.25
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1398089747
 GameObject:
   m_ObjectHideFlags: 0
@@ -14591,7 +14707,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1628671277}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.99664026
+  m_Size: 0.51788
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -14688,9 +14804,10 @@ MonoBehaviour:
   showSpawnArea: 1
   obstacleLayer:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 64
   spawnPriority: 6
   maxSimultaneousQuests: 3
+  debugMode: 0
 --- !u!1001 &1462071429
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -14975,6 +15092,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: wall 4
       objectReference: {fileID: 0}
+    - target: {fileID: 4532152443641756180, guid: 646ce312bff065143a91286b5d099b81, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4532152443641756180, guid: 646ce312bff065143a91286b5d099b81, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 646ce312bff065143a91286b5d099b81, type: 3}
 --- !u!4 &1487288721 stripped
@@ -15079,6 +15204,43 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1495298686}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1497730568
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1497730569}
+  m_Layer: 0
+  m_Name: Security_Zone
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1497730569
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1497730568}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -16.62, y: 0.099999905, z: 1.13}
+  m_LocalScale: {x: 0.25, y: 1, z: 0.25}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1287445307}
+  - {fileID: 929617696}
+  - {fileID: 1708600212}
+  - {fileID: 839646716}
+  - {fileID: 1905406629}
+  - {fileID: 813646633}
+  m_Father: {fileID: 1010550628}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1498359173 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6908656363998969129, guid: 0dd050efb10a21c4f8d1c3ab7e33f70b, type: 3}
@@ -15089,6 +15251,59 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6235409801154746877, guid: 86509780b07285a44a69b1eb089a3ed1, type: 3}
   m_PrefabInstance: {fileID: 1144590989}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1500628368
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1500628369}
+  - component: {fileID: 1500628370}
+  m_Layer: 0
+  m_Name: QuestMarker
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1500628369
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1500628368}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1795769962}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1500628370
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1500628368}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27319b1fb62b6ca4a947f6df3160ff04, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hideDistance: 10
+  edgeOffset: 50
+  markerSize: 50
+  markerColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  showDistance: 1
+  enablePulse: 1
+  pulseSpeed: 2
+  pulseAmount: 0.1
+  debugMode: 0
 --- !u!1 &1500941767
 GameObject:
   m_ObjectHideFlags: 0
@@ -15431,7 +15646,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 27bfdb9a40efac94b969eaf77cea92d9, type: 3}
       propertyPath: m_RootOrder
-      value: 5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 27bfdb9a40efac94b969eaf77cea92d9, type: 3}
       propertyPath: m_LocalScale.x
@@ -15511,7 +15726,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
-    m_TransformParent: {fileID: 1287445307}
+    m_TransformParent: {fileID: 1497730569}
     m_Modifications:
     - target: {fileID: 165962, guid: d2eb17f175564e84c8ad78ac03232e29, type: 3}
       propertyPath: m_Name
@@ -15519,11 +15734,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 460554, guid: d2eb17f175564e84c8ad78ac03232e29, type: 3}
       propertyPath: m_RootOrder
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 460554, guid: d2eb17f175564e84c8ad78ac03232e29, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -12.085
+      value: -12.084999
       objectReference: {fileID: 0}
     - target: {fileID: 460554, guid: d2eb17f175564e84c8ad78ac03232e29, type: 3}
       propertyPath: m_LocalPosition.y
@@ -15597,7 +15812,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.00001069906}
+  m_AnchoredPosition: {x: 0, y: 0.0000788562}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1536727519
@@ -16155,6 +16370,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: wall 3 (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 4656891183985686885, guid: 8e2d54dcdfb4a464297c867a4c365352, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4656891183985686885, guid: 8e2d54dcdfb4a464297c867a4c365352, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
+      objectReference: {fileID: 0}
     - target: {fileID: 5255636116000418932, guid: 8e2d54dcdfb4a464297c867a4c365352, type: 3}
       propertyPath: m_RootOrder
       value: 18
@@ -16275,6 +16498,14 @@ PrefabInstance:
     - target: {fileID: 3601072325686074334, guid: d0d3f275c83a3d04e9f3ec3955aa76e0, type: 3}
       propertyPath: m_Name
       value: tree5_Cube.010
+      objectReference: {fileID: 0}
+    - target: {fileID: 3601072325686074334, guid: d0d3f275c83a3d04e9f3ec3955aa76e0, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 3601072325686074334, guid: d0d3f275c83a3d04e9f3ec3955aa76e0, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d0d3f275c83a3d04e9f3ec3955aa76e0, type: 3}
@@ -17246,9 +17477,10 @@ MonoBehaviour:
   showSpawnArea: 1
   obstacleLayer:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 64
   spawnPriority: 7
   maxSimultaneousQuests: 5
+  debugMode: 0
 --- !u!1001 &1699348564
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -17262,7 +17494,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 940d55d4117386f4f9398ea3ff52d4cd, type: 3}
       propertyPath: m_RootOrder
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 940d55d4117386f4f9398ea3ff52d4cd, type: 3}
       propertyPath: m_LocalScale.x
@@ -18224,7 +18456,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
-    m_TransformParent: {fileID: 1287445307}
+    m_TransformParent: {fileID: 1497730569}
     m_Modifications:
     - target: {fileID: 115042, guid: 64b3f36e835346747865afbf6cf62acf, type: 3}
       propertyPath: m_Name
@@ -18232,11 +18464,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 464552, guid: 64b3f36e835346747865afbf6cf62acf, type: 3}
       propertyPath: m_RootOrder
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 464552, guid: 64b3f36e835346747865afbf6cf62acf, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -4.2361135
+      value: -4.2361145
       objectReference: {fileID: 0}
     - target: {fileID: 464552, guid: 64b3f36e835346747865afbf6cf62acf, type: 3}
       propertyPath: m_LocalPosition.y
@@ -18362,6 +18594,7 @@ Transform:
   - {fileID: 948491523}
   - {fileID: 1611696917}
   - {fileID: 1411058568}
+  - {fileID: 1500628369}
   m_Father: {fileID: 0}
   m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -18380,6 +18613,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1803155613}
   - component: {fileID: 1803155614}
+  - component: {fileID: 1803155615}
   m_Layer: 0
   m_Name: Zone_Fallback_01
   m_TagString: QuestZone
@@ -18407,7 +18641,7 @@ Transform:
   - {fileID: 460800079}
   - {fileID: 1291359007}
   m_Father: {fileID: 396517207}
-  m_RootOrder: 7
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1803155614
 MonoBehaviour:
@@ -18427,14 +18661,28 @@ MonoBehaviour:
     les zones existantes elle peut utiliser cette zone qui contient tous les \xE9l\xE9ments."
   supportedObjects: 00000000010000000200000003000000
   zoneColor: {r: 0, g: 1, b: 1, a: 1}
-  spawnRadius: 6.3
+  spawnRadius: 14
   maxSpawnPoints: 5
   showSpawnArea: 1
   obstacleLayer:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 64
   spawnPriority: 0
   maxSimultaneousQuests: 3
+  debugMode: 0
+--- !u!135 &1803155615
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1803155612}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 13.33
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1804580756
 GameObject:
   m_ObjectHideFlags: 0
@@ -18710,7 +18958,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 940d55d4117386f4f9398ea3ff52d4cd, type: 3}
       propertyPath: m_RootOrder
-      value: 6
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 940d55d4117386f4f9398ea3ff52d4cd, type: 3}
       propertyPath: m_LocalScale.x
@@ -19737,11 +19985,11 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
-    m_TransformParent: {fileID: 1287445307}
+    m_TransformParent: {fileID: 1497730569}
     m_Modifications:
     - target: {fileID: 3732189724793061821, guid: c307df270aadc074992821aa7848cf1a, type: 3}
       propertyPath: m_RootOrder
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 3732189724793061821, guid: c307df270aadc074992821aa7848cf1a, type: 3}
       propertyPath: m_LocalScale.x
@@ -19757,7 +20005,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3732189724793061821, guid: c307df270aadc074992821aa7848cf1a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.08
+      value: 1.0800018
       objectReference: {fileID: 0}
     - target: {fileID: 3732189724793061821, guid: c307df270aadc074992821aa7848cf1a, type: 3}
       propertyPath: m_LocalPosition.y
@@ -20006,9 +20254,10 @@ MonoBehaviour:
   showSpawnArea: 1
   obstacleLayer:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 64
   spawnPriority: 3
   maxSimultaneousQuests: 3
+  debugMode: 0
 --- !u!1 &1985802901
 GameObject:
   m_ObjectHideFlags: 0

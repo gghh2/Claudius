@@ -76,7 +76,9 @@ public class QuestZone : MonoBehaviour
     [Range(1, 20)]
     public int maxSimultaneousQuests = 3;
     
-    // Debug est maintenant géré par GlobalDebugManager
+    [Header("Debug")]
+    [Tooltip("Debug - Show detailed logs")]
+    public bool debugMode = false;
     
     // Variables privées (non visibles dans l'Inspector)
     private List<Vector3> spawnPoints = new List<Vector3>();
@@ -94,65 +96,146 @@ public class QuestZone : MonoBehaviour
     {
         spawnPoints.Clear();
         
-        for (int i = 0; i < maxSpawnPoints; i++)
+        int attempts = 0;
+        int maxAttempts = maxSpawnPoints * 3; // Plus de tentatives pour assurer assez de points
+        
+        while (spawnPoints.Count < maxSpawnPoints && attempts < maxAttempts)
         {
             Vector3 randomPoint = GetRandomPointInZone();
             
             if (IsPointValid(randomPoint))
             {
-                spawnPoints.Add(randomPoint);
+                // Vérifie aussi la distance avec les autres points
+                bool tooClose = false;
+                foreach (Vector3 existingPoint in spawnPoints)
+                {
+                    if (Vector3.Distance(randomPoint, existingPoint) < 1.5f) // Distance minimale entre points
+                    {
+                        tooClose = true;
+                        break;
+                    }
+                }
+                
+                if (!tooClose)
+                {
+                    spawnPoints.Add(randomPoint);
+                }
             }
+            
+            attempts++;
         }
         
-        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
-            Debug.Log($"Zone {zoneName}: {spawnPoints.Count} points de spawn générés");
+        if (debugMode)
+            Debug.Log($"Zone {zoneName}: {spawnPoints.Count} points de spawn générés en {attempts} tentatives");
     }
     
     Vector3 GetRandomPointInZone()
     {
-        Vector3 randomSphere = Random.insideUnitSphere * spawnRadius;
-        Vector3 worldPoint = transform.position + randomSphere;
+        // Génère un point aléatoire dans un cercle horizontal
+        Vector2 randomCircle = Random.insideUnitCircle * spawnRadius;
+        Vector3 randomPoint = transform.position + new Vector3(randomCircle.x, 0, randomCircle.y);
         
-        Vector3 groundPosition = FindGroundPosition(worldPoint);
+        // Trouve la position au sol
+        Vector3 groundPosition = FindGroundPosition(randomPoint);
         
         return groundPosition;
     }
     
     Vector3 FindGroundPosition(Vector3 position)
     {
+        // NOUVEAU : Ignore le collider de cette zone
+        Collider zoneCollider = GetComponent<Collider>();
+        if (zoneCollider != null)
+        {
+            zoneCollider.enabled = false; // Désactive temporairement
+        }
+        
         // Start higher above the position to ensure we're above any terrain
         Vector3 rayStart = new Vector3(position.x, position.y + 50f, position.z);
         
+        // Layer mask pour ignorer certains layers (ajustez selon votre projet)
+        int layerMask = ~0; // Tous les layers
+        
+        // Ignore le layer des triggers si vous en avez un spécifique
+        int triggerLayer = LayerMask.NameToLayer("Triggers");
+        if (triggerLayer >= 0)
+        {
+            layerMask &= ~(1 << triggerLayer);
+        }
+        
+        Vector3 resultPosition = position; // Position par défaut
+        
         // Raycast down to find ground - IGNORE TRIGGERS
-        if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit, 100f, ~0, QueryTriggerInteraction.Ignore))
+        if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit, 100f, layerMask, QueryTriggerInteraction.Ignore))
         {
             // Vérifie que ce n'est pas un trigger (double sécurité)
             if (!hit.collider.isTrigger)
             {
                 // Return hit point with small offset above ground
-                return hit.point + Vector3.up * 0.1f;
+                resultPosition = hit.point + Vector3.up * 0.5f; // Augmenté à 0.5f pour plus de marge
+                
+                if (debugMode)
+                    Debug.Log($"[QuestZone] Sol trouvé à {hit.point} (collider: {hit.collider.name})");
             }
         }
-        
-        // If first raycast fails, try RaycastAll to find first non-trigger
-        RaycastHit[] hits = Physics.RaycastAll(rayStart, Vector3.down, 100f);
-        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
-        
-        foreach (RaycastHit hitInfo in hits)
+        else
         {
-            if (!hitInfo.collider.isTrigger)
+            // Si pas de sol trouvé, essaye depuis plus bas
+            rayStart = position + Vector3.up * 5f;
+            if (Physics.Raycast(rayStart, Vector3.down, out hit, 10f, layerMask, QueryTriggerInteraction.Ignore))
             {
-                return hitInfo.point + Vector3.up * 0.1f;
+                if (!hit.collider.isTrigger)
+                {
+                    resultPosition = hit.point + Vector3.up * 0.5f;
+                }
+            }
+            else
+            {
+                // Fallback : utilise la position Y du transform de la zone
+                resultPosition = new Vector3(position.x, transform.position.y + 0.5f, position.z);
+                Debug.LogWarning($"[QuestZone] Aucun sol trouvé, utilisation de la position de la zone + offset");
             }
         }
         
-        // Final fallback: return position at a reasonable height
-        Debug.LogWarning($"[QuestZone] Could not find non-trigger ground at position {position}. Using fallback.");
-        return new Vector3(position.x, 0f, position.z);
+        // Réactive le collider de la zone
+        if (zoneCollider != null)
+        {
+            zoneCollider.enabled = true;
+        }
+        
+        return resultPosition;
     }
     
     bool IsPointValid(Vector3 point)
     {
+        // Vérifie que le point est dans la zone de spawn
+        float distance = Vector3.Distance(new Vector3(transform.position.x, point.y, transform.position.z), point);
+        if (distance > spawnRadius)
+        {
+            if (debugMode)
+                Debug.Log($"[QuestZone] Point invalide - hors de la zone (distance horizontale: {distance})");
+            return false;
+        }
+        
+        // Vérifie qu'il n'y a pas d'obstacles à cette position
+        // SEULEMENT si un layer d'obstacle est explicitement défini
+        if (obstacleLayer.value != 0) // Si un layer d'obstacle est défini
+        {
+            Collider[] overlaps = Physics.OverlapSphere(point, 0.5f, obstacleLayer);
+            
+            if (overlaps.Length > 0)
+            {
+                if (debugMode)
+                {
+                    Debug.Log($"[QuestZone] Point invalide - obstacle détecté: {overlaps[0].name} (Layer: {LayerMask.LayerToName(overlaps[0].gameObject.layer)})");
+                }
+                return false;
+            }
+        }
+        
+        if (debugMode)
+            Debug.Log($"[QuestZone] Point valide: {point}");
+        
         return true;
     }
     
@@ -180,7 +263,7 @@ public class QuestZone : MonoBehaviour
     
     public GameObject SpawnQuestObject(GameObject prefab, QuestObjectType objectType)
     {
-        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
+        if (debugMode)
         {
             Debug.Log($"=== SPAWN DEBUG pour {zoneName} ===");
             Debug.Log($"Type demandé: {objectType}");
@@ -214,7 +297,7 @@ public class QuestZone : MonoBehaviour
         GameObject spawnedObject = Instantiate(prefab, spawnPoint, Quaternion.identity);
         spawnedObjects.Add(spawnedObject);
         
-        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
+        if (debugMode)
             Debug.Log($"Objet spawné avec succès: {spawnedObject.name}");
         return spawnedObject;
     }
@@ -230,7 +313,7 @@ public class QuestZone : MonoBehaviour
         }
         spawnedObjects.Clear();
         
-        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
+        if (debugMode)
             Debug.Log($"Zone {zoneName} nettoyée");
     }
     

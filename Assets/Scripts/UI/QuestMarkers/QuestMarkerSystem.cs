@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
-/// Système de marqueurs de quête optimisé
+/// Système de marqueurs de quête optimisé - Compatible Orthographique
 /// Pointe directement vers les objectifs de quête actifs
 /// </summary>
 public class QuestMarkerSystem : MonoBehaviour
@@ -19,6 +19,9 @@ public class QuestMarkerSystem : MonoBehaviour
     [SerializeField] private bool enablePulse = true;
     [SerializeField] private float pulseSpeed = 2f;
     [SerializeField] private float pulseAmount = 0.1f;
+    
+    [Header("Debug")]
+    [SerializeField] private bool debugMode = false;
     
     // Composants
     private Camera mainCamera;
@@ -68,6 +71,16 @@ public class QuestMarkerSystem : MonoBehaviour
         
         if (player == null)
             Debug.LogWarning("[QuestMarkerSystem] Joueur avec tag 'Player' non trouvé!");
+            
+        // Debug info sur la caméra
+        if (mainCamera != null)
+        {
+            Debug.Log($"[QuestMarkerSystem] Caméra mode: {(mainCamera.orthographic ? "ORTHOGRAPHIC" : "PERSPECTIVE")}");
+            if (mainCamera.orthographic)
+            {
+                Debug.Log($"[QuestMarkerSystem] Taille ortho: {mainCamera.orthographicSize}");
+            }
+        }
     }
     
     private void CreateMarkerCanvas()
@@ -284,9 +297,71 @@ public class QuestMarkerSystem : MonoBehaviour
     
     private void UpdateMarkerPosition(QuestMarker marker, MarkerTarget target, float distance)
     {
+        if (mainCamera.orthographic)
+        {
+            UpdateMarkerPositionOrthographic(marker, target, distance);
+        }
+        else
+        {
+            UpdateMarkerPositionPerspective(marker, target, distance);
+        }
+    }
+    
+    private void UpdateMarkerPositionOrthographic(QuestMarker marker, MarkerTarget target, float distance)
+    {
+        // Pour une caméra orthographique, on utilise WorldToScreenPoint directement
+        Vector3 screenPos = mainCamera.WorldToScreenPoint(target.position);
+        
+        if (debugMode)
+        {
+            Debug.Log($"[ORTHO] {target.displayName} - Screen: {screenPos}");
+        }
+        
+        // Vérifie si dans les limites de l'écran
+        bool isOnScreen = screenPos.x > edgeOffset && screenPos.x < Screen.width - edgeOffset &&
+                         screenPos.y > edgeOffset && screenPos.y < Screen.height - edgeOffset &&
+                         screenPos.z > 0; // En ortho, z > 0 signifie "dans le frustum"
+        
+        if (isOnScreen)
+        {
+            // Si visible, on peut cacher le marqueur ou le mettre sur le bord
+            marker.gameObject.SetActive(false);
+            return;
+        }
+        
+        // Calcul pour mettre sur le bord
+        Vector2 screenCenter = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+        Vector2 direction = ((Vector2)screenPos - screenCenter).normalized;
+        
+        // Trouve l'intersection avec le bord
+        float halfWidth = Screen.width * 0.5f - edgeOffset;
+        float halfHeight = Screen.height * 0.5f - edgeOffset;
+        
+        float tX = Mathf.Abs(direction.x) > 0.001f ? halfWidth / Mathf.Abs(direction.x) : float.MaxValue;
+        float tY = Mathf.Abs(direction.y) > 0.001f ? halfHeight / Mathf.Abs(direction.y) : float.MaxValue;
+        float t = Mathf.Min(tX, tY);
+        
+        Vector2 edgePos = screenCenter + direction * t;
+        
+        // Applique la position
+        marker.gameObject.transform.position = edgePos;
+        
+        // Rotation pour pointer vers la cible
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        marker.gameObject.transform.rotation = Quaternion.Euler(0, 0, angle - 90);
+        
+        // Met à jour la distance
+        if (marker.distanceText != null)
+        {
+            marker.distanceText.text = $"{Mathf.RoundToInt(distance)}m";
+        }
+    }
+    
+    private void UpdateMarkerPositionPerspective(QuestMarker marker, MarkerTarget target, float distance)
+    {
         Vector3 screenPos = mainCamera.WorldToViewportPoint(target.position);
         
-        // Gestion des objets derrière la caméra
+        // Gestion des objets derrière la caméra (pour perspective uniquement)
         if (screenPos.z < 0)
         {
             screenPos.x = 1 - screenPos.x;

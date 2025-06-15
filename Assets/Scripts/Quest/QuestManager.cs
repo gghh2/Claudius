@@ -230,6 +230,9 @@ public class QuestManager : MonoBehaviour
             return false;
         }
         
+        // IMPORTANT: Enregistrer la zone cible pour le système de marqueurs
+        quest.SetTargetZone(targetZone);
+        
         // Spawn les objets à collecter
         Debug.Log($"[FETCH] Spawning {token.quantity} items of type {token.objectName}");
         
@@ -293,6 +296,9 @@ public class QuestManager : MonoBehaviour
             Debug.LogError($"[DELIVERY] Vérifiez que les zones ont bien 'NPC' dans leur liste supportedObjects dans l'Inspector");
             return false;
         }
+        
+        // IMPORTANT: Enregistrer la zone cible
+        quest.SetTargetZone(targetZone);
         
         // 3. Spawn le NPC destinataire
         GameObject deliveryNPC = targetZone.SpawnQuestObject(npcPrefab, QuestObjectType.NPC);
@@ -362,6 +368,9 @@ public class QuestManager : MonoBehaviour
             return false;
         }
         
+        // IMPORTANT: Enregistrer la zone cible
+        quest.SetTargetZone(targetZone);
+        
         if (markerPrefab == null)
         {
             Debug.LogError("[EXPLORE] markerPrefab est NULL dans QuestManager ! Assignez le prefab dans l'Inspector.");
@@ -428,6 +437,9 @@ public class QuestManager : MonoBehaviour
             Debug.LogError($"[TALK] Vérifiez que les zones ont bien 'NPC' dans leur liste supportedObjects dans l'Inspector");
             return false;
         }
+        
+        // IMPORTANT: Enregistrer la zone cible
+        quest.SetTargetZone(targetZone);
         
         GameObject npc = targetZone.SpawnQuestObject(npcPrefab, QuestObjectType.NPC);
         if (npc != null)
@@ -498,6 +510,9 @@ public class QuestManager : MonoBehaviour
             Debug.LogError($"[INTERACT] Vérifiez que les zones ont bien 'InteractableObject' dans leur liste supportedObjects dans l'Inspector");
             return false;
         }
+        
+        // IMPORTANT: Enregistrer la zone cible
+        quest.SetTargetZone(targetZone);
         
         GameObject terminal = targetZone.SpawnQuestObject(terminalPrefab, QuestObjectType.InteractableObject);
         if (terminal != null)
@@ -642,6 +657,9 @@ public class QuestManager : MonoBehaviour
                     Destroy(obj);
             }
             
+            // Nettoie l'extension de mapping de zone
+            ActiveQuestExtensions.ClearZoneMapping(questId);
+            
             // Retire de la liste des quêtes actives
             activeQuests.Remove(quest);
             
@@ -729,6 +747,9 @@ public class QuestManager : MonoBehaviour
                 if (obj != null)
                     Destroy(obj);
             }
+            
+            // Nettoie l'extension de mapping de zone
+            ActiveQuestExtensions.ClearZoneMapping(questId);
             
             // Retire les objets de quête de l'inventaire si c'était une quête DELIVERY
             if (quest.questData.questType == QuestType.DELIVERY && PlayerInventory.Instance != null)

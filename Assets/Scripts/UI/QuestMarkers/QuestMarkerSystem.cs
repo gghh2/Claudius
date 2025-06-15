@@ -5,7 +5,33 @@ using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
-/// Système de marqueurs de quête - Pointe vers les objectifs actifs
+/// Extension de ActiveQuest pour stocker la zone cible
+/// </summary>
+public static class ActiveQuestExtensions
+{
+    private static Dictionary<string, QuestZone> questZoneMapping = new Dictionary<string, QuestZone>();
+    
+    public static void SetTargetZone(this ActiveQuest quest, QuestZone zone)
+    {
+        if (zone != null)
+        {
+            questZoneMapping[quest.questId] = zone;
+        }
+    }
+    
+    public static QuestZone GetTargetZone(this ActiveQuest quest)
+    {
+        return questZoneMapping.ContainsKey(quest.questId) ? questZoneMapping[quest.questId] : null;
+    }
+    
+    public static void ClearZoneMapping(string questId)
+    {
+        questZoneMapping.Remove(questId);
+    }
+}
+
+/// <summary>
+/// Système de marqueurs de quête - Pointe vers les zones de quête
 /// </summary>
 public class QuestMarkerSystem : MonoBehaviour
 {
@@ -18,6 +44,9 @@ public class QuestMarkerSystem : MonoBehaviour
     [SerializeField] private bool enablePulse = true;
     [SerializeField] private float pulseSpeed = 2f;
     [SerializeField] private float pulseAmount = 0.1f;
+    
+    [Header("Debug")]
+    [SerializeField] private bool debugMode = false;
     
     // Composants
     private Camera mainCamera;
@@ -101,6 +130,9 @@ public class QuestMarkerSystem : MonoBehaviour
         
         if (QuestManager.Instance == null) return targets;
         
+        // Grouper les quêtes par zone
+        Dictionary<QuestZone, List<ActiveQuest>> questsByZone = new Dictionary<QuestZone, List<ActiveQuest>>();
+        
         foreach (var quest in QuestManager.Instance.activeQuests)
         {
             // Quête complétée mais pas rendue : pointer vers le NPC donneur
@@ -110,27 +142,155 @@ public class QuestMarkerSystem : MonoBehaviour
                 continue;
             }
             
-            // Sinon, pointer vers les objectifs
-            foreach (var obj in quest.spawnedObjects)
+            // Trouver la zone depuis l'extension ou les objets spawnés
+            QuestZone zone = FindQuestZone(quest);
+            
+            if (zone != null)
             {
-                if (obj != null && obj.activeInHierarchy)
+                // Vérifier qu'il y a des objectifs actifs
+                bool hasActiveObjectives = HasActiveObjectives(quest);
+                
+                if (hasActiveObjectives)
                 {
-                    QuestObject questObj = obj.GetComponent<QuestObject>();
-                    if (questObj != null && !questObj.isCollected)
-                    {
-                        string key = $"{quest.questId}_{obj.GetInstanceID()}";
-                        targets[key] = new MarkerTarget
-                        {
-                            position = obj.transform.position,
-                            displayName = GetObjectDisplayName(questObj, quest),
-                            questType = quest.questData.questType
-                        };
-                    }
+                    if (!questsByZone.ContainsKey(zone))
+                        questsByZone[zone] = new List<ActiveQuest>();
+                    questsByZone[zone].Add(quest);
                 }
+            }
+            else if (debugMode)
+            {
+                Debug.LogWarning($"[QuestMarkerSystem] Pas de zone trouvée pour la quête: {quest.questData.description}");
             }
         }
         
+        // Créer un marqueur par zone
+        foreach (var kvp in questsByZone)
+        {
+            QuestZone zone = kvp.Key;
+            List<ActiveQuest> questsInZone = kvp.Value;
+            
+            string zoneKey = $"zone_{zone.GetInstanceID()}";
+            targets[zoneKey] = new MarkerTarget
+            {
+                position = zone.transform.position,
+                displayName = GetZoneDisplayName(zone, questsInZone),
+                questType = questsInZone[0].questData.questType
+            };
+        }
+        
+        if (debugMode)
+            Debug.Log($"[QuestMarkerSystem] Marqueurs actifs: {targets.Count}");
+        
         return targets;
+    }
+    
+    private QuestZone FindQuestZone(ActiveQuest quest)
+    {
+        // 1. Essayer avec l'extension
+        QuestZone zone = quest.GetTargetZone();
+        if (zone != null) return zone;
+        
+        // 2. Trouver depuis les objets spawnés
+        foreach (var obj in quest.spawnedObjects)
+        {
+            if (obj != null)
+            {
+                // Chercher la zone parent
+                zone = obj.GetComponentInParent<QuestZone>();
+                if (zone != null) return zone;
+                
+                // Chercher la zone la plus proche
+                float minDistance = float.MaxValue;
+                QuestZone[] allZones = FindObjectsOfType<QuestZone>();
+                foreach (var z in allZones)
+                {
+                    float dist = Vector3.Distance(obj.transform.position, z.transform.position);
+                    if (dist < minDistance && dist <= z.spawnRadius * 1.5f) // Marge de sécurité
+                    {
+                        minDistance = dist;
+                        zone = z;
+                    }
+                }
+                
+                if (zone != null) return zone;
+            }
+        }
+        
+        // 3. Dernier recours : chercher par nom
+        if (!string.IsNullOrEmpty(quest.questData.zoneName))
+        {
+            return FindQuestZoneByName(quest.questData.zoneName);
+        }
+        
+        return null;
+    }
+    
+    private bool HasActiveObjectives(ActiveQuest quest)
+    {
+        foreach (var obj in quest.spawnedObjects)
+        {
+            if (obj != null && obj.activeInHierarchy)
+            {
+                QuestObject questObj = obj.GetComponent<QuestObject>();
+                if (questObj != null && !questObj.isCollected)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    private QuestZone FindQuestZoneByName(string zoneName)
+    {
+        QuestZone[] allZones = FindObjectsOfType<QuestZone>();
+        
+        // Recherche exacte d'abord
+        foreach (var zone in allZones)
+        {
+            if (zone.zoneName.Equals(zoneName, System.StringComparison.OrdinalIgnoreCase))
+                return zone;
+        }
+        
+        // Recherche partielle si pas de correspondance exacte
+        string normalizedSearch = zoneName.ToLower().Replace(" ", "_").Replace("-", "_");
+        foreach (var zone in allZones)
+        {
+            string normalizedZone = zone.zoneName.ToLower().Replace(" ", "_").Replace("-", "_");
+            if (normalizedZone.Contains(normalizedSearch) || normalizedSearch.Contains(normalizedZone))
+                return zone;
+        }
+        
+        return null;
+    }
+    
+    private string GetZoneDisplayName(QuestZone zone, List<ActiveQuest> quests)
+    {
+        // Si une seule quête dans la zone, afficher son type
+        if (quests.Count == 1)
+        {
+            var quest = quests[0];
+            switch (quest.questData.questType)
+            {
+                case QuestType.FETCH:
+                    return $"Collecter dans {zone.zoneName}";
+                case QuestType.DELIVERY:
+                    return $"Livraison dans {zone.zoneName}";
+                case QuestType.EXPLORE:
+                    return $"Explorer {zone.zoneName}";
+                case QuestType.TALK:
+                    return $"Discussion dans {zone.zoneName}";
+                case QuestType.INTERACT:
+                    return $"Interaction dans {zone.zoneName}";
+                default:
+                    return zone.zoneName;
+            }
+        }
+        else
+        {
+            // Plusieurs quêtes dans la même zone
+            return $"{zone.zoneName} ({quests.Count} objectifs)";
+        }
     }
     
     private void AddReturnTarget(Dictionary<string, MarkerTarget> targets, ActiveQuest quest)
@@ -152,25 +312,7 @@ public class QuestMarkerSystem : MonoBehaviour
             }
         }
     }
-    
-    private string GetObjectDisplayName(QuestObject questObj, ActiveQuest quest)
-    {
-        switch (quest.questData.questType)
-        {
-            case QuestType.FETCH:
-                return $"Collecter: {questObj.objectName}";
-            case QuestType.DELIVERY:
-                return $"Livrer à: {questObj.objectName}";
-            case QuestType.EXPLORE:
-                return $"Explorer: {questObj.objectName}";
-            case QuestType.TALK:
-                return $"Parler à: {questObj.objectName}";
-            case QuestType.INTERACT:
-                return $"Interagir: {questObj.objectName}";
-            default:
-                return questObj.objectName;
-        }
-    }
+
     
     private void UpdateOrCreateMarker(string markerId, MarkerTarget target)
     {

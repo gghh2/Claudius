@@ -5,8 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
-/// Système de marqueurs de quête optimisé - Compatible Orthographique
-/// Pointe directement vers les objectifs de quête actifs
+/// Système de marqueurs de quête - Pointe vers les objectifs actifs
 /// </summary>
 public class QuestMarkerSystem : MonoBehaviour
 {
@@ -20,19 +19,13 @@ public class QuestMarkerSystem : MonoBehaviour
     [SerializeField] private float pulseSpeed = 2f;
     [SerializeField] private float pulseAmount = 0.1f;
     
-    [Header("Debug")]
-    [SerializeField] private bool debugMode = false;
-    
     // Composants
     private Camera mainCamera;
     private Transform player;
     private Canvas markerCanvas;
     private Dictionary<string, QuestMarker> activeMarkers = new Dictionary<string, QuestMarker>();
     
-    // Instance singleton
     public static QuestMarkerSystem Instance { get; private set; }
-    
-    #region Unity Lifecycle
     
     void Awake()
     {
@@ -58,10 +51,6 @@ public class QuestMarkerSystem : MonoBehaviour
             AnimateMarkers();
     }
     
-    #endregion
-    
-    #region Initialization
-    
     private void InitializeSystem()
     {
         mainCamera = Camera.main;
@@ -71,16 +60,6 @@ public class QuestMarkerSystem : MonoBehaviour
         
         if (player == null)
             Debug.LogWarning("[QuestMarkerSystem] Joueur avec tag 'Player' non trouvé!");
-            
-        // Debug info sur la caméra
-        if (mainCamera != null)
-        {
-            Debug.Log($"[QuestMarkerSystem] Caméra mode: {(mainCamera.orthographic ? "ORTHOGRAPHIC" : "PERSPECTIVE")}");
-            if (mainCamera.orthographic)
-            {
-                Debug.Log($"[QuestMarkerSystem] Taille ortho: {mainCamera.orthographicSize}");
-            }
-        }
     }
     
     private void CreateMarkerCanvas()
@@ -104,21 +83,15 @@ public class QuestMarkerSystem : MonoBehaviour
         return player != null && mainCamera != null && markerCanvas != null;
     }
     
-    #endregion
-    
-    #region Marker Management
-    
     private void UpdateMarkers()
     {
         Dictionary<string, MarkerTarget> currentTargets = GetActiveQuestTargets();
         
-        // Met à jour ou crée les marqueurs
         foreach (var kvp in currentTargets)
         {
             UpdateOrCreateMarker(kvp.Key, kvp.Value);
         }
         
-        // Nettoie les marqueurs obsolètes
         CleanupInactiveMarkers(currentTargets.Keys);
     }
     
@@ -150,8 +123,7 @@ public class QuestMarkerSystem : MonoBehaviour
                         {
                             position = obj.transform.position,
                             displayName = GetObjectDisplayName(questObj, quest),
-                            questType = quest.questData.questType,
-                            priority = GetQuestPriority(quest.questData.questType)
+                            questType = quest.questData.questType
                         };
                     }
                 }
@@ -174,8 +146,7 @@ public class QuestMarkerSystem : MonoBehaviour
                 {
                     position = npc.transform.position,
                     displayName = $"Retourner voir {quest.giverNPCName}",
-                    questType = quest.questData.questType,
-                    priority = 10 // Haute priorité pour les retours
+                    questType = quest.questData.questType
                 };
                 break;
             }
@@ -201,28 +172,10 @@ public class QuestMarkerSystem : MonoBehaviour
         }
     }
     
-    private int GetQuestPriority(QuestType type)
-    {
-        switch (type)
-        {
-            case QuestType.TALK: return 5;
-            case QuestType.DELIVERY: return 4;
-            case QuestType.FETCH: return 3;
-            case QuestType.EXPLORE: return 2;
-            case QuestType.INTERACT: return 1;
-            default: return 0;
-        }
-    }
-    
-    #endregion
-    
-    #region Marker Creation and Update
-    
     private void UpdateOrCreateMarker(string markerId, MarkerTarget target)
     {
         float distance = Vector3.Distance(player.position, target.position);
         
-        // Cache si trop proche
         if (distance < hideDistance)
         {
             if (activeMarkers.ContainsKey(markerId))
@@ -259,21 +212,17 @@ public class QuestMarkerSystem : MonoBehaviour
         GameObject marker = new GameObject($"Marker_{markerId}");
         marker.transform.SetParent(markerCanvas.transform);
         
-        // Configuration du RectTransform
         RectTransform rect = marker.AddComponent<RectTransform>();
         rect.sizeDelta = new Vector2(markerSize, markerSize);
         
-        // Image du marqueur
         Image img = marker.AddComponent<Image>();
         img.color = markerColor;
         img.raycastTarget = false;
         
-        // Outline pour la visibilité
         Outline outline = marker.AddComponent<Outline>();
         outline.effectColor = Color.black;
         outline.effectDistance = new Vector2(2, 2);
         
-        // Texte de distance
         if (showDistance)
         {
             GameObject textObj = new GameObject("Distance");
@@ -309,31 +258,21 @@ public class QuestMarkerSystem : MonoBehaviour
     
     private void UpdateMarkerPositionOrthographic(QuestMarker marker, MarkerTarget target, float distance)
     {
-        // Pour une caméra orthographique, on utilise WorldToScreenPoint directement
         Vector3 screenPos = mainCamera.WorldToScreenPoint(target.position);
         
-        if (debugMode)
-        {
-            Debug.Log($"[ORTHO] {target.displayName} - Screen: {screenPos}");
-        }
-        
-        // Vérifie si dans les limites de l'écran
         bool isOnScreen = screenPos.x > edgeOffset && screenPos.x < Screen.width - edgeOffset &&
                          screenPos.y > edgeOffset && screenPos.y < Screen.height - edgeOffset &&
-                         screenPos.z > 0; // En ortho, z > 0 signifie "dans le frustum"
+                         screenPos.z > 0;
         
         if (isOnScreen)
         {
-            // Si visible, on peut cacher le marqueur ou le mettre sur le bord
             marker.gameObject.SetActive(false);
             return;
         }
         
-        // Calcul pour mettre sur le bord
         Vector2 screenCenter = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
         Vector2 direction = ((Vector2)screenPos - screenCenter).normalized;
         
-        // Trouve l'intersection avec le bord
         float halfWidth = Screen.width * 0.5f - edgeOffset;
         float halfHeight = Screen.height * 0.5f - edgeOffset;
         
@@ -343,25 +282,19 @@ public class QuestMarkerSystem : MonoBehaviour
         
         Vector2 edgePos = screenCenter + direction * t;
         
-        // Applique la position
         marker.gameObject.transform.position = edgePos;
         
-        // Rotation pour pointer vers la cible
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         marker.gameObject.transform.rotation = Quaternion.Euler(0, 0, angle - 90);
         
-        // Met à jour la distance
         if (marker.distanceText != null)
-        {
             marker.distanceText.text = $"{Mathf.RoundToInt(distance)}m";
-        }
     }
     
     private void UpdateMarkerPositionPerspective(QuestMarker marker, MarkerTarget target, float distance)
     {
         Vector3 screenPos = mainCamera.WorldToViewportPoint(target.position);
         
-        // Gestion des objets derrière la caméra (pour perspective uniquement)
         if (screenPos.z < 0)
         {
             screenPos.x = 1 - screenPos.x;
@@ -369,7 +302,6 @@ public class QuestMarkerSystem : MonoBehaviour
             screenPos.z = 0;
         }
         
-        // Vérifie si dans le viewport visible
         bool isVisible = screenPos.x > 0.1f && screenPos.x < 0.9f && 
                         screenPos.y > 0.1f && screenPos.y < 0.9f && 
                         screenPos.z > 0;
@@ -380,7 +312,6 @@ public class QuestMarkerSystem : MonoBehaviour
             return;
         }
         
-        // Calcul de la position sur le bord
         Vector2 screenCenter = new Vector2(0.5f, 0.5f);
         Vector2 direction = new Vector2(screenPos.x - 0.5f, screenPos.y - 0.5f).normalized;
         
@@ -394,22 +325,14 @@ public class QuestMarkerSystem : MonoBehaviour
         Vector2 edgePos = screenCenter + direction * t;
         Vector2 screenPosition = new Vector2(edgePos.x * Screen.width, edgePos.y * Screen.height);
         
-        // Applique la position et rotation
         marker.gameObject.transform.position = screenPosition;
         
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         marker.gameObject.transform.rotation = Quaternion.Euler(0, 0, angle - 90);
         
-        // Met à jour la distance
         if (marker.distanceText != null)
-        {
             marker.distanceText.text = $"{Mathf.RoundToInt(distance)}m";
-        }
     }
-    
-    #endregion
-    
-    #region Animation
     
     private void AnimateMarkers()
     {
@@ -423,10 +346,6 @@ public class QuestMarkerSystem : MonoBehaviour
             }
         }
     }
-    
-    #endregion
-    
-    #region Cleanup
     
     private void CleanupInactiveMarkers(IEnumerable<string> activeIds)
     {
@@ -451,13 +370,6 @@ public class QuestMarkerSystem : MonoBehaviour
         }
     }
     
-    #endregion
-    
-    #region Public API
-    
-    /// <summary>
-    /// Force le rafraîchissement de tous les marqueurs
-    /// </summary>
     public void RefreshMarkers()
     {
         foreach (var marker in activeMarkers.Values)
@@ -468,25 +380,17 @@ public class QuestMarkerSystem : MonoBehaviour
         activeMarkers.Clear();
     }
     
-    /// <summary>
-    /// Active ou désactive l'affichage des marqueurs
-    /// </summary>
     public void SetMarkersVisible(bool visible)
     {
         if (markerCanvas != null)
             markerCanvas.gameObject.SetActive(visible);
     }
     
-    #endregion
-    
-    #region Data Structures
-    
     private class MarkerTarget
     {
         public Vector3 position;
         public string displayName;
         public QuestType questType;
-        public int priority;
     }
     
     private class QuestMarker
@@ -496,6 +400,4 @@ public class QuestMarkerSystem : MonoBehaviour
         public TextMeshProUGUI distanceText;
         public RectTransform rectTransform;
     }
-    
-    #endregion
 }

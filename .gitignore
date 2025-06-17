@@ -1,4 +1,4 @@
-# This .gitignore file should be placed at the root of your Unity project directory
+ # This .gitignore file should be placed at the root of your Unity project directory
 #
 # Get latest from https://github.com/github/gitignore/blob/main/Unity.gitignore
 #
@@ -64,7 +64,6 @@ sysinfo.txt
 *.aab
 *.unitypackage
 *.app
-/Compile
 
 # Crashlytics generated file
 crashlytics-build.properties
@@ -78,12 +77,11 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 auto-push.bat
 git_autopush.bat
-Assets/Scripts/APIConfig.cs
-Assets/Scripts/APIConfig.cs.meta
+
+
+Assets/AssetsStore/TerrainSampleAssets/
+Assets/AssetsStore/TerrainSampleAssets/*
+Compile/*
+Compile/
 Assets/Scripts/Config/APIConfig.cs
 Assets/Scripts/Config/APIConfig.cs.meta
-Assets/Scenes/SampleScene.unity.meta
-/Compile
-/Compile
-/Compile
-/Compile

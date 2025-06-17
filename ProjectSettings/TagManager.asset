@@ -8,6 +8,8 @@ TagManager:
   - QuestZone
   - NPC
   - Companion
+  - Interactable
+  - UI
   layers:
   - Default
   - TransparentFX
@@ -16,7 +18,7 @@ TagManager:
   - Water
   - UI
   - Obstacles
-  - 
+  - Interactable
   - 
   - 
   - 

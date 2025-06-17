@@ -12,10 +12,28 @@ public class ModernPauseMenu : MonoBehaviour
     [Tooltip("The main pause menu GameObject to show/hide")]
     [SerializeField] private GameObject pauseMenuPanel;
     
-    [Tooltip("Buttons")]
+    [Tooltip("Container for main menu buttons")]
+    [SerializeField] private GameObject menuContainer;
+    
+    [Tooltip("Main Menu Buttons")]
     [SerializeField] private Button resumeButton;
     [SerializeField] private Button respawnButton;
+    [SerializeField] private Button optionsButton;
     [SerializeField] private Button quitButton;
+    
+    [Header("Options Panel")]
+    [Tooltip("Options panel container")]
+    [SerializeField] private GameObject optionsPanel;
+    [SerializeField] private Button backFromOptionsButton;
+    
+    [Header("Audio Settings")]
+    [Tooltip("Music volume slider")]
+    [SerializeField] private Slider musicVolumeSlider;
+    [SerializeField] private TextMeshProUGUI musicVolumeText;
+    
+    [Tooltip("Sound effects volume slider")]
+    [SerializeField] private Slider sfxVolumeSlider;
+    [SerializeField] private TextMeshProUGUI sfxVolumeText;
     
     [Tooltip("Debug Controls Panel (Optional)")]
     [SerializeField] private GameObject debugControlsPanel;
@@ -31,7 +49,7 @@ public class ModernPauseMenu : MonoBehaviour
     [SerializeField] private bool autoSaveSpawnPosition = true;
     
     [Header("Debug Controls")]
-    [Tooltip("Show debug sliders in pause menu")]
+    [Tooltip("Show debug controls in options menu")]
     [SerializeField] private bool showDebugControls = false;
     
     [Tooltip("Min/Max values for jump height slider")]
@@ -39,6 +57,10 @@ public class ModernPauseMenu : MonoBehaviour
     
     [Tooltip("Min/Max values for move speed slider")]
     [SerializeField] private Vector2 moveSpeedRange = new Vector2(1f, 50f);
+    
+    [Header("Additional Options")]
+    [SerializeField] private Button resetAudioButton;
+    [SerializeField] private Button resetAllSettingsButton;
     
     // Private variables
     private bool isPaused = false;
@@ -52,6 +74,12 @@ public class ModernPauseMenu : MonoBehaviour
     // Default values
     private const float DEFAULT_JUMP_HEIGHT = 2f; // For Character Controller
     private const float DEFAULT_MOVE_SPEED = 5f;
+    private const float DEFAULT_MUSIC_VOLUME = 0.7f;
+    private const float DEFAULT_SFX_VOLUME = 1f;
+    
+    // Audio settings keys for PlayerPrefs
+    private const string MUSIC_VOLUME_KEY = "MusicVolume";
+    private const string SFX_VOLUME_KEY = "SFXVolume";
     
     void Start()
     {
@@ -74,11 +102,19 @@ public class ModernPauseMenu : MonoBehaviour
         // Setup UI
         SetupUI();
         
-        // Hide pause menu at start
+        // Hide pause menu and options at start
         if (pauseMenuPanel != null)
         {
             pauseMenuPanel.SetActive(false);
         }
+        
+        if (optionsPanel != null)
+        {
+            optionsPanel.SetActive(false);
+        }
+        
+        // Apply audio volumes after a delay to ensure managers are ready
+        StartCoroutine(ApplyAudioVolumesDelayed());
     }
     
     void CacheCursorManagers()
@@ -106,26 +142,38 @@ public class ModernPauseMenu : MonoBehaviour
     
     void SetupUI()
     {
-        // Setup button listeners
+        // Setup main menu button listeners
         if (resumeButton != null)
             resumeButton.onClick.AddListener(Resume);
             
         if (respawnButton != null)
             respawnButton.onClick.AddListener(ResetPlayerPosition);
             
+        if (optionsButton != null)
+            optionsButton.onClick.AddListener(ShowOptions);
+            
         if (quitButton != null)
             quitButton.onClick.AddListener(QuitGame);
             
-        // Setup debug controls if enabled
+        // Setup options panel
+        if (backFromOptionsButton != null)
+            backFromOptionsButton.onClick.AddListener(HideOptions);
+            
+        // Setup audio controls
+        SetupAudioControls();
+        
+        // Setup debug controls (will be in options panel)
         if (showDebugControls && debugControlsPanel != null)
         {
-            debugControlsPanel.SetActive(true);
             SetupDebugControls();
         }
-        else if (debugControlsPanel != null)
-        {
-            debugControlsPanel.SetActive(false);
-        }
+        
+        // Setup reset buttons
+        if (resetAudioButton != null)
+            resetAudioButton.onClick.AddListener(ResetAudioSettings);
+            
+        if (resetAllSettingsButton != null)
+            resetAllSettingsButton.onClick.AddListener(ResetAllSettings);
     }
     
     void SetupDebugControls()
@@ -284,6 +332,19 @@ public class ModernPauseMenu : MonoBehaviour
         }
     }
     
+    IEnumerator ApplyAudioVolumesDelayed()
+    {
+        // Wait a bit for audio managers to initialize
+        yield return new WaitForSeconds(0.5f);
+        
+        // Apply saved volumes
+        float savedMusicVolume = PlayerPrefs.GetFloat(MUSIC_VOLUME_KEY, DEFAULT_MUSIC_VOLUME);
+        float savedSFXVolume = PlayerPrefs.GetFloat(SFX_VOLUME_KEY, DEFAULT_SFX_VOLUME);
+        
+        ApplyMusicVolume(savedMusicVolume);
+        ApplySFXVolume(savedSFXVolume);
+    }
+    
     IEnumerator ForceCursorVisible()
     {
         // Force cursor to stay visible for a few frames
@@ -335,6 +396,179 @@ public class ModernPauseMenu : MonoBehaviour
         UpdateDebugValueTexts();
     }
     
+    void ShowOptions()
+    {
+        if (optionsPanel != null)
+        {
+            // If menuContainer is assigned, use it. Otherwise fall back to old behavior
+            if (menuContainer != null)
+            {
+                // Hide main menu container (buttons) but keep the background
+                menuContainer.SetActive(false);
+            }
+            else if (pauseMenuPanel != null)
+            {
+                // Fallback: hide entire pause menu panel if no menuContainer
+                pauseMenuPanel.SetActive(false);
+            }
+            
+            // Show options panel
+            optionsPanel.SetActive(true);
+            
+            // Show/hide debug controls based on setting
+            if (debugControlsPanel != null)
+            {
+                debugControlsPanel.SetActive(showDebugControls);
+            }
+            
+            // Apply current audio volumes when showing options
+            ApplyCurrentAudioVolumes();
+        }
+    }
+    
+    void HideOptions()
+    {
+        if (optionsPanel != null)
+        {
+            // Hide options panel
+            optionsPanel.SetActive(false);
+        }
+        
+        // Show main menu container or pause menu panel
+        if (menuContainer != null)
+        {
+            menuContainer.SetActive(true);
+        }
+        else if (pauseMenuPanel != null)
+        {
+            // Fallback if menuContainer not assigned
+            pauseMenuPanel.SetActive(true);
+        }
+    }
+    
+    void SetupAudioControls()
+    {
+        // Load saved volumes
+        float savedMusicVolume = PlayerPrefs.GetFloat(MUSIC_VOLUME_KEY, DEFAULT_MUSIC_VOLUME);
+        float savedSFXVolume = PlayerPrefs.GetFloat(SFX_VOLUME_KEY, DEFAULT_SFX_VOLUME);
+        
+        // Setup sliders
+        SetupVolumeSlider(musicVolumeSlider, savedMusicVolume, OnMusicVolumeChanged, UpdateMusicVolumeText);
+        SetupVolumeSlider(sfxVolumeSlider, savedSFXVolume, OnSFXVolumeChanged, UpdateSFXVolumeText);
+    }
+    
+    void SetupVolumeSlider(Slider slider, float savedValue, UnityEngine.Events.UnityAction<float> onChange, System.Action<float> updateText)
+    {
+        if (slider != null)
+        {
+            slider.minValue = 0f;
+            slider.maxValue = 1f;
+            slider.value = savedValue;
+            slider.onValueChanged.AddListener(onChange);
+            updateText?.Invoke(savedValue);
+        }
+    }
+    
+    void OnMusicVolumeChanged(float value)
+    {
+        PlayerPrefs.SetFloat(MUSIC_VOLUME_KEY, value);
+        PlayerPrefs.Save();
+        UpdateMusicVolumeText(value);
+        ApplyMusicVolume(value);
+    }
+    
+    void OnSFXVolumeChanged(float value)
+    {
+        PlayerPrefs.SetFloat(SFX_VOLUME_KEY, value);
+        PlayerPrefs.Save();
+        UpdateSFXVolumeText(value);
+        ApplySFXVolume(value);
+    }
+    
+    void UpdateMusicVolumeText(float value)
+    {
+        UpdateVolumeText(musicVolumeText, value);
+    }
+    
+    void UpdateSFXVolumeText(float value)
+    {
+        UpdateVolumeText(sfxVolumeText, value);
+    }
+    
+    void UpdateVolumeText(TextMeshProUGUI text, float value)
+    {
+        if (text != null)
+            text.text = $"{Mathf.RoundToInt(value * 100)}%";
+    }
+    
+    // Helper method to get current or saved volume
+    float GetVolumeValue(Slider slider, string prefsKey, float defaultValue)
+    {
+        return slider != null ? slider.value : PlayerPrefs.GetFloat(prefsKey, defaultValue);
+    }
+    
+    void ApplyCurrentAudioVolumes()
+    {
+        // Get current slider values or saved values
+        float musicVolume = GetVolumeValue(musicVolumeSlider, MUSIC_VOLUME_KEY, DEFAULT_MUSIC_VOLUME);
+        float sfxVolume = GetVolumeValue(sfxVolumeSlider, SFX_VOLUME_KEY, DEFAULT_SFX_VOLUME);
+            
+        // Force apply both volumes
+        ApplyMusicVolume(musicVolume);
+        ApplySFXVolume(sfxVolume);
+    }
+    
+    void ApplyMusicVolume(float volume)
+    {
+        // Apply to MusicManager if it exists
+        MusicManager musicManager = FindObjectOfType<MusicManager>();
+        if (musicManager != null)
+        {
+            musicManager.SetMasterVolume(volume);
+        }
+    }
+    
+    void ApplySFXVolume(float volume)
+    {
+        // Apply to SoundEffectsManager if it exists
+        SoundEffectsManager sfxManager = FindObjectOfType<SoundEffectsManager>();
+        if (sfxManager != null)
+        {
+            sfxManager.SetMasterVolume(volume);
+        }
+        
+        // Also apply to FootstepSystem if it exists
+        FootstepSystem footsteps = FindObjectOfType<FootstepSystem>();
+        if (footsteps != null)
+        {
+            footsteps.SetFootstepVolume(volume * 0.7f); // Footsteps at 70% of master SFX
+        }
+    }
+    
+    void ResetAudioSettings()
+    {
+        // Reset to default values
+        if (musicVolumeSlider != null)
+            musicVolumeSlider.value = DEFAULT_MUSIC_VOLUME;
+            
+        if (sfxVolumeSlider != null)
+            sfxVolumeSlider.value = DEFAULT_SFX_VOLUME;
+            
+        // Save defaults
+        PlayerPrefs.SetFloat(MUSIC_VOLUME_KEY, DEFAULT_MUSIC_VOLUME);
+        PlayerPrefs.SetFloat(SFX_VOLUME_KEY, DEFAULT_SFX_VOLUME);
+        PlayerPrefs.Save();
+    }
+    
+    void ResetAllSettings()
+    {
+        // Reset audio
+        ResetAudioSettings();
+        
+        // Reset debug values
+        ResetDebugValues();
+    }
+    
     void QuitGame()
     {
         #if UNITY_EDITOR
@@ -358,9 +592,23 @@ public class ModernPauseMenu : MonoBehaviour
         if (respawnButton != null)
             respawnButton.onClick.RemoveListener(ResetPlayerPosition);
             
+        if (optionsButton != null)
+            optionsButton.onClick.RemoveListener(ShowOptions);
+            
         if (quitButton != null)
             quitButton.onClick.RemoveListener(QuitGame);
             
+        if (backFromOptionsButton != null)
+            backFromOptionsButton.onClick.RemoveListener(HideOptions);
+            
+        // Remove audio listeners
+        if (musicVolumeSlider != null)
+            musicVolumeSlider.onValueChanged.RemoveListener(OnMusicVolumeChanged);
+            
+        if (sfxVolumeSlider != null)
+            sfxVolumeSlider.onValueChanged.RemoveListener(OnSFXVolumeChanged);
+            
+        // Remove debug listeners
         if (jumpHeightSlider != null)
             jumpHeightSlider.onValueChanged.RemoveListener(OnJumpHeightChanged);
             
@@ -369,5 +617,11 @@ public class ModernPauseMenu : MonoBehaviour
             
         if (resetDebugButton != null)
             resetDebugButton.onClick.RemoveListener(ResetDebugValues);
+            
+        if (resetAudioButton != null)
+            resetAudioButton.onClick.RemoveListener(ResetAudioSettings);
+            
+        if (resetAllSettingsButton != null)
+            resetAllSettingsButton.onClick.RemoveListener(ResetAllSettings);
     }
 }

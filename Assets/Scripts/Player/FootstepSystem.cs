@@ -13,16 +13,16 @@ public class FootstepSystem : MonoBehaviour
     public AudioSource audioSource;
     
     [Header("Surface Audio")]
-    [Tooltip("Surface-specific sounds")]
+    [Tooltip("Surface-specific sounds with alternative keywords")]
     public SurfaceAudioMapping[] surfaceAudio = new SurfaceAudioMapping[]
     {
-        new SurfaceAudioMapping("grass", null),
-        new SurfaceAudioMapping("dirt", null),
-        new SurfaceAudioMapping("stone", null),
-        new SurfaceAudioMapping("metal", null),
-        new SurfaceAudioMapping("sand", null),
-        new SurfaceAudioMapping("water", null),
-        new SurfaceAudioMapping("wood", null)
+        new SurfaceAudioMapping("grass", null) { alternativeKeywords = new string[] { "weed", "herbe", "lawn", "field" } },
+        new SurfaceAudioMapping("dirt", null) { alternativeKeywords = new string[] { "soil", "mud", "earth", "ground" } },
+        new SurfaceAudioMapping("stone", null) { alternativeKeywords = new string[] { "rock", "pierre", "concrete", "cement", "pavement" } },
+        new SurfaceAudioMapping("metal", null) { alternativeKeywords = new string[] { "steel", "iron", "aluminum", "metallic" } },
+        new SurfaceAudioMapping("sand", null) { alternativeKeywords = new string[] { "beach", "desert", "dune", "gravel" } },
+        new SurfaceAudioMapping("water", null) { alternativeKeywords = new string[] { "eau", "liquid", "pool", "river", "ocean" } },
+        new SurfaceAudioMapping("wood", null) { alternativeKeywords = new string[] { "timber", "plank", "oak", "pine", "bois" } }
     };
     
     [Header("Movement Detection")]
@@ -56,6 +56,14 @@ public class FootstepSystem : MonoBehaviour
     [Range(1, 50)]
     public int particlesPerStep = 10;
     public bool adaptParticleColor = true;
+    
+    [Header("Debug")]
+    [Tooltip("Show detected surface in console")]
+    public bool debugSurfaceDetection = false;
+    
+    [Space(5)]
+    [Tooltip("Currently detected surface (Read-only)")]
+    [SerializeField] private string _currentSurfaceDisplay = "default";
     
     [Header("Surface Colors")]
     public SurfaceColorMapping[] surfaceColors = new SurfaceColorMapping[]
@@ -362,39 +370,42 @@ public class FootstepSystem : MonoBehaviour
             detectedSurface = FindSurfaceMatch(objectName);
         }
         
-        currentSurface = detectedSurface;
+        // Only update if surface changed
+        if (currentSurface != detectedSurface)
+        {
+            currentSurface = detectedSurface;
+            _currentSurfaceDisplay = currentSurface; // Update display in Inspector
+            
+            if (debugSurfaceDetection)
+            {
+                Debug.Log($"🦶 Surface changed to: {currentSurface}");
+            }
+        }
     }
     
     string FindSurfaceMatch(string name)
     {
-        // Direct match
-        foreach (var surface in surfaceColorDict.Keys)
+        // Convert name to lowercase for comparison
+        string lowerName = name.ToLower();
+        
+        // Check each surface mapping
+        foreach (var mapping in surfaceAudio)
         {
-            if (name.Contains(surface))
+            // Check main surface name
+            if (lowerName.Contains(mapping.surfaceName.ToLower()))
             {
-                return surface;
+                return mapping.surfaceName;
             }
-        }
-        
-        // Keyword match
-        var keywords = new Dictionary<string, string[]>
-        {
-            ["grass"] = new[] { "grass", "herbe", "lawn", "field" },
-            ["stone"] = new[] { "stone", "rock", "pierre", "concrete", "cement" },
-            ["metal"] = new[] { "metal", "steel", "iron", "aluminum" },
-            ["wood"] = new[] { "wood", "timber", "plank", "oak", "pine" },
-            ["water"] = new[] { "water", "eau", "liquid", "pool" },
-            ["sand"] = new[] { "sand", "beach", "desert", "dune" },
-            ["dirt"] = new[] { "dirt", "soil", "mud", "earth", "ground" }
-        };
-        
-        foreach (var kvp in keywords)
-        {
-            foreach (string keyword in kvp.Value)
+            
+            // Check alternative keywords
+            if (mapping.alternativeKeywords != null)
             {
-                if (name.Contains(keyword))
+                foreach (string keyword in mapping.alternativeKeywords)
                 {
-                    return kvp.Key;
+                    if (!string.IsNullOrEmpty(keyword) && lowerName.Contains(keyword.ToLower()))
+                    {
+                        return mapping.surfaceName;
+                    }
                 }
             }
         }
@@ -512,6 +523,56 @@ public class FootstepSystem : MonoBehaviour
         footstepParticles.Play();
     }
     
+    // Context menu methods for easier setup
+    [ContextMenu("Add Common Keywords to All Surfaces")]
+    void AddCommonKeywords()
+    {
+        foreach (var mapping in surfaceAudio)
+        {
+            switch (mapping.surfaceName.ToLower())
+            {
+                case "grass":
+                    AddKeywordsIfMissing(mapping, "weed", "herbe", "lawn", "field", "meadow", "turf");
+                    break;
+                case "dirt":
+                    AddKeywordsIfMissing(mapping, "soil", "mud", "earth", "ground", "clay", "dust");
+                    break;
+                case "stone":
+                    AddKeywordsIfMissing(mapping, "rock", "pierre", "concrete", "cement", "pavement", "brick", "cobble");
+                    break;
+                case "metal":
+                    AddKeywordsIfMissing(mapping, "steel", "iron", "aluminum", "metallic", "copper", "tin");
+                    break;
+                case "sand":
+                    AddKeywordsIfMissing(mapping, "beach", "desert", "dune", "gravel", "pebble");
+                    break;
+                case "water":
+                    AddKeywordsIfMissing(mapping, "eau", "liquid", "pool", "river", "ocean", "lake", "puddle");
+                    break;
+                case "wood":
+                    AddKeywordsIfMissing(mapping, "timber", "plank", "oak", "pine", "bois", "log", "bark");
+                    break;
+            }
+        }
+        
+        Debug.Log("✅ Common keywords added to all surfaces");
+    }
+    
+    void AddKeywordsIfMissing(SurfaceAudioMapping mapping, params string[] keywords)
+    {
+        var keywordsList = new System.Collections.Generic.List<string>(mapping.alternativeKeywords ?? new string[0]);
+        
+        foreach (string keyword in keywords)
+        {
+            if (!keywordsList.Contains(keyword))
+            {
+                keywordsList.Add(keyword);
+            }
+        }
+        
+        mapping.alternativeKeywords = keywordsList.ToArray();
+    }
+    
     // Serializable classes
     [System.Serializable]
     public class SurfaceColorMapping
@@ -529,13 +590,20 @@ public class FootstepSystem : MonoBehaviour
     [System.Serializable]
     public class SurfaceAudioMapping
     {
+        [Tooltip("Main surface name")]
         public string surfaceName;
+        
+        [Tooltip("Alternative keywords that also match this surface")]
+        public string[] alternativeKeywords;
+        
+        [Tooltip("Audio clips for this surface")]
         public AudioClip[] audioClips;
         
         public SurfaceAudioMapping(string name, AudioClip[] clips)
         {
             surfaceName = name;
             audioClips = clips;
+            alternativeKeywords = new string[0];
         }
     }
 }

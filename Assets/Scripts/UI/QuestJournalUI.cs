@@ -168,6 +168,11 @@ public class QuestJournalUI : MonoBehaviour
             questDetailsPanel.SetActive(false);
     }
     
+    public void RefreshCurrentTab()
+    {
+        RefreshQuestList();
+    }
+    
     void RefreshQuestList()
     {
         // Nettoie la liste actuelle

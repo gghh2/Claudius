@@ -36,14 +36,19 @@ public static class ActiveQuestExtensions
 public class QuestMarkerSystem : MonoBehaviour
 {
     [Header("Configuration")]
-    [SerializeField] private float hideDistance = 10f;
-    [SerializeField] private float edgeOffset = 50f;
-    [SerializeField] private float markerSize = 50f;
-    [SerializeField] private Color markerColor = Color.yellow;
+    [SerializeField] private float hideDistance = QuestSystemConfig.MarkerHideDistance;
+    [SerializeField] private float edgeOffset = QuestSystemConfig.MarkerEdgeOffset;
+    [SerializeField] private float markerSize = QuestSystemConfig.DefaultMarkerSize;
+    [SerializeField] private Color markerColor = QuestSystemConfig.TrackedButtonColor;
     [SerializeField] private bool showDistance = true;
     [SerializeField] private bool enablePulse = true;
-    [SerializeField] private float pulseSpeed = 2f;
-    [SerializeField] private float pulseAmount = 0.1f;
+    [SerializeField] private float pulseSpeed = QuestSystemConfig.MarkerPulseSpeed;
+    [SerializeField] private float pulseAmount = QuestSystemConfig.MarkerPulseAmount;
+    
+    [Header("Marker Visuals")]
+    [SerializeField] private Sprite customMarkerSprite = null;
+    [SerializeField] private bool useCustomSprite = true;
+    [SerializeField] private Vector2 customSpriteSize = new Vector2(QuestSystemConfig.DefaultMarkerSize, QuestSystemConfig.DefaultMarkerSize);
     
     [Header("Debug")]
     [SerializeField] private bool debugMode = false;
@@ -83,12 +88,11 @@ public class QuestMarkerSystem : MonoBehaviour
     private void InitializeSystem()
     {
         mainCamera = Camera.main;
-        player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        player = GameObject.FindGameObjectWithTag(QuestSystemConfig.PlayerTag)?.transform;
         
         CreateMarkerCanvas();
         
-        if (player == null)
-            Debug.LogWarning("[QuestMarkerSystem] Joueur avec tag 'Player' non trouvé!");
+        // Le joueur peut être initialisé plus tard
     }
     
     private void CreateMarkerCanvas()
@@ -128,58 +132,43 @@ public class QuestMarkerSystem : MonoBehaviour
     {
         var targets = new Dictionary<string, MarkerTarget>();
         
-        if (QuestManager.Instance == null) return targets;
+        if (QuestManager.Instance == null || QuestJournal.Instance == null) return targets;
         
-        // Grouper les quêtes par zone
-        Dictionary<QuestZone, List<ActiveQuest>> questsByZone = new Dictionary<QuestZone, List<ActiveQuest>>();
+        // Récupérer la quête suivie
+        JournalQuest trackedQuest = QuestJournal.Instance.GetTrackedQuest();
+        if (trackedQuest == null) return targets;
         
-        foreach (var quest in QuestManager.Instance.activeQuests)
+        // Trouver la quête active correspondante
+        ActiveQuest activeQuest = QuestManager.Instance.activeQuests.FirstOrDefault(q => q.questId == trackedQuest.questId);
+        if (activeQuest == null) return targets;
+        
+        // Quête complétée mais pas rendue : pointer vers le NPC donneur
+        if (activeQuest.currentProgress >= activeQuest.questData.quantity && !activeQuest.isCompleted)
         {
-            // Quête complétée mais pas rendue : pointer vers le NPC donneur
-            if (quest.currentProgress >= quest.questData.quantity && !quest.isCompleted)
-            {
-                AddReturnTarget(targets, quest);
-                continue;
-            }
+            AddReturnTarget(targets, activeQuest);
+            return targets;
+        }
+        
+        // Trouver la zone de la quête
+        QuestZone zone = FindQuestZone(activeQuest);
+        
+        if (zone != null)
+        {
+            // Vérifier qu'il y a des objectifs actifs
+            bool hasActiveObjectives = HasActiveObjectives(activeQuest);
             
-            // Trouver la zone depuis l'extension ou les objets spawnés
-            QuestZone zone = FindQuestZone(quest);
-            
-            if (zone != null)
+            if (hasActiveObjectives)
             {
-                // Vérifier qu'il y a des objectifs actifs
-                bool hasActiveObjectives = HasActiveObjectives(quest);
-                
-                if (hasActiveObjectives)
+                string zoneKey = $"zone_{zone.GetInstanceID()}";
+                targets[zoneKey] = new MarkerTarget
                 {
-                    if (!questsByZone.ContainsKey(zone))
-                        questsByZone[zone] = new List<ActiveQuest>();
-                    questsByZone[zone].Add(quest);
-                }
-            }
-            else if (debugMode)
-            {
-                Debug.LogWarning($"[QuestMarkerSystem] Pas de zone trouvée pour la quête: {quest.questData.description}");
+                    position = zone.transform.position,
+                    displayName = GetZoneDisplayName(zone, activeQuest),
+                    questType = activeQuest.questData.questType
+                };
             }
         }
-        
-        // Créer un marqueur par zone
-        foreach (var kvp in questsByZone)
-        {
-            QuestZone zone = kvp.Key;
-            List<ActiveQuest> questsInZone = kvp.Value;
-            
-            string zoneKey = $"zone_{zone.GetInstanceID()}";
-            targets[zoneKey] = new MarkerTarget
-            {
-                position = zone.transform.position,
-                displayName = GetZoneDisplayName(zone, questsInZone),
-                questType = questsInZone[0].questData.questType
-            };
-        }
-        
-        if (debugMode)
-            Debug.Log($"[QuestMarkerSystem] Marqueurs actifs: {targets.Count}");
+
         
         return targets;
     }
@@ -264,38 +253,28 @@ public class QuestMarkerSystem : MonoBehaviour
         return null;
     }
     
-    private string GetZoneDisplayName(QuestZone zone, List<ActiveQuest> quests)
+    private string GetZoneDisplayName(QuestZone zone, ActiveQuest quest)
     {
-        // Si une seule quête dans la zone, afficher son type
-        if (quests.Count == 1)
+        switch (quest.questData.questType)
         {
-            var quest = quests[0];
-            switch (quest.questData.questType)
-            {
-                case QuestType.FETCH:
-                    return $"Collecter dans {zone.zoneName}";
-                case QuestType.DELIVERY:
-                    return $"Livraison dans {zone.zoneName}";
-                case QuestType.EXPLORE:
-                    return $"Explorer {zone.zoneName}";
-                case QuestType.TALK:
-                    return $"Discussion dans {zone.zoneName}";
-                case QuestType.INTERACT:
-                    return $"Interaction dans {zone.zoneName}";
-                default:
-                    return zone.zoneName;
-            }
-        }
-        else
-        {
-            // Plusieurs quêtes dans la même zone
-            return $"{zone.zoneName} ({quests.Count} objectifs)";
+            case QuestType.FETCH:
+                return $"Collecter dans {zone.zoneName}";
+            case QuestType.DELIVERY:
+                return $"Livraison dans {zone.zoneName}";
+            case QuestType.EXPLORE:
+                return $"Explorer {zone.zoneName}";
+            case QuestType.TALK:
+                return $"Discussion dans {zone.zoneName}";
+            case QuestType.INTERACT:
+                return $"Interaction dans {zone.zoneName}";
+            default:
+                return zone.zoneName;
         }
     }
     
     private void AddReturnTarget(Dictionary<string, MarkerTarget> targets, ActiveQuest quest)
     {
-        GameObject[] npcs = GameObject.FindGameObjectsWithTag("NPC");
+        GameObject[] npcs = GameObject.FindGameObjectsWithTag(QuestSystemConfig.NPCTag);
         foreach (var npc in npcs)
         {
             NPC npcComponent = npc.GetComponent<NPC>();
@@ -355,15 +334,31 @@ public class QuestMarkerSystem : MonoBehaviour
         marker.transform.SetParent(markerCanvas.transform);
         
         RectTransform rect = marker.AddComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(markerSize, markerSize);
         
         Image img = marker.AddComponent<Image>();
-        img.color = markerColor;
         img.raycastTarget = false;
         
-        Outline outline = marker.AddComponent<Outline>();
-        outline.effectColor = Color.black;
-        outline.effectDistance = new Vector2(2, 2);
+        // Utiliser le sprite custom si disponible
+        if (useCustomSprite && customMarkerSprite != null)
+        {
+            img.sprite = customMarkerSprite;
+            img.type = Image.Type.Simple;
+            img.preserveAspect = true;
+            img.color = Color.white; // Pas de teinte pour le sprite custom
+            rect.sizeDelta = customSpriteSize;
+        }
+        else
+        {
+            // Fallback : utiliser un carré coloré
+            img.sprite = null; // Sprite blanc par défaut d'Unity
+            img.color = markerColor;
+            rect.sizeDelta = new Vector2(markerSize, markerSize);
+            
+            // Ajouter un outline seulement pour le carré par défaut
+            Outline outline = marker.AddComponent<Outline>();
+            outline.effectColor = Color.black;
+            outline.effectDistance = new Vector2(2, 2);
+        }
         
         if (showDistance)
         {
@@ -527,6 +522,49 @@ public class QuestMarkerSystem : MonoBehaviour
         if (markerCanvas != null)
             markerCanvas.gameObject.SetActive(visible);
     }
+    
+    /// <summary>
+    /// Change le sprite du marqueur en runtime
+    /// </summary>
+    public void SetMarkerSprite(Sprite newSprite)
+    {
+        customMarkerSprite = newSprite;
+        useCustomSprite = (newSprite != null);
+        
+        // Rafraîchir tous les marqueurs existants
+        RefreshMarkers();
+    }
+    
+    /// <summary>
+    /// Change la taille du sprite custom
+    /// </summary>
+    public void SetCustomSpriteSize(Vector2 newSize)
+    {
+        customSpriteSize = newSize;
+        
+        // Mettre à jour les marqueurs existants si on utilise un sprite custom
+        if (useCustomSprite && customMarkerSprite != null)
+        {
+            foreach (var marker in activeMarkers.Values)
+            {
+                if (marker.rectTransform != null)
+                {
+                    marker.rectTransform.sizeDelta = customSpriteSize;
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Active/désactive l'utilisation du sprite custom
+    /// </summary>
+    public void SetUseCustomSprite(bool use)
+    {
+        useCustomSprite = use;
+        RefreshMarkers();
+    }
+    
+
     
     private class MarkerTarget
     {

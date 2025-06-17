@@ -78,6 +78,9 @@ public class QuestJournal : MonoBehaviour
     [Header("Quest Tracking")]
     public List<JournalQuest> allQuests = new List<JournalQuest>();
     
+    [Header("Active Tracking")]
+    [SerializeField] private string trackedQuestId = null;
+    
     [Header("Debug")]
     public bool debugMode = true;
     
@@ -96,14 +99,25 @@ public class QuestJournal : MonoBehaviour
     
     void Start()
     {
-        Debug.Log($"🎯 QuestJournal Instance créée: {Instance != null}");
-        Debug.Log($"🎯 Debug mode: {debugMode}");
+        // Initialisation
     }
     
     public void AddQuest(QuestToken token, string npcName)
     {
         JournalQuest newQuest = new JournalQuest(token, npcName);
         allQuests.Add(newQuest);
+        
+        // Si aucune quête n'est suivie, suivre automatiquement la nouvelle
+        if (string.IsNullOrEmpty(trackedQuestId))
+        {
+            SetTrackedQuest(newQuest.questId);
+            
+            // Force le rafraîchissement de l'UI si elle est ouverte
+            if (QuestJournalUI.Instance != null && QuestJournalUI.Instance.IsJournalOpen())
+            {
+                QuestJournalUI.Instance.RefreshCurrentTab();
+            }
+        }
         
         if (debugMode)
             Debug.Log($"📔 Quête ajoutée au journal: {newQuest.questTitle} (de {npcName})");
@@ -197,8 +211,40 @@ public class QuestJournal : MonoBehaviour
         Debug.Log($"=== JOURNAL DE QUÊTES ({allQuests.Count} total) ===");
         foreach (JournalQuest quest in allQuests)
         {
-            Debug.Log($"{quest.questTitle} - {quest.GetStatusText()} - {quest.GetProgressText()} (de {quest.giverNPCName})");
+            string tracked = quest.questId == trackedQuestId ? " [SUIVIE]" : "";
+            Debug.Log($"{quest.questTitle} - {quest.GetStatusText()} - {quest.GetProgressText()} (de {quest.giverNPCName}){tracked}");
         }
+    }
+    
+    // Nouvelle méthode pour définir la quête suivie
+    public void SetTrackedQuest(string questId)
+    {
+        JournalQuest quest = allQuests.FirstOrDefault(q => q.questId == questId && q.status == QuestStatus.InProgress);
+        if (quest != null)
+        {
+            trackedQuestId = questId;
+            if (debugMode)
+                Debug.Log($"Quête suivie: {quest.questTitle}");
+            
+            // Rafraîchir les marqueurs
+            if (QuestMarkerSystem.Instance != null)
+                QuestMarkerSystem.Instance.RefreshMarkers();
+        }
+    }
+    
+    // Récupérer la quête actuellement suivie
+    public JournalQuest GetTrackedQuest()
+    {
+        if (string.IsNullOrEmpty(trackedQuestId))
+            return null;
+            
+        return allQuests.FirstOrDefault(q => q.questId == trackedQuestId && q.status == QuestStatus.InProgress);
+    }
+    
+    // Vérifier si une quête est suivie
+    public bool IsQuestTracked(string questId)
+    {
+        return trackedQuestId == questId;
     }
 
 

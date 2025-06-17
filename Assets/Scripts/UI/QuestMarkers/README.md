@@ -1,58 +1,34 @@
 # Système de Marqueurs de Quête
 
-## Vue d'ensemble
+## Fichiers principaux
+- **QuestMarkerSystem.cs** : Système principal de marqueurs
+- **QuestMarkerDebugger.cs** : Outil de debug (optionnel)
+- **QuestMarkerCustomizer.cs** : Personnalisation des sprites
 
-Le système affiche des marqueurs visuels sur les bords de l'écran qui pointent vers les objectifs de quête actifs.
+## Configuration rapide
 
-## Installation
+### 1. Installation
+Créez un GameObject vide et ajoutez le composant `QuestMarkerSystem`.
 
-1. Créez un GameObject vide dans votre scène
-2. Ajoutez le composant `QuestMarkerSystem`
-3. Configurez les paramètres dans l'inspecteur
+### 2. Personnalisation des marqueurs
+Dans l'Inspector :
+- **Custom Marker Sprite** : Votre image PNG
+- **Use Custom Sprite** : Activer/désactiver
+- **Custom Sprite Size** : Taille du marqueur
 
-## Configuration
+### 3. Sprites recommandés
+- Format : PNG avec transparence
+- Taille : 64x64 ou 128x128 pixels
+- Import : Sprite (2D and UI)
 
-### QuestMarkerSystem
-- **Hide Distance** (10m) : Distance en dessous de laquelle les marqueurs disparaissent
-- **Edge Offset** (50px) : Marge depuis le bord de l'écran
-- **Marker Size** (50px) : Taille des marqueurs
-- **Marker Color** : Couleur des indicateurs
-- **Show Distance** : Affiche la distance en mètres
-- **Enable Pulse** : Active l'animation de pulsation
-
-### QuestZone
-- **Zone Name** : Nom de la zone
-- **Zone Type** : Type de zone (Laboratory, Hangar, etc.)
-- **Supported Objects** : Types d'objets qui peuvent spawner ici
-- **Spawn Radius** : Rayon de spawn des objets
-- **Obstacle Layer** : Layer des objets qui bloquent le spawn (optionnel)
-
-## Utilisation
-
-### Prérequis
-- Le joueur doit avoir le tag "Player"
-- QuestManager doit être actif
-- Les zones doivent avoir le composant QuestZone
-
-### Types de marqueurs
-- **FETCH** : Pointe vers les objets à collecter
-- **DELIVERY** : Pointe vers le NPC destinataire
-- **EXPLORE** : Pointe vers la zone à explorer
-- **TALK** : Pointe vers le NPC à qui parler
-- **RETOUR** : Pointe vers le NPC donneur quand la quête est complétée
-
-## API
-
+## Utilisation par code
 ```csharp
-// Rafraîchir les marqueurs
-QuestMarkerSystem.Instance.RefreshMarkers();
+// Changer le sprite
+QuestMarkerSystem.Instance.SetMarkerSprite(mySprite);
 
-// Activer/Désactiver
-QuestMarkerSystem.Instance.SetMarkersVisible(bool visible);
+// Changer la taille
+QuestMarkerSystem.Instance.SetCustomSpriteSize(new Vector2(64, 64));
+
+// Retour au carré jaune par défaut
+QuestMarkerSystem.Instance.SetMarkerSprite(null);
 ```
-
-## Fichiers
-
-- `QuestMarkerSystem.cs` : Système principal de marqueurs
-- `QuestZone.cs` : Zones où les objets de quête peuvent spawner
-- `QuestMarkerDebugger.cs` : Outil de debug (optionnel, F9 en jeu)

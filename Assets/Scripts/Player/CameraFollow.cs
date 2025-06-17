@@ -56,7 +56,7 @@ public class CameraFollow : MonoBehaviour
         // Trouve le target automatiquement
         if (target == null)
         {
-            PlayerController player = FindObjectOfType<PlayerController>();
+            PlayerControllerCC player = FindObjectOfType<PlayerControllerCC>();
             if (player != null)
             {
                 target = player.transform;

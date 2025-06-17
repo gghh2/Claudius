@@ -120,7 +120,7 @@ public class QuestJournalUI : MonoBehaviour
             }
             
             // Désactive le mouvement du joueur
-            PlayerController player = FindObjectOfType<PlayerController>();
+            PlayerControllerCC player = FindObjectOfType<PlayerControllerCC>();
             if (player != null)
                 player.enabled = false;
             
@@ -145,7 +145,7 @@ public class QuestJournalUI : MonoBehaviour
             }
             
             // Réactive le mouvement du joueur
-            PlayerController player = FindObjectOfType<PlayerController>();
+            PlayerControllerCC player = FindObjectOfType<PlayerControllerCC>();
             if (player != null)
                 player.enabled = true;
             

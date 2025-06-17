@@ -26,7 +26,7 @@ public class StaminaUI : MonoBehaviour
     public Vector2 screenPosition = new Vector2(10, 10); // Depuis bas-gauche
     
     // Références
-    private PlayerController playerController;
+    private PlayerControllerCC playerController;
     private CanvasGroup canvasGroup;
     private RectTransform containerRect;
     private float hideTimer = 0f;
@@ -160,14 +160,15 @@ public class StaminaUI : MonoBehaviour
     
     void FindPlayerController()
     {
-        playerController = FindObjectOfType<PlayerController>();
+        playerController = FindObjectOfType<PlayerControllerCC>();
+        
         if (playerController == null)
         {
-            Debug.LogError("❌ PlayerController non trouvé !");
+            Debug.LogError("❌ PlayerControllerCC non trouvé !");
         }
         else
         {
-            Debug.Log("✅ StaminaUI connectée au PlayerController");
+            Debug.Log("✅ StaminaUI connectée au PlayerControllerCC");
         }
     }
     

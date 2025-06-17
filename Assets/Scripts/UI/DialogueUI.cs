@@ -365,7 +365,7 @@ public class DialogueUI : MonoBehaviour
         // Check if player can turn in a completed quest
         CheckForCompletableQuest(npcData);
         
-        FindObjectOfType<PlayerController>()?.DisableControl();
+        FindObjectOfType<PlayerControllerCC>()?.DisableControl();
     }
     
     // Mode dialogue IA
@@ -399,7 +399,7 @@ public class DialogueUI : MonoBehaviour
         // Check if player can turn in a completed quest
         CheckForCompletableQuest(npcData);
         
-        FindObjectOfType<PlayerController>()?.DisableControl();
+        FindObjectOfType<PlayerControllerCC>()?.DisableControl();
     }
     
     void SwitchToAIMode()
@@ -1279,7 +1279,7 @@ public class DialogueUI : MonoBehaviour
         {
             UIManager.Instance.SetPanelState(UIPanelNames.Dialogue, false);
         }
-        FindObjectOfType<PlayerController>()?.EnableControl();
+        FindObjectOfType<PlayerControllerCC>()?.EnableControl();
         
         // REPREND le mouvement et réaffiche les noms
         NPCMovement[] allNPCMovements = FindObjectsOfType<NPCMovement>();

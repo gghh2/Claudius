@@ -43,15 +43,15 @@ public class ModernPauseMenu : MonoBehaviour
     // Private variables
     private bool isPaused = false;
     private GameObject player;
-    private PlayerController playerController;
+    private PlayerControllerCC playerController;
     private bool cursorWasLocked = false;
     
     // Cached cursor managers
     private MonoBehaviour[] cursorManagers;
     
     // Default values
-    private const float DEFAULT_JUMP_HEIGHT = 8f;
-    private const float DEFAULT_MOVE_SPEED = 10f;
+    private const float DEFAULT_JUMP_HEIGHT = 2f; // For Character Controller
+    private const float DEFAULT_MOVE_SPEED = 5f;
     
     void Start()
     {
@@ -59,7 +59,7 @@ public class ModernPauseMenu : MonoBehaviour
         player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
         {
-            playerController = player.GetComponent<PlayerController>();
+            playerController = player.GetComponent<PlayerControllerCC>();
             
             if (autoSaveSpawnPosition)
             {
@@ -135,9 +135,10 @@ public class ModernPauseMenu : MonoBehaviour
         // Initialize sliders with current player values
         if (jumpHeightSlider != null)
         {
-            jumpHeightSlider.minValue = jumpHeightRange.x;
-            jumpHeightSlider.maxValue = jumpHeightRange.y;
-            jumpHeightSlider.value = playerController.jumpForce;
+            // For Character Controller, use jump height directly
+            jumpHeightSlider.minValue = 0.5f;
+            jumpHeightSlider.maxValue = 5f;
+            jumpHeightSlider.value = playerController.jumpHeight;
             jumpHeightSlider.onValueChanged.AddListener(OnJumpHeightChanged);
         }
         
@@ -299,9 +300,9 @@ public class ModernPauseMenu : MonoBehaviour
     {
         if (playerController != null)
         {
-            playerController.jumpForce = value;
-            UpdateDebugValueTexts();
+            playerController.jumpHeight = value;
         }
+        UpdateDebugValueTexts();
     }
     
     void OnMoveSpeedChanged(float value)
@@ -309,8 +310,9 @@ public class ModernPauseMenu : MonoBehaviour
         if (playerController != null)
         {
             playerController.moveSpeed = value;
-            UpdateDebugValueTexts();
         }
+
+        UpdateDebugValueTexts();
     }
     
     void UpdateDebugValueTexts()

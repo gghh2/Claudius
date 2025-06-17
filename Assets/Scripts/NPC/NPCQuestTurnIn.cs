@@ -32,7 +32,7 @@ public class NPCQuestTurnIn : MonoBehaviour
         mainCamera = Camera.main;
         
         // Trouve le joueur
-        PlayerController playerController = FindObjectOfType<PlayerController>();
+        PlayerControllerCC playerController = FindObjectOfType<PlayerControllerCC>();
         if (playerController != null)
         {
             player = playerController.transform;

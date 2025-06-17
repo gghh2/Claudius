@@ -105,7 +105,7 @@ public class CompanionController : MonoBehaviour
     private Animator animator;
     private Animation legacyAnimation;
     private AudioSource audioSource;
-    private PlayerController playerController; // Référence au joueur
+    private PlayerControllerCC playerController; // Référence au joueur
     
     // State
     private bool isMoving = false;
@@ -185,7 +185,7 @@ public class CompanionController : MonoBehaviour
         // Trouve le joueur
         if (player == null)
         {
-            playerController = FindObjectOfType<PlayerController>();
+            playerController = FindObjectOfType<PlayerControllerCC>();
             if (playerController != null)
             {
                 player = playerController.transform;
@@ -203,7 +203,7 @@ public class CompanionController : MonoBehaviour
         else
         {
             // Si le joueur est assigné manuellement, trouve quand même le PlayerController
-            playerController = player.GetComponent<PlayerController>();
+            playerController = player.GetComponent<PlayerControllerCC>();
             if (playerController != null)
             {
                 SyncSpeedWithPlayer();

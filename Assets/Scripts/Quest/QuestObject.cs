@@ -591,6 +591,12 @@ public class QuestObject : MonoBehaviour
         // Retire la quête de la liste active
         QuestManager.Instance.activeQuests.Remove(quest);
         
+        // NOUVEAU : Met à jour la quête suivie
+        if (QuestJournal.Instance != null)
+        {
+            QuestJournal.Instance.UpdateTrackedQuestAfterCompletion(quest.questId);
+        }
+        
         // NE PAS détruire le NPC de livraison
         Debug.Log($"[DELIVERY] Quête terminée - NPC {objectName} reste en place");
         

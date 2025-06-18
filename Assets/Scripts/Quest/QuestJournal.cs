@@ -107,20 +107,20 @@ public class QuestJournal : MonoBehaviour
         JournalQuest newQuest = new JournalQuest(token, npcName);
         allQuests.Add(newQuest);
         
-        // Si aucune quête n'est suivie, suivre automatiquement la nouvelle
-        if (string.IsNullOrEmpty(trackedQuestId))
+        // NOUVEAU : Toujours suivre automatiquement la nouvelle quête
+        SetTrackedQuest(newQuest.questId);
+        
+        // Force le rafraîchissement de l'UI si elle est ouverte
+        if (QuestJournalUI.Instance != null && QuestJournalUI.Instance.IsJournalOpen())
         {
-            SetTrackedQuest(newQuest.questId);
-            
-            // Force le rafraîchissement de l'UI si elle est ouverte
-            if (QuestJournalUI.Instance != null && QuestJournalUI.Instance.IsJournalOpen())
-            {
-                QuestJournalUI.Instance.RefreshCurrentTab();
-            }
+            QuestJournalUI.Instance.RefreshCurrentTab();
         }
         
         if (debugMode)
+        {
             Debug.Log($"📔 Quête ajoutée au journal: {newQuest.questTitle} (de {npcName})");
+            Debug.Log($"📍 Nouvelle quête automatiquement suivie: {newQuest.questTitle}");
+        }
     }
 
 
@@ -245,6 +245,41 @@ public class QuestJournal : MonoBehaviour
     public bool IsQuestTracked(string questId)
     {
         return trackedQuestId == questId;
+    }
+    
+    /// <summary>
+    /// Met à jour automatiquement la quête suivie après qu'une quête soit terminée
+    /// </summary>
+    public void UpdateTrackedQuestAfterCompletion(string completedQuestId)
+    {
+        // Si la quête terminée était celle suivie
+        if (trackedQuestId == completedQuestId)
+        {
+            // Trouve la première quête active pour la suivre automatiquement
+            JournalQuest nextQuest = allQuests.FirstOrDefault(q => 
+                q.status == QuestStatus.InProgress && 
+                q.questId != completedQuestId);
+            
+            if (nextQuest != null)
+            {
+                SetTrackedQuest(nextQuest.questId);
+                
+                if (debugMode)
+                    Debug.Log($"📍 Quête suivante automatiquement suivie: {nextQuest.questTitle}");
+            }
+            else
+            {
+                // Plus aucune quête active
+                trackedQuestId = null;
+                
+                if (debugMode)
+                    Debug.Log("📍 Plus aucune quête active à suivre");
+            }
+            
+            // Rafraîchir les marqueurs
+            if (QuestMarkerSystem.Instance != null)
+                QuestMarkerSystem.Instance.RefreshMarkers();
+        }
     }
 
 

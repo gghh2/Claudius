@@ -216,6 +216,26 @@ public class QuestJournal : MonoBehaviour
         }
     }
     
+    /// <summary>
+    /// Check if there's an active quest with a specific NPC
+    /// </summary>
+    public bool HasActiveQuestWithNPC(string npcName)
+    {
+        return allQuests.Any(q => q.giverNPCName == npcName && q.status == QuestStatus.InProgress);
+    }
+    
+    /// <summary>
+    /// Clear all quests from the journal
+    /// </summary>
+    public void ClearAllQuests()
+    {
+        allQuests.Clear();
+        trackedQuestId = null;
+        
+        if (debugMode)
+            Debug.Log("📔 Journal de quêtes vidé");
+    }
+    
     // Nouvelle méthode pour définir la quête suivie
     public void SetTrackedQuest(string questId)
     {

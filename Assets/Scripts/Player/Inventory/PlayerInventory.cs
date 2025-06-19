@@ -139,4 +139,23 @@ public class PlayerInventory : MonoBehaviour
             }
         }
     }
+    
+    /// <summary>
+    /// Get all items in the inventory
+    /// </summary>
+    public List<InventoryItem> GetAllItems()
+    {
+        return new List<InventoryItem>(items);
+    }
+    
+    /// <summary>
+    /// Clear the entire inventory
+    /// </summary>
+    public void ClearInventory()
+    {
+        items.Clear();
+        
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
+            Debug.Log("📦 INVENTAIRE: Inventaire vidé");
+    }
 }

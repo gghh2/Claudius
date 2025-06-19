@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Global Volume Profile
   m_EditorClassIdentifier: 
   components:
-  - {fileID: 4589313642997567964}
---- !u!114 &4589313642997567964
+  - {fileID: 8436333575810240954}
+--- !u!114 &8436333575810240954
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -23,40 +23,25 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c01700fd266d6914ababb731e09af2eb, type: 3}
-  m_Name: DepthOfField
+  m_Script: {fileID: 11500000, guid: 7a969feb2d61c394aa4cfcb695e4cc4d, type: 3}
+  m_Name: OrthographicDOF_URP
   m_EditorClassIdentifier: 
   active: 1
-  mode:
-    m_OverrideState: 0
-    m_Value: 0
-  gaussianStart:
-    m_OverrideState: 0
-    m_Value: 10
-  gaussianEnd:
-    m_OverrideState: 0
-    m_Value: 30
-  gaussianMaxRadius:
-    m_OverrideState: 0
-    m_Value: 1
-  highQualitySampling:
-    m_OverrideState: 0
-    m_Value: 0
-  focusDistance:
-    m_OverrideState: 0
-    m_Value: 10
-  aperture:
-    m_OverrideState: 0
-    m_Value: 5.6
-  focalLength:
-    m_OverrideState: 0
-    m_Value: 50
-  bladeCount:
-    m_OverrideState: 0
+  focalDistance:
+    m_OverrideState: 1
+    m_Value: 54.9
+  focalRange:
+    m_OverrideState: 1
     m_Value: 5
-  bladeCurvature:
-    m_OverrideState: 0
+  maxBlur:
+    m_OverrideState: 1
     m_Value: 1
-  bladeRotation:
-    m_OverrideState: 0
-    m_Value: 0
+  quality:
+    m_OverrideState: 1
+    m_Value: 2
+  useForegroundBlur:
+    m_OverrideState: 1
+    m_Value: 1
+  foregroundBlurOffset:
+    m_OverrideState: 1
+    m_Value: 2

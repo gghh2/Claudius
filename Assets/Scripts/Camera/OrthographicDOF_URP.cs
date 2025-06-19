@@ -7,7 +7,7 @@ using System;
 /// Custom Depth of Field pour caméras orthographiques avec URP
 /// </summary>
 [Serializable, VolumeComponentMenu("Post-processing/Custom/Orthographic DOF")]
-public class OrthographicDepthOfField : VolumeComponent, IPostProcessComponent
+public class OrthographicDOF_URP : VolumeComponent, IPostProcessComponent
 {
     [Header("Focus Settings")]
     public ClampedFloatParameter focalDistance = new ClampedFloatParameter(10f, 0.1f, 100f);
@@ -94,7 +94,7 @@ public class OrthographicDOFRenderFeature : ScriptableRendererFeature
             if (material == null) return;
             
             var stack = VolumeManager.instance.stack;
-            var dof = stack.GetComponent<OrthographicDepthOfField>();
+            var dof = stack.GetComponent<OrthographicDOF_URP>();
             
             if (dof == null || !dof.IsActive()) return;
             
@@ -144,7 +144,7 @@ public class OrthographicDOFController : MonoBehaviour
     public AnimationCurve blurCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
     public float blurDistanceMax = 50f;
     
-    private OrthographicDepthOfField dofComponent;
+    private OrthographicDOF_URP dofComponent;
     private Camera cam;
     
     void Start()

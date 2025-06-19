@@ -212,6 +212,13 @@ public class ModernPauseMenu : MonoBehaviour
         // Check for pause input
         if (Input.GetKeyDown(KeyCode.Escape))
         {
+            // NOUVEAU : Vérification complète via UIInputPriority
+            if (UIInputPriority.IsBlockingUIOpen())
+            {
+                // Une UI bloquante gère la touche Escape
+                return;
+            }
+            
             if (isPaused)
                 Resume();
             else

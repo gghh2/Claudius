@@ -170,12 +170,7 @@ public class DialogueUI : MonoBehaviour
             acceptQuestButton.onClick.AddListener(AcceptQuests);
             acceptQuestButton.gameObject.SetActive(false);
             
-            // NOUVEAU : Ajoute le raccourci dans le texte du bouton
-            var acceptButtonText = acceptQuestButton.GetComponentInChildren<TextMeshProUGUI>();
-            if (acceptButtonText != null && !acceptButtonText.text.Contains("[A]"))
-            {
-                acceptButtonText.text = "[A] " + acceptButtonText.text;
-            }
+            // NE PAS modifier le texte du bouton - on garde le texte de l'Inspector
             
             Debug.Log("[UI] Accept button configured and hidden");
         }
@@ -189,12 +184,7 @@ public class DialogueUI : MonoBehaviour
             declineQuestButton.onClick.AddListener(DeclineQuests);
             declineQuestButton.gameObject.SetActive(false);
             
-            // NOUVEAU : Ajoute le raccourci dans le texte du bouton
-            var declineButtonText = declineQuestButton.GetComponentInChildren<TextMeshProUGUI>();
-            if (declineButtonText != null && !declineButtonText.text.Contains("[R]"))
-            {
-                declineButtonText.text = "[R] " + declineButtonText.text;
-            }
+            // NE PAS modifier le texte du bouton - on garde le texte de l'Inspector
             
             Debug.Log("[UI] Decline button configured and hidden");
         }
@@ -233,6 +223,27 @@ public class DialogueUI : MonoBehaviour
     
     void Update()
     {
+        // NOUVEAU : Touche Escape pour fermer le history panel en priorité
+        if (historyPanel != null && historyPanel.activeInHierarchy && Input.GetKeyDown(KeyCode.Escape))
+        {
+            Debug.Log("[UI] Touche Escape pressée - Fermeture du history panel");
+            CloseHistory();
+            return; // Sort immédiatement
+        }
+        
+        // NOUVEAU : Touche Escape pour fermer le dialogue
+        if (dialoguePanel.activeInHierarchy && Input.GetKeyDown(KeyCode.Escape))
+        {
+            Debug.Log("[UI] Touche Escape pressée - Fermeture du dialogue");
+            CloseDialogue();
+            
+            // IMPORTANT : Consomme l'event pour empêcher d'autres scripts de réagir
+            if (Event.current != null)
+                Event.current.Use();
+                
+            return; // Sort immédiatement pour éviter d'autres interactions
+        }
+        
         // Gestion ENTER en mode IA
         if (isAIMode && !isSendingMessage)
         {
@@ -788,10 +799,9 @@ public class DialogueUI : MonoBehaviour
 	            string formattedDescription = TextFormatter.FormatName(quest.description);
 	            questInfo += $"• {formattedDescription}\n";
 	        }
-	        questInfo += "\nAcceptez-vous cette mission ?\n";
-	        questInfo += "\n[A] Accepter    [R] Refuser";
-        
-        ShowText(currentFullText + questInfo);
+	        questInfo += "\nAcceptez-vous cette mission ?";
+	        
+	        ShowText(currentFullText + questInfo);
 	    }
 	}
     

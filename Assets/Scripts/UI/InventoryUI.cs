@@ -46,6 +46,15 @@ public class InventoryUI : MonoBehaviour
         }
     }
     
+    void Update()
+    {
+        // NOUVEAU : Gère la touche Escape pour fermer l'inventaire
+        if (isOpen && Input.GetKeyDown(KeyCode.Escape))
+        {
+            CloseInventory();
+        }
+    }
+    
     public void ToggleInventory()
     {
         isOpen = !isOpen;

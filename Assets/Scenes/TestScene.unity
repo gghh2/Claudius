@@ -3652,7 +3652,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Refuser
+  m_text: (R)efuser
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: ef1d1804ded4e9a418e4c42179c6ef45, type: 2}
   m_sharedMaterial: {fileID: -1084811708038353288, guid: ef1d1804ded4e9a418e4c42179c6ef45, type: 2}
@@ -23880,7 +23880,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 9410445}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.99999475
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -25272,7 +25272,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Accepter
+  m_text: (A)ccepter
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: ef1d1804ded4e9a418e4c42179c6ef45, type: 2}
   m_sharedMaterial: {fileID: -1084811708038353288, guid: ef1d1804ded4e9a418e4c42179c6ef45, type: 2}
@@ -27475,7 +27475,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1628671277}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.99995375
+  m_Size: 0.9999926
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -29666,7 +29666,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.0005354693}
+  m_AnchoredPosition: {x: 0, y: 0.0009285562}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1536727519
@@ -39220,9 +39220,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e52b077ed9c5fb4ca50e43061df7ce1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  zoneName: Ruine de temple
+  zoneName: Ruine d'un ancien labyrinthe
   zoneType: 3
-  description: Un ancien temple extraterresstre en pleine nature en haut d'une montagne
+  description: Un ancien labyrinthe  extraterresstre en pleine nature en haut d'un
+    plateau
   supportedObjects: 0000000003000000
   spawnRadius: 11.1
   maxSpawnPoints: 8

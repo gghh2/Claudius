@@ -72,6 +72,21 @@ public class UIManager : MonoBehaviour
     {
         return openPanels.Count > 0;
     }
+    
+    /// <summary>
+    /// Check if any of the specified panels is open
+    /// </summary>
+    /// <param name="panelNames">Panel names to check</param>
+    /// <returns>True if any of the specified panels is open</returns>
+    public bool IsAnyPanelOpen(params string[] panelNames)
+    {
+        foreach (string panelName in panelNames)
+        {
+            if (IsPanelOpen(panelName))
+                return true;
+        }
+        return false;
+    }
 
     /// <summary>
     /// Check if a specific UI panel is open

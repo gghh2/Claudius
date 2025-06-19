@@ -218,10 +218,32 @@ public class ModernPauseMenu : MonoBehaviour
                 Pause();
         }
         
-        // Respawn shortcut when paused
-        if (isPaused && Input.GetKeyDown(KeyCode.R))
+        // Keyboard shortcuts when paused
+        if (isPaused)
         {
-            ResetPlayerPosition();
+            // R - Respawn
+            if (Input.GetKeyDown(KeyCode.R))
+            {
+                ResetPlayerPosition();
+            }
+            
+            // O - Open Options (only from main pause menu)
+            if (Input.GetKeyDown(KeyCode.O) && pauseMenuPanel.activeSelf && !optionsPanel.activeSelf)
+            {
+                ShowOptions();
+            }
+            
+            // Q - Quit Game
+            if (Input.GetKeyDown(KeyCode.Q))
+            {
+                QuitGame();
+            }
+            
+            // C - Continue/Resume
+            if (Input.GetKeyDown(KeyCode.C))
+            {
+                Resume();
+            }
         }
     }
     

@@ -129,8 +129,24 @@ public class SaveGameUI : MonoBehaviour
         {
             saveMenuPanel.SetActive(false);
             
-            // Resume game
-            Time.timeScale = 1f;
+            // Check if we came from pause menu
+            ModernPauseMenu pauseMenu = FindObjectOfType<ModernPauseMenu>();
+            if (pauseMenu != null && pauseMenu.IsPaused())
+            {
+                // Return to pause menu instead of resuming
+                Transform pausePanel = pauseMenu.transform.Find("PauseMenuPanel");
+                if (pausePanel != null)
+                {
+                    pausePanel.gameObject.SetActive(true);
+                }
+                // Keep time paused
+                Time.timeScale = 0f;
+            }
+            else
+            {
+                // Normal resume
+                Time.timeScale = 1f;
+            }
         }
     }
     
@@ -149,10 +165,11 @@ public class SaveGameUI : MonoBehaviour
     public void SaveToSlot(int slotIndex)
     {
         string saveName = $"save_{slotIndex}";
+        string displayName = $"Claudius-{slotIndex + 1}";
         
         if (SaveGameManager.Instance.SaveExists(saveName))
         {
-            ShowConfirmDialog($"Overwrite save slot {slotIndex + 1}?", () =>
+            ShowConfirmDialog($"Overwrite {displayName}?", () =>
             {
                 PerformSave(saveName);
             });
@@ -166,8 +183,9 @@ public class SaveGameUI : MonoBehaviour
     public void LoadFromSlot(int slotIndex)
     {
         string saveName = $"save_{slotIndex}";
+        string displayName = $"Claudius-{slotIndex + 1}";
         
-        ShowConfirmDialog($"Load save slot {slotIndex + 1}? Current progress will be lost.", () =>
+        ShowConfirmDialog($"Load {displayName}? Current progress will be lost.", () =>
         {
             PerformLoad(saveName);
         });
@@ -176,8 +194,9 @@ public class SaveGameUI : MonoBehaviour
     public void DeleteSlot(int slotIndex)
     {
         string saveName = $"save_{slotIndex}";
+        string displayName = $"Claudius-{slotIndex + 1}";
         
-        ShowConfirmDialog($"Delete save slot {slotIndex + 1}?", () =>
+        ShowConfirmDialog($"Delete {displayName}?", () =>
         {
             SaveGameManager.Instance.DeleteSave(saveName);
             RefreshSaveSlots();
@@ -275,11 +294,13 @@ public class SaveGameUI : MonoBehaviour
     void OnGameSaved()
     {
         ShowNotification("Game saved!");
+        RefreshSaveSlots(); // Refresh to update button visibility
     }
     
     void OnGameLoaded()
     {
         ShowNotification("Game loaded!");
+        RefreshSaveSlots(); // Refresh to update button visibility
     }
 }
 
@@ -324,23 +345,31 @@ public class SaveSlotUI : MonoBehaviour
         if (emptySlotIndicator != null)
             emptySlotIndicator.SetActive(!hasData);
         
+        // Hide/show load button based on save data
         if (loadButton != null)
-            loadButton.interactable = hasData;
+            loadButton.gameObject.SetActive(hasData);
             
+        // Hide/show delete button based on save data
         if (deleteButton != null)
             deleteButton.gameObject.SetActive(hasData);
         
+        // Update slot text
         if (saveInfoText != null)
         {
             if (hasData)
             {
-                // Could load and parse save data for more info
-                saveInfoText.text = "Save data present";
+                saveInfoText.text = $"Claudius-{slotIndex + 1}";
             }
             else
             {
-                saveInfoText.text = "Empty slot";
+                saveInfoText.text = "Empty";
             }
+        }
+        
+        // Also update the slot number text if it exists
+        if (slotNumberText != null)
+        {
+            slotNumberText.text = $"Slot {slotIndex + 1}";
         }
     }
 }

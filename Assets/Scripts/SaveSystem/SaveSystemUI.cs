@@ -248,14 +248,23 @@ public class SaveSystemUI : MonoBehaviour
     
     void OnCloseClicked()
     {
-        // Return to pause menu
-        if (saveMenuPanel != null)
-            saveMenuPanel.SetActive(false);
-            
-        // Navigate back to pause menu
-        GameObject pausePanel = GameObject.Find("PauseMenuPanel");
-        if (pausePanel != null)
-            pausePanel.SetActive(true);
+        Debug.Log("[SaveSystem] Close button clicked, using UnifiedUIManager.NavigateBack()");
+        
+        // Use UnifiedUIManager for proper navigation
+        if (UnifiedUIManager.Instance != null)
+        {
+            UnifiedUIManager.Instance.NavigateBack();
+        }
+        else
+        {
+            // Fallback if UnifiedUIManager not available
+            if (saveMenuPanel != null)
+                saveMenuPanel.SetActive(false);
+                
+            GameObject pausePanel = GameObject.Find("PauseMenuPanel");
+            if (pausePanel != null)
+                pausePanel.SetActive(true);
+        }
     }
     
     // Save/Load operations
@@ -279,19 +288,27 @@ public class SaveSystemUI : MonoBehaviour
     
     void CloseAllMenus()
     {
-        // Close save menu
-        if (saveMenuPanel != null)
-            saveMenuPanel.SetActive(false);
-            
-        // Close pause menu
-        GameObject pausePanel = GameObject.Find("PauseMenuPanel");
-        if (pausePanel != null)
-            pausePanel.SetActive(false);
-            
-        // Also try to call Resume on ModernPauseMenu
-        ModernPauseMenu pauseMenu = FindObjectOfType<ModernPauseMenu>();
-        if (pauseMenu != null)
-            pauseMenu.Resume();
+        Debug.Log("[SaveSystem] Closing all menus and returning to game");
+        
+        // Use UnifiedUIManager to properly close everything
+        if (UnifiedUIManager.Instance != null)
+        {
+            UnifiedUIManager.Instance.CloseAllPanels();
+        }
+        else
+        {
+            // Fallback
+            if (saveMenuPanel != null)
+                saveMenuPanel.SetActive(false);
+                
+            GameObject pausePanel = GameObject.Find("PauseMenuPanel");
+            if (pausePanel != null)
+                pausePanel.SetActive(false);
+                
+            ModernPauseMenu pauseMenu = FindObjectOfType<ModernPauseMenu>();
+            if (pauseMenu != null)
+                pauseMenu.Resume();
+        }
     }
     
     // Events

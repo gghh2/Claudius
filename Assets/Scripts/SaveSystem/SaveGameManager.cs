@@ -153,6 +153,9 @@ public class SaveGameManager : MonoBehaviour
                 health = 100f // Add if you have health system
             };
             
+            Debug.Log($"[SaveGame] Saving player position: {data.playerData.position}");
+            Debug.Log($"[SaveGame] Saving player rotation: {data.playerData.rotation}");
+            
             // Save camera zoom
             Camera mainCamera = Camera.main;
             if (mainCamera != null && mainCamera.orthographic)
@@ -164,6 +167,10 @@ public class SaveGameManager : MonoBehaviour
                 // For perspective camera, you might want to save field of view
                 data.playerData.cameraZoom = mainCamera.fieldOfView;
             }
+        }
+        else
+        {
+            Debug.LogError("[SaveGame] PlayerControllerCC not found!");
         }
         
         // Companion data
@@ -287,9 +294,23 @@ public class SaveGameManager : MonoBehaviour
         PlayerControllerCC player = FindObjectOfType<PlayerControllerCC>();
         if (player != null && data.playerData != null)
         {
+            Debug.Log($"[SaveGame] Loading player position: {data.playerData.position}");
+            Debug.Log($"[SaveGame] Loading player rotation: {data.playerData.rotation}");
+            
+            // Apply position
             player.transform.position = data.playerData.position;
             player.transform.rotation = Quaternion.Euler(data.playerData.rotation);
             player.currentStamina = data.playerData.currentStamina;
+            
+            // Force CharacterController to update its position
+            CharacterController charController = player.GetComponent<CharacterController>();
+            if (charController != null)
+            {
+                charController.enabled = false;
+                player.transform.position = data.playerData.position;
+                charController.enabled = true;
+                Debug.Log($"[SaveGame] CharacterController updated, final position: {player.transform.position}");
+            }
             
             // Restore camera zoom
             Camera mainCamera = Camera.main;
@@ -311,6 +332,13 @@ public class SaveGameManager : MonoBehaviour
                     cameraFollow.SetZoom(data.playerData.cameraZoom);
                 }
             }
+        }
+        else
+        {
+            if (player == null)
+                Debug.LogError("[SaveGame] PlayerControllerCC not found during load!");
+            if (data.playerData == null)
+                Debug.LogError("[SaveGame] No player data in save file!");
         }
         
         // Companion

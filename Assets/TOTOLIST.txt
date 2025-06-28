@@ -1,15 +1,27 @@
-- Faciliter la marche quand petit rebord à frandchir
+
+
+
 - Que la zone fall back n'est pas de nom de zone, actuelement Laboratory
+
+
 ========================================
 UI
 √ Avoir un menu pour quitter / afficher les touches
 √ Création menu Pause
 √ Menu pause n'apaprait pas lors du build ans run
 √ Je ne veux pas couleur onglet par défaut, que ça utilise les paramètre de l'inspector
-- Que le marker ne soit actif que si on a qu'une quête / ou qu'on a choisi de follow une quête
+√ Que le marker ne soit actif que si on a qu'une quête / ou qu'on a choisi de follow une quête
 √ Le glow sur les noms  Thickness à enleevr et le mode Gras
 √ Avoir le background du menu pause en image dispo dans inspector
-
+= Cacher Marker UI quand on est dans un Dialogue UI
+√ Quand on accepte une nouvelle quête alors qu'on en a déjà une, elle devient follow
+√ Enlever Texte Accepter / refuser des dialogue UI
+√ Quand dans un dialogue, la touche echap doit fermer le dialogue
+√ On voit PanelMenu derrier Load/Save Game
+- Le marker UI de la quête follow ne reste pas d'un allumage du jeu à l'autre
+- F5 et F9 ne font rien
+- Les raccourcis dans PauseMenu ne fonctionnent plus 
+- Quand on sprint ça garde le zoom quand il y ades montagne
 
 ========================================
 IA
@@ -30,6 +42,7 @@ GRAPHISME
 ========================================
 GAMEPLAY
 √ Quand on parle à un PNJ, la barre de stamina peut remonter, actuelement elle se emt en pause
+√ Faciliter la marche quand petit rebord à frandchir
 
 ========================================
 COMPANIONS

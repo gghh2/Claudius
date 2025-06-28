@@ -1,93 +1,103 @@
-# Système de Sauvegarde - Guide d'utilisation
+# 🎮 Système de Sauvegarde - Documentation
 
 ## Vue d'ensemble
 
 Le système de sauvegarde permet de sauvegarder et charger l'état complet du jeu incluant :
 - Position et état du joueur
+- Stamina et santé
+- **Zoom de la caméra** (nouveau)
 - Companion (position, type)
 - Quêtes actives et complétées
 - Positions des NPCs
 - Inventaire
 - Paramètres audio
 
+## Architecture
+
+### Fichiers principaux (4 scripts seulement)
+
+1. **SaveGameManager.cs** : Gestionnaire principal
+   - Gère la sauvegarde/chargement des données
+   - Sérialise en JSON
+   - Pas d'autosave (supprimé)
+
+2. **SaveGameUI.cs** : Interface utilisateur
+   - Gère l'affichage du menu de sauvegarde
+   - Boîtes de dialogue de confirmation
+   - Notifications
+
+3. **SaveMenuIntegration.cs** : Intégration menu pause
+   - Ajoute le bouton Save/Load au menu pause
+   - Gère la navigation entre menus
+
+4. **ProgressiveSaveSlots.cs** : Gestion des slots
+   - Mode progressif : affiche seulement les slots utilisés + 1
+   - Mode complet : affiche tous les slots
+   - Mise à jour automatique de l'affichage
+
 ## Installation
 
-### 1. Ajouter le SaveGameManager
+### 1. SaveGameManager
 
-1. Créez un GameObject vide nommé "SaveGameManager"
-2. Ajoutez le script `SaveGameManager`
-3. Configurez :
-   - **Save File Name** : "savegame" (nom par défaut)
-   - **Auto Save Interval** : 60 (sauvegarde auto toutes les 60 secondes)
-   - **Debug Mode** : ✓ (pour voir les logs)
-
-### 2. Interface utilisateur (optionnel)
-
-Pour une interface de sauvegarde :
-
-1. Créez un Canvas si vous n'en avez pas
-2. Créez la structure UI suivante :
 ```
-Canvas
-├── SaveMenu (Panel)
-│   ├── SaveSlotContainer
-│   │   └── SaveSlotPrefab (x10)
-│   └── CloseButton
-├── ConfirmDialog (Panel)
-│   ├── ConfirmText
-│   ├── YesButton
-│   └── NoButton
+GameObject vide → "SaveGameManager"
+Ajouter composant → SaveGameManager
+```
+
+**Configuration :**
+- Save File Name : "savegame" (nom par défaut)
+- Debug Mode : ✓ (pour voir les logs)
+
+### 2. Interface utilisateur
+
+Sur l'objet avec SaveGameUI :
+- Ajouter `SaveGameUI`
+- Ajouter `ProgressiveSaveSlots`
+
+**Structure UI requise :**
+```
+SaveMenuPanel
+├── Title (Text: "Save/Load Game")
+├── SaveSlotContainer
+│   ├── SaveSlot_0
+│   ├── SaveSlot_1
+│   ├── SaveSlot_2
+│   ├── SaveSlot_3
+│   └── SaveSlot_4
+├── CloseButton
+├── ConfirmDialog
 └── NotificationPanel
-    └── NotificationText
 ```
 
-3. Ajoutez `SaveGameUI` sur un GameObject
-4. Assignez toutes les références UI
+### 3. Intégration menu pause
 
-### 3. Raccourcis clavier (optionnel)
-
-1. Ajoutez `SaveGameKeybinds` sur un GameObject
-2. Configurez les touches :
-   - **F5** : Sauvegarde rapide
-   - **F9** : Chargement rapide
-   - **Ctrl+S** : Menu de sauvegarde
+Sur l'objet avec ModernPauseMenu :
+- Ajouter `SaveMenuIntegration`
+- Assigner le bouton Save/Load
 
 ## Utilisation
 
-### Sauvegarder par code
+### Navigation
+1. **ESC** → Menu pause
+2. **Save/Load** → Menu de sauvegarde
+3. **Save** → Sauvegarde et retour au jeu
+4. **Load** → Chargement et retour au jeu
+5. **Delete** → Suppression avec confirmation
+6. **Close** → Retour au menu pause
 
-```csharp
-// Sauvegarde simple
-SaveGameManager.Instance.SaveGame();
+### Comportement des slots
+- **Mode progressif** (par défaut) :
+  - Début : 1 slot vide
+  - Après sauvegarde : slots utilisés + 1 vide
+  - Maximum : 10 slots
 
-// Sauvegarde avec nom spécifique
-SaveGameManager.Instance.SaveGame("checkpoint_1");
+- **Noms des sauvegardes** :
+  - Slot vide : "Empty"
+  - Slot utilisé : "Claudius-1", "Claudius-2", etc.
 
-// Vérifier si une sauvegarde existe
-if (SaveGameManager.Instance.SaveExists("checkpoint_1"))
-{
-    // La sauvegarde existe
-}
-```
-
-### Charger par code
-
-```csharp
-// Charger la sauvegarde par défaut
-SaveGameManager.Instance.LoadGame();
-
-// Charger une sauvegarde spécifique
-SaveGameManager.Instance.LoadGame("checkpoint_1");
-```
-
-### Zones de sauvegarde automatique
-
-1. Créez un GameObject avec un Collider (Trigger)
-2. Ajoutez le script `AutoSaveTrigger`
-3. Configurez :
-   - **Save Name** : Nom de la sauvegarde
-   - **One Time Only** : Sauvegarde unique
-   - **Trigger Message** : Message affiché
+- **Boutons dynamiques** :
+  - Save : toujours visible
+  - Load/Delete : visibles seulement si sauvegarde existe
 
 ## Ce qui est sauvegardé
 
@@ -95,6 +105,7 @@ SaveGameManager.Instance.LoadGame("checkpoint_1");
 - Position et rotation
 - Stamina actuelle
 - Santé (si implémentée)
+- **Zoom de la caméra** (orthographicSize)
 
 ### Companion
 - Présence du companion
@@ -102,9 +113,8 @@ SaveGameManager.Instance.LoadGame("checkpoint_1");
 - Position et rotation
 
 ### Quêtes
-- Toutes les quêtes actives
-- Progression de chaque quête
-- Quête suivie actuellement
+- Toutes les quêtes actives avec progression
+- Quête actuellement suivie
 - Quêtes complétées
 
 ### NPCs
@@ -122,20 +132,28 @@ SaveGameManager.Instance.LoadGame("checkpoint_1");
 - Volume musique
 - Volume effets sonores
 
-## Format de sauvegarde
+## Format et emplacement
 
-Les sauvegardes sont stockées en JSON dans :
-- **Windows** : `%APPDATA%/../LocalLow/[CompanyName]/[GameName]/saves/`
-- **Mac** : `~/Library/Application Support/[CompanyName]/[GameName]/saves/`
-- **Linux** : `~/.config/unity3d/[CompanyName]/[GameName]/saves/`
+**Format** : JSON lisible
 
-Format : `[saveName].json`
+**Emplacement des fichiers** :
+- Windows : `%APPDATA%/../LocalLow/[CompanyName]/[GameName]/saves/`
+- Mac : `~/Library/Application Support/[CompanyName]/[GameName]/saves/`
+- Linux : `~/.config/unity3d/[CompanyName]/[GameName]/saves/`
 
-## Étendre le système
+**Noms des fichiers** : `save_0.json`, `save_1.json`, etc.
 
-### Ajouter des données personnalisées
+## Personnalisation
 
-1. Créez une nouvelle classe de données :
+### Changer le mode d'affichage des slots
+
+Dans `ProgressiveSaveSlots` :
+- `Show All Slots` : ❌ = progressif, ✓ = tous les slots
+- `Max Slots` : nombre maximum de sauvegardes
+
+### Ajouter des données à sauvegarder
+
+1. Modifier la classe de données dans SaveGameManager :
 ```csharp
 [System.Serializable]
 public class MyCustomData
@@ -145,54 +163,43 @@ public class MyCustomData
 }
 ```
 
-2. Ajoutez-la à `SaveData` :
-```csharp
-public MyCustomData customData;
-```
-
-3. Collectez les données dans `CollectSaveData()`
-4. Appliquez les données dans `ApplySaveData()`
-
-### Rendre un objet sauvegardable
-
-1. Ajoutez le composant `SaveableObject` sur l'objet
-2. Configurez :
-   - **Save Position** : ✓
-   - **Save Rotation** : ✓
-   - **Save Active** : ✓
-
-## Bonnes pratiques
-
-1. **Sauvegarde automatique** : Utilisez les zones de sauvegarde avant les combats difficiles
-2. **Multiple slots** : Encouragez les joueurs à utiliser plusieurs slots
-3. **Notifications** : Affichez toujours quand le jeu sauvegarde
-4. **Validation** : Vérifiez l'intégrité des données au chargement
+2. L'ajouter à SaveData
+3. Implémenter dans CollectSaveData()
+4. Implémenter dans ApplySaveData()
 
 ## Dépannage
 
-### La sauvegarde ne fonctionne pas
-- Vérifiez que `SaveGameManager` existe dans la scène
-- Vérifiez les permissions d'écriture
-- Regardez la console pour les erreurs
+### Les boutons ne fonctionnent pas
+→ Vérifier que ProgressiveSaveSlots est actif
 
-### Les quêtes ne se chargent pas
-- Assurez-vous que `QuestJournal` a la méthode `ClearAllQuests()`
-- Vérifiez que les IDs de quête sont uniques
+### Le menu ne s'ouvre pas
+→ Vérifier SaveMenuPanel dans l'Inspector de SaveGameUI
 
-### Les NPCs ne se restaurent pas
-- Les NPCs doivent avoir des noms uniques
-- Vérifiez que les NPCs existent dans la scène au chargement
+### Les slots ne se mettent pas à jour
+→ Clic droit sur ProgressiveSaveSlots → "Force Update"
+
+### La suppression ne rafraîchit pas l'affichage
+→ Le système fait plusieurs mises à jour automatiques, attendez 0.5s
+
+## Notes importantes
+
+- **Pas de quicksave F5/F9** (supprimé pour simplifier)
+- **Pas d'autosave** (supprimé)
+- **Save/Load retourne directement au jeu** (pas au menu pause)
+- Le système utilise les événements pour se mettre à jour automatiquement
 
 ## Performance
 
-- Les sauvegardes sont asynchrones (pas de freeze)
-- Taille moyenne d'une sauvegarde : ~10-50 KB
-- Temps de sauvegarde : < 100ms
-- Temps de chargement : < 200ms
+- Sauvegarde : < 100ms
+- Chargement : < 200ms
+- Taille moyenne : 10-50 KB par sauvegarde
+- Mise à jour UI : instantanée avec plusieurs passes
 
-## Sécurité
+## Changelog
 
-Les sauvegardes sont en texte clair (JSON). Pour un jeu commercial :
-1. Chiffrez les données sensibles
-2. Ajoutez une somme de contrôle
-3. Compressez les fichiers volumineux
+### v2.0 (Version actuelle)
+- Ajout sauvegarde du zoom caméra
+- Système de slots progressif
+- Suppression autosave et quicksave
+- Interface épurée
+- Architecture simplifiée (4 scripts au lieu de 10+)

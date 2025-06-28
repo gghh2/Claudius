@@ -85,8 +85,8 @@ public class CameraFollow : MonoBehaviour
     {
         if (!enableZoom) return;
         
-        // Check if any UI is open through UIManager
-        if (UIManager.Instance != null && UIManager.Instance.IsAnyUIOpen())
+        // Check if any UI is open through UnifiedUIManager
+        if (UnifiedUIManager.Instance != null && UnifiedUIManager.Instance.IsBlockingGameplay())
         {
             return; // No zoom when any UI panel is open
         }

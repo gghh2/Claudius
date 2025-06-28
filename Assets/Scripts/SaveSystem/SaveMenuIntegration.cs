@@ -11,12 +11,13 @@ public class SaveMenuIntegration : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Button saveLoadButton;
-    [SerializeField] private SaveGameUI saveGameUI;
+    [SerializeField] private SaveSystemUI saveSystemUI;
     
-    [Header("Quick Save/Load")]
-    [SerializeField] private bool enableQuickSave = true;
-    [SerializeField] private KeyCode quickSaveKey = KeyCode.F5;
-    [SerializeField] private KeyCode quickLoadKey = KeyCode.F9;
+    // Quick save/load removed - no longer needed
+    // [Header("Quick Save/Load")]
+    // [SerializeField] private bool enableQuickSave = true;
+    // [SerializeField] private KeyCode quickSaveKey = KeyCode.F5;
+    // [SerializeField] private KeyCode quickLoadKey = KeyCode.F9;
     
     private ModernPauseMenu pauseMenu;
     
@@ -24,23 +25,25 @@ public class SaveMenuIntegration : MonoBehaviour
     {
         pauseMenu = GetComponent<ModernPauseMenu>();
         
-        // Find SaveGameUI if not assigned
-        if (saveGameUI == null)
+        // Find SaveSystemUI if not assigned
+        if (saveSystemUI == null)
         {
-            saveGameUI = FindObjectOfType<SaveGameUI>();
+            saveSystemUI = FindObjectOfType<SaveSystemUI>();
         }
         
         // Setup button if assigned
-        if (saveLoadButton != null && saveGameUI != null)
+        if (saveLoadButton != null && saveSystemUI != null)
         {
             saveLoadButton.onClick.AddListener(OpenSaveMenu);
         }
         else
         {
-            Debug.LogWarning("[SaveMenuIntegration] SaveLoadButton or SaveGameUI not assigned!");
+            Debug.LogWarning("[SaveMenuIntegration] SaveLoadButton or SaveSystemUI not assigned!");
         }
     }
     
+    // Quick save/load removed
+    /*
     void Update()
     {
         if (!enableQuickSave) return;
@@ -57,20 +60,28 @@ public class SaveMenuIntegration : MonoBehaviour
             QuickLoad();
         }
     }
+    */
     
     void OpenSaveMenu()
     {
-        if (saveGameUI == null) return;
+        if (saveSystemUI == null) return;
         
-        // Hide pause menu
-        Transform pausePanel = transform.Find("PauseMenuPanel");
-        if (pausePanel != null)
+        // Use UnifiedUIManager for navigation
+        if (UnifiedUIManager.Instance != null)
         {
-            pausePanel.gameObject.SetActive(false);
+            UnifiedUIManager.Instance.NavigateTo(UnifiedUIPanelNames.SaveMenu);
         }
-        
-        // Open save menu
-        saveGameUI.OpenSaveMenu();
+        else
+        {
+            // Fallback to old method
+            Transform pausePanel = transform.Find("PauseMenuPanel");
+            if (pausePanel != null)
+            {
+                pausePanel.gameObject.SetActive(false);
+            }
+            
+            saveSystemUI.OpenSaveMenu();
+        }
         
         // Ensure we return to pause menu when closing
         EnsureCloseButtonReturns();
@@ -79,7 +90,7 @@ public class SaveMenuIntegration : MonoBehaviour
     void EnsureCloseButtonReturns()
     {
         // Find the close button in SaveMenuPanel
-        Transform savePanel = saveGameUI.transform.Find("SaveMenuPanel");
+        Transform savePanel = saveSystemUI.transform.Find("SaveMenuPanel");
         if (savePanel != null)
         {
             Button closeButton = savePanel.Find("CloseButton")?.GetComponent<Button>();
@@ -88,23 +99,32 @@ public class SaveMenuIntegration : MonoBehaviour
                 // Clear and set new listener
                 closeButton.onClick.RemoveAllListeners();
                 closeButton.onClick.AddListener(() => {
-                    // Close save menu
-                    savePanel.gameObject.SetActive(false);
-                    
-                    // Return to pause menu
-                    Transform pausePanel = transform.Find("PauseMenuPanel");
-                    if (pausePanel != null)
+                    // Use UnifiedUIManager for navigation back
+                    if (UnifiedUIManager.Instance != null)
                     {
-                        pausePanel.gameObject.SetActive(true);
+                        UnifiedUIManager.Instance.NavigateBack();
                     }
-                    
-                    // Keep game paused
-                    Time.timeScale = 0f;
+                    else
+                    {
+                        // Fallback to old method
+                        savePanel.gameObject.SetActive(false);
+                        
+                        Transform pausePanel = transform.Find("PauseMenuPanel");
+                        if (pausePanel != null)
+                        {
+                            pausePanel.gameObject.SetActive(true);
+                        }
+                        
+                        // Keep game paused
+                        Time.timeScale = 0f;
+                    }
                 });
             }
         }
     }
     
+    // Quick save/load methods removed
+    /*
     void QuickSave()
     {
         if (SaveGameManager.Instance != null)
@@ -144,6 +164,7 @@ public class SaveMenuIntegration : MonoBehaviour
         // Fallback to console
         Debug.Log($"[Save System] {message}");
     }
+    */
     
     void OnDestroy()
     {

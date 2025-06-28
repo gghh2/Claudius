@@ -14,8 +14,9 @@ public class SaveGameManager : MonoBehaviour
     [Tooltip("Name of the save file")]
     public string saveFileName = "savegame";
     
-    [Tooltip("Auto save interval in seconds (0 = disabled)")]
-    public float autoSaveInterval = 60f;
+    // Auto save removed - no longer needed
+    // [Tooltip("Auto save interval in seconds (0 = disabled)")]
+    // public float autoSaveInterval = 60f;
     
     [Header("Debug")]
     public bool debugMode = true;
@@ -24,7 +25,7 @@ public class SaveGameManager : MonoBehaviour
     public static event Action OnGameSaved;
     public static event Action OnGameLoaded;
     
-    private float autoSaveTimer;
+    // private float autoSaveTimer; // Removed
     private string savePath;
     
     void Awake()
@@ -52,6 +53,8 @@ public class SaveGameManager : MonoBehaviour
         }
     }
     
+    // Auto save removed
+    /*
     void Update()
     {
         // Auto save
@@ -65,6 +68,7 @@ public class SaveGameManager : MonoBehaviour
             }
         }
     }
+    */
     
     /// <summary>
     /// Save the current game state
@@ -148,6 +152,18 @@ public class SaveGameManager : MonoBehaviour
                 currentStamina = player.currentStamina,
                 health = 100f // Add if you have health system
             };
+            
+            // Save camera zoom
+            Camera mainCamera = Camera.main;
+            if (mainCamera != null && mainCamera.orthographic)
+            {
+                data.playerData.cameraZoom = mainCamera.orthographicSize;
+            }
+            else if (mainCamera != null)
+            {
+                // For perspective camera, you might want to save field of view
+                data.playerData.cameraZoom = mainCamera.fieldOfView;
+            }
         }
         
         // Companion data
@@ -274,6 +290,27 @@ public class SaveGameManager : MonoBehaviour
             player.transform.position = data.playerData.position;
             player.transform.rotation = Quaternion.Euler(data.playerData.rotation);
             player.currentStamina = data.playerData.currentStamina;
+            
+            // Restore camera zoom
+            Camera mainCamera = Camera.main;
+            if (mainCamera != null && data.playerData.cameraZoom > 0)
+            {
+                if (mainCamera.orthographic)
+                {
+                    mainCamera.orthographicSize = data.playerData.cameraZoom;
+                }
+                else
+                {
+                    mainCamera.fieldOfView = data.playerData.cameraZoom;
+                }
+                
+                // Also update CameraFollow if it exists
+                CameraFollow cameraFollow = FindObjectOfType<CameraFollow>();
+                if (cameraFollow != null)
+                {
+                    cameraFollow.SetZoom(data.playerData.cameraZoom);
+                }
+            }
         }
         
         // Companion
@@ -425,6 +462,7 @@ public class PlayerSaveData
     public Vector3 rotation;
     public float currentStamina;
     public float health;
+    public float cameraZoom; // Added camera zoom/size
 }
 
 [System.Serializable]

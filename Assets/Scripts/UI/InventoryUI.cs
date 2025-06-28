@@ -48,11 +48,7 @@ public class InventoryUI : MonoBehaviour
     
     void Update()
     {
-        // NOUVEAU : Gère la touche Escape pour fermer l'inventaire
-        if (isOpen && Input.GetKeyDown(KeyCode.Escape))
-        {
-            CloseInventory();
-        }
+        // I shortcut and ESCAPE are handled by UnifiedUIManager
     }
     
     public void ToggleInventory()
@@ -71,21 +67,18 @@ public class InventoryUI : MonoBehaviour
     
     void OpenInventory()
     {
-        gameObject.SetActive(true);
-        isOpen = true;
-        
-        // Notify UIManager
-        if (UIManager.Instance != null)
+        if (UnifiedUIManager.Instance != null)
         {
-            UIManager.Instance.SetPanelState(UIPanelNames.Inventory, true);
+            UnifiedUIManager.Instance.NavigateTo(UnifiedUIPanelNames.Inventory);
+            isOpen = true;
+        }
+        else
+        {
+            gameObject.SetActive(true);
+            isOpen = true;
         }
         
-        // Désactive le mouvement du joueur
-        PlayerControllerCC player = FindObjectOfType<PlayerControllerCC>();
-        if (player != null)
-        {
-            player.enabled = false;
-        }
+        // Player control is handled by UnifiedUIManager
         
         // Rafraîchit l'affichage
         RefreshInventoryDisplay();
@@ -95,21 +88,18 @@ public class InventoryUI : MonoBehaviour
     
     public void CloseInventory()
     {
-        gameObject.SetActive(false);
-        isOpen = false;
-        
-        // Notify UIManager
-        if (UIManager.Instance != null)
+        if (UnifiedUIManager.Instance != null)
         {
-            UIManager.Instance.SetPanelState(UIPanelNames.Inventory, false);
+            UnifiedUIManager.Instance.NavigateBack();
+            isOpen = false;
+        }
+        else
+        {
+            gameObject.SetActive(false);
+            isOpen = false;
         }
         
-        // Réactive le mouvement du joueur
-        PlayerControllerCC player = FindObjectOfType<PlayerControllerCC>();
-        if (player != null)
-        {
-            player.enabled = true;
-        }
+        // Player control is handled by UnifiedUIManager
         
         Debug.Log("📦 Inventaire fermé");
     }

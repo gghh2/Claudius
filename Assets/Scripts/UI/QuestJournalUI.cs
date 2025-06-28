@@ -76,53 +76,25 @@ public class QuestJournalUI : MonoBehaviour
     
     void Update()
 	{
-	    // Vérifie qu'on n'est pas en train de taper dans un InputField
-	    bool isTyping = false;
-	    
-	    // Vérifie si DialogueUI est ouvert et si l'input field est focus
-	    if (DialogueUI.Instance != null && DialogueUI.Instance.IsDialogueOpen())
-	    {
-	        // Vérifie si le joueur tape dans l'input field
-	        if (DialogueUI.Instance.playerInputField != null && 
-	            DialogueUI.Instance.playerInputField.isFocused)
-	        {
-	            isTyping = true;
-	        }
-	    }
-	    
-	    // Touche J pour ouvrir/fermer le journal SEULEMENT si pas en train de taper
-	    if (Input.GetKeyDown(KeyCode.J) && !isTyping)
-	    {
-	        if (isJournalOpen)
-	            CloseJournal();
-	        else
-	            OpenJournal();
-	    }
-	    
-	    // Échap pour fermer si ouvert
-	    if (Input.GetKeyDown(KeyCode.Escape) && isJournalOpen)
-	    {
-	        CloseJournal();
-	    }
+	    // J shortcut is handled by UnifiedUIManager
 	}
     
     public void OpenJournal()
     {
         if (journalPanel != null)
         {
-            journalPanel.SetActive(true);
-            isJournalOpen = true;
-            
-            // Notify UIManager
-            if (UIManager.Instance != null)
+            if (UnifiedUIManager.Instance != null)
             {
-                UIManager.Instance.SetPanelState(UIPanelNames.QuestJournal, true);
+                UnifiedUIManager.Instance.NavigateTo(UnifiedUIPanelNames.QuestJournal);
+                isJournalOpen = true;
+            }
+            else
+            {
+                journalPanel.SetActive(true);
+                isJournalOpen = true;
             }
             
-            // Désactive le mouvement du joueur
-            PlayerControllerCC player = FindObjectOfType<PlayerControllerCC>();
-            if (player != null)
-                player.enabled = false;
+            // Player control is handled by UnifiedUIManager
             
             // Affiche les quêtes actives par défaut
             SwitchTab(QuestStatus.InProgress);
@@ -135,19 +107,18 @@ public class QuestJournalUI : MonoBehaviour
     {
         if (journalPanel != null)
         {
-            journalPanel.SetActive(false);
-            isJournalOpen = false;
-            
-            // Notify UIManager
-            if (UIManager.Instance != null)
+            if (UnifiedUIManager.Instance != null)
             {
-                UIManager.Instance.SetPanelState(UIPanelNames.QuestJournal, false);
+                UnifiedUIManager.Instance.NavigateBack();
+                isJournalOpen = false;
+            }
+            else
+            {
+                journalPanel.SetActive(false);
+                isJournalOpen = false;
             }
             
-            // Réactive le mouvement du joueur
-            PlayerControllerCC player = FindObjectOfType<PlayerControllerCC>();
-            if (player != null)
-                player.enabled = true;
+            // Player control is handled by UnifiedUIManager
             
             // Cache les détails
             if (questDetailsPanel != null)

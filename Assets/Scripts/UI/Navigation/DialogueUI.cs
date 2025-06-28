@@ -223,26 +223,8 @@ public class DialogueUI : MonoBehaviour
     
     void Update()
     {
-        // NOUVEAU : Touche Escape pour fermer le history panel en priorité
-        if (historyPanel != null && historyPanel.activeInHierarchy && Input.GetKeyDown(KeyCode.Escape))
-        {
-            Debug.Log("[UI] Touche Escape pressée - Fermeture du history panel");
-            CloseHistory();
-            return; // Sort immédiatement
-        }
-        
-        // NOUVEAU : Touche Escape pour fermer le dialogue
-        if (dialoguePanel.activeInHierarchy && Input.GetKeyDown(KeyCode.Escape))
-        {
-            Debug.Log("[UI] Touche Escape pressée - Fermeture du dialogue");
-            CloseDialogue();
-            
-            // IMPORTANT : Consomme l'event pour empêcher d'autres scripts de réagir
-            if (Event.current != null)
-                Event.current.Use();
-                
-            return; // Sort immédiatement pour éviter d'autres interactions
-        }
+        // All ESCAPE and shortcut handling is done by UnifiedUIManager
+        // M shortcut for work is handled internally in dialogue mode
         
         // Gestion ENTER en mode IA
         if (isAIMode && !isSendingMessage)
@@ -342,12 +324,13 @@ public class DialogueUI : MonoBehaviour
         dialogueStep = 0;
         isAIMode = false;
         
-        dialoguePanel.SetActive(true);
-        
-        // Notify UIManager
-        if (UIManager.Instance != null)
+        if (UnifiedUIManager.Instance != null)
         {
-            UIManager.Instance.SetPanelState(UIPanelNames.Dialogue, true);
+            UnifiedUIManager.Instance.NavigateTo(UnifiedUIPanelNames.Dialogue);
+        }
+        else
+        {
+            dialoguePanel.SetActive(true);
         }
         
         // Applique la couleur du NPC au nom
@@ -385,12 +368,13 @@ public class DialogueUI : MonoBehaviour
         currentNPC = npcData;
         isAIMode = true;
         
-        dialoguePanel.SetActive(true);
-        
-        // Notify UIManager
-        if (UIManager.Instance != null)
+        if (UnifiedUIManager.Instance != null)
         {
-            UIManager.Instance.SetPanelState(UIPanelNames.Dialogue, true);
+            UnifiedUIManager.Instance.NavigateTo(UnifiedUIPanelNames.Dialogue);
+        }
+        else
+        {
+            dialoguePanel.SetActive(true);
         }
         
         // Applique la couleur du NPC
@@ -1066,13 +1050,14 @@ public class DialogueUI : MonoBehaviour
             
             if (history != null && history.messages.Count > 0)
             {
-                dialoguePanel.SetActive(false);
-                historyPanel.SetActive(true);
-                
-                // Notify UIManager
-                if (UIManager.Instance != null)
+                if (UnifiedUIManager.Instance != null)
                 {
-                    UIManager.Instance.SetPanelState(UIPanelNames.DialogueHistory, true);
+                    UnifiedUIManager.Instance.NavigateTo(UnifiedUIPanelNames.DialogueHistory);
+                }
+                else
+                {
+                    dialoguePanel.SetActive(false);
+                    historyPanel.SetActive(true);
                 }
                 
                 string historyContent = $"<size=24><color=yellow>=== Historique avec {currentNPC.name} ===</color></size>\n\n";
@@ -1100,17 +1085,17 @@ public class DialogueUI : MonoBehaviour
     
     void CloseHistory()
     {
-        if (historyPanel != null)
-            historyPanel.SetActive(false);
-        
-        // Notify UIManager
-        if (UIManager.Instance != null)
+        if (UnifiedUIManager.Instance != null)
         {
-            UIManager.Instance.SetPanelState(UIPanelNames.DialogueHistory, false);
+            UnifiedUIManager.Instance.NavigateBack();
         }
-        
-        if (dialoguePanel != null)
-            dialoguePanel.SetActive(true);
+        else
+        {
+            if (historyPanel != null)
+                historyPanel.SetActive(false);
+            if (dialoguePanel != null)
+                dialoguePanel.SetActive(true);
+        }
     }
     
     void CheckForCompletableQuest(NPCData npcData)
@@ -1279,17 +1264,17 @@ public class DialogueUI : MonoBehaviour
     
     public void CloseDialogue()
     {
-        CloseHistory(); // Ferme l'historique aussi
-        ClearPendingQuests(); // Nettoie les quêtes en attente
+        ClearPendingQuests();
         
-        dialoguePanel.SetActive(false);
-        
-        // Notify UIManager
-        if (UIManager.Instance != null)
+        if (UnifiedUIManager.Instance != null)
         {
-            UIManager.Instance.SetPanelState(UIPanelNames.Dialogue, false);
+            UnifiedUIManager.Instance.NavigateBack();
         }
-        FindObjectOfType<PlayerControllerCC>()?.EnableControl();
+        else
+        {
+            dialoguePanel.SetActive(false);
+            FindObjectOfType<PlayerControllerCC>()?.EnableControl();
+        }
         
         // REPREND le mouvement et réaffiche les noms
         NPCMovement[] allNPCMovements = FindObjectsOfType<NPCMovement>();

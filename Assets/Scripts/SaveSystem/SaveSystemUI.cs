@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 using System.Collections.Generic;
 
 /// <summary>
@@ -237,6 +238,12 @@ public class SaveSystemUI : MonoBehaviour
                     Debug.Log($"[SaveSystem] Delete confirmed for {saveToDelete}");
                     SaveGameManager.Instance.DeleteSave(saveToDelete);
                     RefreshAllSlots();
+                    
+                    // Show notification
+                    if (NotificationManager.Instance != null)
+                    {
+                        NotificationManager.Instance.ShowInfo("Save deleted!");
+                    }
                 }
             );
         }
@@ -272,16 +279,33 @@ public class SaveSystemUI : MonoBehaviour
     {
         SaveGameManager.Instance.SaveGame(saveName);
         
-        // Close everything and return to game
-        CloseAllMenus();
-        Time.timeScale = 1f;
+        // Try notification
+        if (NotificationManager.Instance != null)
+        {
+            NotificationManager.Instance.ShowSuccess("Game saved!");
+        }
+        
+        // Small delay to see notification before closing
+        StartCoroutine(CloseAfterDelay(0.5f));
     }
     
     void PerformLoad(string saveName)
     {
         SaveGameManager.Instance.LoadGame(saveName);
         
-        // Close everything and return to game
+        // Try notification
+        if (NotificationManager.Instance != null)
+        {
+            NotificationManager.Instance.ShowSuccess("Game loaded!");
+        }
+        
+        // Small delay to see notification before closing
+        StartCoroutine(CloseAfterDelay(0.5f));
+    }
+    
+    IEnumerator CloseAfterDelay(float delay)
+    {
+        yield return new WaitForSecondsRealtime(delay);
         CloseAllMenus();
         Time.timeScale = 1f;
     }

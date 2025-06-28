@@ -39,9 +39,15 @@ public class ModernPauseMenu : MonoBehaviour
     [SerializeField] private bool showDebugControls = false;
     
     [Header("Settings")]
-    [SerializeField] private Vector3 spawnPosition = Vector3.zero;
-    [SerializeField] private Vector3 spawnRotation = Vector3.zero;
+    [SerializeField] private Vector3 defaultSpawnPosition = Vector3.zero;  // Position initiale du jeu
+    [SerializeField] private Vector3 defaultSpawnRotation = Vector3.zero;  // Rotation initiale du jeu
     [SerializeField] private bool autoSaveSpawnPosition = true;
+    
+    // Static variables to store game session data
+    private static Vector3 lastLoadedPosition = Vector3.zero;
+    private static Vector3 lastLoadedRotation = Vector3.zero;
+    private static bool hasLoadedSave = false;  // Changed from hasLoadedPosition
+    private static bool isInitialized = false;
     
     [Header("Additional Options")]
     [SerializeField] private Button resetAudioButton;
@@ -70,10 +76,13 @@ public class ModernPauseMenu : MonoBehaviour
         {
             playerController = player.GetComponent<PlayerControllerCC>();
             
-            if (autoSaveSpawnPosition)
+            // Initialize default spawn position on first run
+            if (!isInitialized)
             {
-                spawnPosition = player.transform.position;
-                spawnRotation = player.transform.eulerAngles;
+                defaultSpawnPosition = player.transform.position;
+                defaultSpawnRotation = player.transform.eulerAngles;
+                isInitialized = true;
+                Debug.Log($"[PauseMenu] Game started - Default spawn position set to: {defaultSpawnPosition}");
             }
         }
         
@@ -167,20 +176,45 @@ public class ModernPauseMenu : MonoBehaviour
     
     void Update()
     {
-        // Keyboard shortcuts when paused
-        if (isPaused && pauseMenuPanel.activeInHierarchy)
+        // Test if Update is being called
+        if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (Input.GetKeyDown(KeyCode.R))
-                ResetPlayerPosition();
+            Debug.Log($"[PauseMenu] ESC pressed - isPaused: {isPaused}, Time.timeScale: {Time.timeScale}");
+        }
+        
+        // Keyboard shortcuts when paused or when Time.timeScale is 0 (game is paused)
+        if (isPaused || Time.timeScale == 0f)
+        {
+            // Debug to check if we're in the paused state
+            if (Input.anyKeyDown)
+            {
+                Debug.Log($"[PauseMenu] Key pressed while paused. isPaused: {isPaused}, Current key: {Input.inputString}");
+            }
             
-            if (Input.GetKeyDown(KeyCode.O) && pauseMenuPanel.activeSelf && !optionsPanel.activeSelf)
-                ShowOptions();
-            
-            if (Input.GetKeyDown(KeyCode.Q))
-                QuitGame();
-            
+            // C - Continue/Resume (retour au jeu)
             if (Input.GetKeyDown(KeyCode.C))
+            {
+                Debug.Log("[PauseMenu] C key pressed - Resume");
                 Resume();
+            }
+            // R - Respawn (retour aux coordonnées du dernier Load/début)
+            else if (Input.GetKeyDown(KeyCode.R))
+            {
+                Debug.Log("[PauseMenu] R key pressed - Respawn");
+                ResetPlayerPosition();
+            }
+            // O - Options (only if not already in options)
+            else if (Input.GetKeyDown(KeyCode.O) && (optionsPanel == null || !optionsPanel.activeSelf))
+            {
+                Debug.Log("[PauseMenu] O key pressed - Options");
+                ShowOptions();
+            }
+            // Q - Quit
+            else if (Input.GetKeyDown(KeyCode.Q))
+            {
+                Debug.Log("[PauseMenu] Q key pressed - Quit");
+                QuitGame();
+            }
         }
     }
     
@@ -242,9 +276,37 @@ public class ModernPauseMenu : MonoBehaviour
     {
         if (player != null)
         {
-            player.transform.position = spawnPosition;
-            player.transform.eulerAngles = spawnRotation;
+            Vector3 targetPosition;
+            Vector3 targetRotation;
             
+            // Determine where to respawn
+            if (hasLoadedSave)
+            {
+                // A save has been loaded during this session - use loaded position
+                targetPosition = lastLoadedPosition;
+                targetRotation = lastLoadedRotation;
+                Debug.Log($"[PauseMenu] Respawning to last loaded position: {targetPosition}");
+            }
+            else
+            {
+                // No save loaded - use default spawn position
+                targetPosition = defaultSpawnPosition;
+                targetRotation = defaultSpawnRotation;
+                Debug.Log($"[PauseMenu] Respawning to default position: {targetPosition}");
+            }
+            
+            // Disable CharacterController before teleporting
+            CharacterController cc = player.GetComponent<CharacterController>();
+            if (cc != null)
+            {
+                cc.enabled = false;
+            }
+            
+            // Apply position and rotation
+            player.transform.position = targetPosition;
+            player.transform.eulerAngles = targetRotation;
+            
+            // Clear any velocity
             Rigidbody rb = player.GetComponent<Rigidbody>();
             if (rb != null)
             {
@@ -252,14 +314,13 @@ public class ModernPauseMenu : MonoBehaviour
                 rb.angularVelocity = Vector3.zero;
             }
             
-            CharacterController cc = player.GetComponent<CharacterController>();
+            // Re-enable CharacterController
             if (cc != null)
             {
-                cc.enabled = false;
-                player.transform.position = spawnPosition;
                 cc.enabled = true;
             }
             
+            // Resume game
             Resume();
         }
     }
@@ -458,6 +519,28 @@ public class ModernPauseMenu : MonoBehaviour
     }
     
     public bool IsPaused() => isPaused;
+    
+    /// <summary>
+    /// Updates the spawn position when a save is loaded
+    /// </summary>
+    public static void UpdateSpawnPosition(Vector3 position, Vector3 rotation)
+    {
+        lastLoadedPosition = position;
+        lastLoadedRotation = rotation;
+        hasLoadedSave = true;
+        Debug.Log($"[PauseMenu] Save loaded - Respawn position updated to: {position}");
+    }
+    
+    /// <summary>
+    /// Resets the session state (for testing)
+    /// </summary>
+    [ContextMenu("Reset Session State")]
+    public void ResetSessionState()
+    {
+        hasLoadedSave = false;
+        isInitialized = false;
+        Debug.Log("[PauseMenu] Session state reset");
+    }
     
     void OnDestroy()
     {

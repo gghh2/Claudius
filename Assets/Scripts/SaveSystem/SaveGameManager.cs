@@ -312,6 +312,9 @@ public class SaveGameManager : MonoBehaviour
                 Debug.Log($"[SaveGame] CharacterController updated, final position: {player.transform.position}");
             }
             
+            // Update spawn position for respawn
+            ModernPauseMenu.UpdateSpawnPosition(data.playerData.position, data.playerData.rotation);
+            
             // Restore camera zoom
             Camera mainCamera = Camera.main;
             if (mainCamera != null && data.playerData.cameraZoom > 0)

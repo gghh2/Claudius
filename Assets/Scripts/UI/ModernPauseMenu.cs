@@ -182,8 +182,9 @@ public class ModernPauseMenu : MonoBehaviour
             Debug.Log($"[PauseMenu] ESC pressed - isPaused: {isPaused}, Time.timeScale: {Time.timeScale}");
         }
         
-        // Keyboard shortcuts when paused or when Time.timeScale is 0 (game is paused)
-        if (isPaused || Time.timeScale == 0f)
+        // SIMPLE CHECK: Shortcuts work ONLY when pause menu panel is visible
+        // This prevents shortcuts from working during dialogues or other UI states
+        if (pauseMenuPanel != null && pauseMenuPanel.activeInHierarchy)
         {
             // Debug to check if we're in the paused state
             if (Input.anyKeyDown)

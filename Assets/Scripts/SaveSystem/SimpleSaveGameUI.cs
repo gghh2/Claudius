@@ -188,7 +188,7 @@ public class SimpleSaveGameUI : MonoBehaviour
             saveMenuPanel.SetActive(false);
             
             // Check if we came from pause menu
-            ModernPauseMenu pauseMenu = FindObjectOfType<ModernPauseMenu>();
+            PauseMenuUI pauseMenu = FindObjectOfType<PauseMenuUI>();
             if (pauseMenu != null && pauseMenu.IsPaused())
             {
                 // Return to pause menu (not game)
@@ -368,7 +368,7 @@ public class SimpleSaveGameUI : MonoBehaviour
         }
         
         // Close pause menu completely and resume game
-        ModernPauseMenu pauseMenu = FindObjectOfType<ModernPauseMenu>();
+        PauseMenuUI pauseMenu = FindObjectOfType<PauseMenuUI>();
         if (pauseMenu != null)
         {
             // Force complete resume

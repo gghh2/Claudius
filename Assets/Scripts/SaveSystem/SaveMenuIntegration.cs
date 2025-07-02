@@ -4,26 +4,20 @@ using TMPro;
 
 /// <summary>
 /// Simple integration between pause menu and save system
-/// Add this to the same GameObject as ModernPauseMenu
+/// Add this to the same GameObject as PauseMenuUI
 /// </summary>
-[RequireComponent(typeof(ModernPauseMenu))]
+[RequireComponent(typeof(PauseMenuUI))]
 public class SaveMenuIntegration : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Button saveLoadButton;
     [SerializeField] private SaveSystemUI saveSystemUI;
     
-    // Quick save/load removed - no longer needed
-    // [Header("Quick Save/Load")]
-    // [SerializeField] private bool enableQuickSave = true;
-    // [SerializeField] private KeyCode quickSaveKey = KeyCode.F5;
-    // [SerializeField] private KeyCode quickLoadKey = KeyCode.F9;
-    
-    private ModernPauseMenu pauseMenu;
+    private PauseMenuUI pauseMenu;
     
     void Start()
     {
-        pauseMenu = GetComponent<ModernPauseMenu>();
+        pauseMenu = GetComponent<PauseMenuUI>();
         
         // Find SaveSystemUI if not assigned
         if (saveSystemUI == null)

@@ -33,6 +33,7 @@ public class UnifiedUIManager : MonoBehaviour
 
     #region UI Panel References
     [Header("UI Panel References")]
+    [SerializeField] private GameObject mainMenuPanel;
     [SerializeField] private GameObject pauseMenuPanel;
     [SerializeField] private GameObject optionsPanel;
     [SerializeField] private GameObject saveMenuPanel;
@@ -107,6 +108,15 @@ public class UnifiedUIManager : MonoBehaviour
     void InitializePanels()
     {
         // Configure all panels according to the navigation rules
+        ConfigurePanel(UnifiedUIPanelNames.MainMenu, mainMenuPanel, baseUILayer, true, true,
+            new[] { UnifiedUIPanelNames.Settings, UnifiedUIPanelNames.SaveMenu });
+        
+        // Special configuration for MainMenu - doesn't allow escape
+        if (panelConfigs.ContainsKey(UnifiedUIPanelNames.MainMenu))
+        {
+            panelConfigs[UnifiedUIPanelNames.MainMenu].allowsEscape = false;
+        }
+            
         ConfigurePanel(UnifiedUIPanelNames.PauseMenu, pauseMenuPanel, pauseMenuLayer, false, true,
             new[] { UnifiedUIPanelNames.Settings, UnifiedUIPanelNames.SaveMenu });
             
@@ -320,9 +330,10 @@ public class UnifiedUIManager : MonoBehaviour
         }
         else if (currentPanel == GAME_STATE)
         {
-            // From game, ESC opens pause menu
+            // From game, ESC opens pause menu (not main menu)
             NavigateTo(UnifiedUIPanelNames.PauseMenu);
         }
+        // No action for ESC from MainMenu - it doesn't allow escape
     }
 
     bool IsTransitionAllowed(string from, string to)
@@ -637,6 +648,7 @@ public class UnifiedUIManager : MonoBehaviour
 /// </summary>
 public static class UnifiedUIPanelNames
 {
+    public const string MainMenu = "MainMenu";
     public const string Inventory = "Inventory";
     public const string QuestJournal = "QuestJournal";
     public const string Dialogue = "Dialogue";

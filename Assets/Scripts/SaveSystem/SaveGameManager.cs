@@ -313,7 +313,7 @@ public class SaveGameManager : MonoBehaviour
             }
             
             // Update spawn position for respawn
-            ModernPauseMenu.UpdateSpawnPosition(data.playerData.position, data.playerData.rotation);
+            PauseMenuUI.UpdateSpawnPosition(data.playerData.position, data.playerData.rotation);
             
             // Restore camera zoom
             Camera mainCamera = Camera.main;

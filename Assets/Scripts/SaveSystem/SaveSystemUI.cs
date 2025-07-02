@@ -329,7 +329,7 @@ public class SaveSystemUI : MonoBehaviour
             if (pausePanel != null)
                 pausePanel.SetActive(false);
                 
-            ModernPauseMenu pauseMenu = FindObjectOfType<ModernPauseMenu>();
+            PauseMenuUI pauseMenu = FindObjectOfType<PauseMenuUI>();
             if (pauseMenu != null)
                 pauseMenu.Resume();
         }

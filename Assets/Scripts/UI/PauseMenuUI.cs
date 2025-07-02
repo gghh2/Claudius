@@ -4,19 +4,21 @@ using TMPro;
 using System.Collections;
 
 /// <summary>
-/// Modern pause menu controller
-/// Works with UnifiedUIManager for navigation
+/// Pause menu UI controller
+/// Handles in-game pause functionality
 /// </summary>
-public class ModernPauseMenu : MonoBehaviour
+public class PauseMenuUI : MonoBehaviour
 {
     [Header("UI References")]
     [SerializeField] private GameObject pauseMenuPanel;
     [SerializeField] private GameObject menuContainer;
     
-    [Header("Main Menu Buttons")]
+    [Header("Pause Menu Buttons")]
     [SerializeField] private Button resumeButton;
     [SerializeField] private Button respawnButton;
+    [SerializeField] private Button saveLoadButton;
     [SerializeField] private Button optionsButton;
+    [SerializeField] private Button mainMenuButton;
     [SerializeField] private Button quitButton;
     
     [Header("Options Panel")]
@@ -39,14 +41,14 @@ public class ModernPauseMenu : MonoBehaviour
     [SerializeField] private bool showDebugControls = false;
     
     [Header("Settings")]
-    [SerializeField] private Vector3 defaultSpawnPosition = Vector3.zero;  // Position initiale du jeu
-    [SerializeField] private Vector3 defaultSpawnRotation = Vector3.zero;  // Rotation initiale du jeu
+    [SerializeField] private Vector3 defaultSpawnPosition = Vector3.zero;
+    [SerializeField] private Vector3 defaultSpawnRotation = Vector3.zero;
     [SerializeField] private bool autoSaveSpawnPosition = true;
     
     // Static variables to store game session data
     private static Vector3 lastLoadedPosition = Vector3.zero;
     private static Vector3 lastLoadedRotation = Vector3.zero;
-    private static bool hasLoadedSave = false;  // Changed from hasLoadedPosition
+    private static bool hasLoadedSave = false;
     private static bool isInitialized = false;
     
     [Header("Additional Options")]
@@ -82,7 +84,6 @@ public class ModernPauseMenu : MonoBehaviour
                 defaultSpawnPosition = player.transform.position;
                 defaultSpawnRotation = player.transform.eulerAngles;
                 isInitialized = true;
-                Debug.Log($"[PauseMenu] Game started - Default spawn position set to: {defaultSpawnPosition}");
             }
         }
         
@@ -121,15 +122,21 @@ public class ModernPauseMenu : MonoBehaviour
     
     void SetupUI()
     {
-        // Setup main menu buttons
+        // Setup pause menu buttons
         if (resumeButton != null)
             resumeButton.onClick.AddListener(Resume);
             
         if (respawnButton != null)
             respawnButton.onClick.AddListener(ResetPlayerPosition);
             
+        if (saveLoadButton != null)
+            saveLoadButton.onClick.AddListener(ShowSaveMenu);
+            
         if (optionsButton != null)
             optionsButton.onClick.AddListener(ShowOptions);
+            
+        if (mainMenuButton != null)
+            mainMenuButton.onClick.AddListener(ReturnToMainMenu);
             
         if (quitButton != null)
             quitButton.onClick.AddListener(QuitGame);
@@ -176,44 +183,28 @@ public class ModernPauseMenu : MonoBehaviour
     
     void Update()
     {
-        // Test if Update is being called
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            Debug.Log($"[PauseMenu] ESC pressed - isPaused: {isPaused}, Time.timeScale: {Time.timeScale}");
-        }
-        
         // SIMPLE CHECK: Shortcuts work ONLY when pause menu panel is visible
         // This prevents shortcuts from working during dialogues or other UI states
         if (pauseMenuPanel != null && pauseMenuPanel.activeInHierarchy)
         {
-            // Debug to check if we're in the paused state
-            if (Input.anyKeyDown)
-            {
-                Debug.Log($"[PauseMenu] Key pressed while paused. isPaused: {isPaused}, Current key: {Input.inputString}");
-            }
-            
-            // C - Continue/Resume (retour au jeu)
+            // C - Continue/Resume
             if (Input.GetKeyDown(KeyCode.C))
             {
-                Debug.Log("[PauseMenu] C key pressed - Resume");
                 Resume();
             }
-            // R - Respawn (retour aux coordonnées du dernier Load/début)
+            // R - Respawn
             else if (Input.GetKeyDown(KeyCode.R))
             {
-                Debug.Log("[PauseMenu] R key pressed - Respawn");
                 ResetPlayerPosition();
             }
             // O - Options (only if not already in options)
             else if (Input.GetKeyDown(KeyCode.O) && (optionsPanel == null || !optionsPanel.activeSelf))
             {
-                Debug.Log("[PauseMenu] O key pressed - Options");
                 ShowOptions();
             }
             // Q - Quit
             else if (Input.GetKeyDown(KeyCode.Q))
             {
-                Debug.Log("[PauseMenu] Q key pressed - Quit");
                 QuitGame();
             }
         }
@@ -273,6 +264,14 @@ public class ModernPauseMenu : MonoBehaviour
             playerController.enabled = true;
     }
     
+    void ShowSaveMenu()
+    {
+        if (UnifiedUIManager.Instance != null)
+        {
+            UnifiedUIManager.Instance.NavigateTo(UnifiedUIPanelNames.SaveMenu);
+        }
+    }
+    
     void ResetPlayerPosition()
     {
         if (player != null)
@@ -286,14 +285,12 @@ public class ModernPauseMenu : MonoBehaviour
                 // A save has been loaded during this session - use loaded position
                 targetPosition = lastLoadedPosition;
                 targetRotation = lastLoadedRotation;
-                Debug.Log($"[PauseMenu] Respawning to last loaded position: {targetPosition}");
             }
             else
             {
                 // No save loaded - use default spawn position
                 targetPosition = defaultSpawnPosition;
                 targetRotation = defaultSpawnRotation;
-                Debug.Log($"[PauseMenu] Respawning to default position: {targetPosition}");
             }
             
             // Disable CharacterController before teleporting
@@ -510,6 +507,57 @@ public class ModernPauseMenu : MonoBehaviour
         ResetDebugValues();
     }
     
+    void ReturnToMainMenu()
+    {
+        // Show confirmation dialog
+        if (ConfirmationDialogManager.Instance != null)
+        {
+            ConfirmationDialogManager.Instance.ShowYesNoDialog(
+                "Retourner au menu principal ? Les progrès non sauvegardés seront perdus.",
+                onYes: () => {
+                    // Close pause menu
+                    Resume();
+                    
+                    // Clean up the game session
+                    CleanupGameSession();
+                    
+                    // Return to main menu
+                    SceneNavigationManager.ReturnToMainMenu();
+                },
+                onNo: null
+            );
+        }
+    }
+    
+    void CleanupGameSession()
+    {
+        // Stop all music
+        MusicManager musicManager = FindObjectOfType<MusicManager>();
+        if (musicManager != null)
+        {
+            musicManager.StopMusic();
+        }
+        
+        // Stop all sound effects
+        SoundEffectsManager sfxManager = FindObjectOfType<SoundEffectsManager>();
+        if (sfxManager != null)
+        {
+            sfxManager.StopAllSounds();
+        }
+        
+        // Stop footsteps
+        FootstepSystem footsteps = FindObjectOfType<FootstepSystem>();
+        if (footsteps != null)
+        {
+            footsteps.enabled = false;
+        }
+        
+        // Optionally clear quests and other game state
+        // This depends on if you want to reset everything or keep progress
+        // QuestManager.Instance?.ClearAllQuests();
+        // QuestJournal.Instance?.ClearAllQuests();
+    }
+    
     void QuitGame()
     {
         #if UNITY_EDITOR
@@ -529,7 +577,6 @@ public class ModernPauseMenu : MonoBehaviour
         lastLoadedPosition = position;
         lastLoadedRotation = rotation;
         hasLoadedSave = true;
-        Debug.Log($"[PauseMenu] Save loaded - Respawn position updated to: {position}");
     }
     
     /// <summary>
@@ -540,7 +587,6 @@ public class ModernPauseMenu : MonoBehaviour
     {
         hasLoadedSave = false;
         isInitialized = false;
-        Debug.Log("[PauseMenu] Session state reset");
     }
     
     void OnDestroy()
@@ -553,8 +599,14 @@ public class ModernPauseMenu : MonoBehaviour
         if (respawnButton != null)
             respawnButton.onClick.RemoveListener(ResetPlayerPosition);
             
+        if (saveLoadButton != null)
+            saveLoadButton.onClick.RemoveListener(ShowSaveMenu);
+            
         if (optionsButton != null)
             optionsButton.onClick.RemoveListener(ShowOptions);
+            
+        if (mainMenuButton != null)
+            mainMenuButton.onClick.RemoveListener(ReturnToMainMenu);
             
         if (quitButton != null)
             quitButton.onClick.RemoveListener(QuitGame);

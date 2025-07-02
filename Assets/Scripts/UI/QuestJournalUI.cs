@@ -17,9 +17,9 @@ public class QuestJournalUI : MonoBehaviour
     public Button cancelledQuestsTab;
     
     [Header("Quest Display")]
-    public Transform questListParent; // Parent pour la liste des quêtes
-    public GameObject questItemPrefab; // Prefab pour chaque quête
-    public TextMeshProUGUI questCountText; // "Quêtes actives: 3/10"
+    [SerializeField] private Transform questListParent; // Parent pour la liste des quêtes
+    [SerializeField] private GameObject questItemPrefab; // Prefab pour chaque quête
+    [SerializeField] private TextMeshProUGUI questCountText; // "Quêtes actives: 3/10"
     
     [Header("Quest Details")]
     public GameObject questDetailsPanel;
@@ -72,6 +72,24 @@ public class QuestJournalUI : MonoBehaviour
             
         if (cancelQuestButton != null)
             cancelQuestButton.onClick.AddListener(CancelSelectedQuest);
+    }
+    
+    void OnEnable()
+    {
+        // Appelé chaque fois que le GameObject devient actif
+        if (journalPanel != null && journalPanel.activeInHierarchy)
+        {
+            Debug.Log("[QuestJournalUI] Panel activé - Rafraîchissement automatique");
+            isJournalOpen = true;
+            // Affiche les quêtes actives par défaut
+            SwitchTab(QuestStatus.InProgress);
+        }
+    }
+    
+    void OnDisable()
+    {
+        // Appelé quand le GameObject devient inactif
+        isJournalOpen = false;
     }
     
     void Update()
@@ -146,16 +164,27 @@ public class QuestJournalUI : MonoBehaviour
     
     void RefreshQuestList()
     {
+        Debug.Log("[QuestJournalUI] RefreshQuestList() appelé");
+        
         // Nettoie la liste actuelle
         if (questListParent != null)
         {
+            Debug.Log($"[QuestJournalUI] Nettoyage de {questListParent.childCount} anciens éléments");
             foreach (Transform child in questListParent)
             {
                 Destroy(child.gameObject);
             }
         }
+        else
+        {
+            Debug.LogError("[QuestJournalUI] questListParent est NULL!");
+        }
         
-        if (QuestJournal.Instance == null) return;
+        if (QuestJournal.Instance == null)
+        {
+            Debug.LogError("[QuestJournalUI] QuestJournal.Instance est NULL!");
+            return;
+        }
         
         // Récupère les quêtes selon l'onglet actuel
         List<JournalQuest> questsToShow = new List<JournalQuest>();
@@ -166,6 +195,7 @@ public class QuestJournalUI : MonoBehaviour
             case QuestStatus.InProgress:
                 questsToShow = QuestJournal.Instance.GetActiveQuests();
                 tabName = "En cours";
+                Debug.Log($"[QuestJournalUI] Récupération des quêtes actives: {questsToShow.Count} trouvées");
                 break;
             case QuestStatus.Completed:
                 questsToShow = QuestJournal.Instance.GetCompletedQuests();
@@ -181,11 +211,18 @@ public class QuestJournalUI : MonoBehaviour
         if (questCountText != null)
         {
             questCountText.text = $"Quêtes {tabName}: {questsToShow.Count}";
+            Debug.Log($"[QuestJournalUI] Texte du compteur mis à jour: {questCountText.text}");
+        }
+        else
+        {
+            Debug.LogWarning("[QuestJournalUI] questCountText est NULL");
         }
         
         // Crée les éléments de liste
+        Debug.Log($"[QuestJournalUI] Création des éléments pour {questsToShow.Count} quêtes");
         foreach (JournalQuest quest in questsToShow)
         {
+            Debug.Log($"[QuestJournalUI] Création d'un élément pour: {quest.questTitle}");
             CreateQuestListItem(quest);
         }
         
@@ -194,15 +231,42 @@ public class QuestJournalUI : MonoBehaviour
     
     void CreateQuestListItem(JournalQuest quest)
     {
-        if (questItemPrefab == null || questListParent == null) return;
+        Debug.Log($"[QuestJournalUI] CreateQuestListItem appelé pour: {quest.questTitle}");
         
+        if (questItemPrefab == null)
+        {
+            Debug.LogError("[QuestJournalUI] questItemPrefab est NULL! Vérifiez l'assignation dans l'Inspector.");
+            return;
+        }
+        
+        if (questListParent == null)
+        {
+            Debug.LogError("[QuestJournalUI] questListParent est NULL! Vérifiez l'assignation dans l'Inspector.");
+            return;
+        }
+        
+        Debug.Log($"[QuestJournalUI] Instantiation du prefab...");
         GameObject questItem = Instantiate(questItemPrefab, questListParent);
         
-        // Configure l'élément (nous créerons le prefab après)
+        if (questItem == null)
+        {
+            Debug.LogError("[QuestJournalUI] Echec de l'instantiation du prefab!");
+            return;
+        }
+        
+        Debug.Log($"[QuestJournalUI] Prefab instancié, recherche du composant QuestListItem...");
+        
+        // Configure l'élément
         QuestListItem questComponent = questItem.GetComponent<QuestListItem>();
         if (questComponent != null)
         {
+            Debug.Log($"[QuestJournalUI] Composant QuestListItem trouvé, configuration...");
             questComponent.SetupQuest(quest);
+            Debug.Log($"[QuestJournalUI] Élément de quête configuré avec succès");
+        }
+        else
+        {
+            Debug.LogError("[QuestJournalUI] Le prefab questItemPrefab ne contient pas de composant QuestListItem!");
         }
     }
     
@@ -278,6 +342,36 @@ public class QuestJournalUI : MonoBehaviour
             questDetailsPanel.SetActive(false);
             selectedQuest = null;
             RefreshQuestList();
+        }
+    }
+    
+    [ContextMenu("Force Refresh Quest List")]
+    public void ForceRefreshQuestList()
+    {
+        Debug.Log("[QuestJournalUI] Forçage du rafraîchissement de la liste des quêtes");
+        RefreshQuestList();
+    }
+    
+    [ContextMenu("Debug - Check References")]
+    public void DebugCheckReferences()
+    {
+        Debug.Log("=== QuestJournalUI Debug Check ===");
+        Debug.Log($"questListParent: {(questListParent != null ? "ASSIGNÉ" : "NULL")}");
+        Debug.Log($"questItemPrefab: {(questItemPrefab != null ? "ASSIGNÉ" : "NULL")}");
+        Debug.Log($"questCountText: {(questCountText != null ? "ASSIGNÉ" : "NULL")}");
+        
+        if (QuestJournal.Instance != null)
+        {
+            var activeQuests = QuestJournal.Instance.GetActiveQuests();
+            Debug.Log($"Quêtes actives dans le journal: {activeQuests.Count}");
+            foreach (var quest in activeQuests)
+            {
+                Debug.Log($"  - {quest.questTitle} (ID: {quest.questId})");
+            }
+        }
+        else
+        {
+            Debug.LogError("QuestJournal.Instance est NULL!");
         }
     }
 }

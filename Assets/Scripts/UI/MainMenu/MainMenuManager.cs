@@ -347,6 +347,10 @@ public class MainMenuManager : MonoBehaviour
                 }
                 PlayerPrefs.Save();
                 
+                // Store that we're coming from MainMenu
+                PlayerPrefs.SetString("PreviousScene", "MainMenu");
+                PlayerPrefs.Save();
+                
                 asyncLoad.allowSceneActivation = true;
             }
             

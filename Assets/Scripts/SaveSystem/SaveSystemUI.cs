@@ -85,12 +85,21 @@ public class SaveSystemUI : MonoBehaviour
         
         // Initial refresh
         RefreshAllSlots();
+        
+        // Log if we're in MainMenu
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainMenu")
+        {
+            Debug.Log("[SaveSystem] MainMenu scene detected - Save and Delete buttons will be hidden");
+        }
     }
     
     void SetupSlot(GameObject slot, int index)
     {
         SlotReferences refs = new SlotReferences();
         refs.gameObject = slot;
+        
+        // Check if we're in MainMenu scene
+        bool isMainMenuScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainMenu";
         
         // Find all buttons in the slot
         Button[] buttons = slot.GetComponentsInChildren<Button>();
@@ -104,6 +113,12 @@ public class SaveSystemUI : MonoBehaviour
                 int capturedIndex = index;
                 button.onClick.RemoveAllListeners();
                 button.onClick.AddListener(() => OnSaveClicked(capturedIndex));
+                
+                // Hide save button in MainMenu
+                if (isMainMenuScene)
+                {
+                    button.gameObject.SetActive(false);
+                }
             }
             else if (btnName.Contains("load"))
             {
@@ -118,6 +133,12 @@ public class SaveSystemUI : MonoBehaviour
                 int capturedIndex = index;
                 button.onClick.RemoveAllListeners();
                 button.onClick.AddListener(() => OnDeleteClicked(capturedIndex));
+                
+                // Hide delete button in MainMenu
+                if (isMainMenuScene)
+                {
+                    button.gameObject.SetActive(false);
+                }
             }
         }
         
@@ -141,6 +162,9 @@ public class SaveSystemUI : MonoBehaviour
     {
         if (SaveGameManager.Instance == null) return;
         
+        // Check if we're in MainMenu scene
+        bool isMainMenuScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainMenu";
+        
         foreach (var kvp in slotRefs)
         {
             int index = kvp.Key;
@@ -160,7 +184,10 @@ public class SaveSystemUI : MonoBehaviour
                 refs.loadButton.gameObject.SetActive(hasSave);
                 
             if (refs.deleteButton != null)
-                refs.deleteButton.gameObject.SetActive(hasSave);
+                refs.deleteButton.gameObject.SetActive(hasSave && !isMainMenuScene); // Hide delete in MainMenu
+                
+            if (refs.saveButton != null)
+                refs.saveButton.gameObject.SetActive(!isMainMenuScene); // Always hide save in MainMenu
         }
     }
     
@@ -196,30 +223,58 @@ public class SaveSystemUI : MonoBehaviour
         string saveName = $"save_{slotIndex}";
         Debug.Log($"[SaveSystem] Load clicked for slot {slotIndex}, save name: {saveName}");
         
-        // Capture the correct save name in a local variable
-        string saveToLoad = saveName;
+        // Check if we're in MainMenu scene
+        bool isMainMenuScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainMenu";
         
-        // Use ConfirmationDialogManager
-        if (ConfirmationDialogManager.Instance != null)
+        if (isMainMenuScene)
         {
-            Debug.Log("[SaveSystem] ConfirmationDialogManager found, showing load dialog");
-            ConfirmationDialogManager.Instance.ShowDialog(
-                $"Load Save {slotIndex}?\nCurrent progress will be lost.",
-                () => {
-                    Debug.Log($"[SaveSystem] Load confirmed for {saveToLoad}");
-                    PerformLoad(saveToLoad);
-                },
-                null,
-                "Load Game",
-                "Load",
-                "Cancel"
-            );
+            // In MainMenu, load directly without confirmation
+            Debug.Log($"[SaveSystem] MainMenu scene - loading directly: {saveName}");
+            
+            // Hide the load panel
+            if (saveMenuPanel != null)
+                saveMenuPanel.SetActive(false);
+            
+            // Use MainMenuManager to load the game with this save
+            MainMenuManager mainMenu = FindObjectOfType<MainMenuManager>();
+            if (mainMenu != null)
+            {
+                // Call ContinueGame with specific save
+                PlayerPrefs.SetString("LoadOnStart", saveName);
+                PlayerPrefs.Save();
+                mainMenu.StartCoroutine(mainMenu.LoadGameScene(false, saveName));
+            }
+            else
+            {
+                Debug.LogError("[SaveSystem] MainMenuManager not found!");
+            }
         }
         else
         {
-            Debug.LogError("[SaveSystem] ConfirmationDialogManager.Instance is NULL! Loading directly.");
-            // Fallback
-            PerformLoad(saveName);
+            // In Game scene, use confirmation dialog
+            string saveToLoad = saveName;
+            
+            if (ConfirmationDialogManager.Instance != null)
+            {
+                Debug.Log("[SaveSystem] ConfirmationDialogManager found, showing load dialog");
+                ConfirmationDialogManager.Instance.ShowDialog(
+                    $"Load Save {slotIndex}?\nCurrent progress will be lost.",
+                    () => {
+                        Debug.Log($"[SaveSystem] Load confirmed for {saveToLoad}");
+                        PerformLoad(saveToLoad);
+                    },
+                    null,
+                    "Load Game",
+                    "Load",
+                    "Cancel"
+                );
+            }
+            else
+            {
+                Debug.LogError("[SaveSystem] ConfirmationDialogManager.Instance is NULL! Loading directly.");
+                // Fallback
+                PerformLoad(saveName);
+            }
         }
     }
     

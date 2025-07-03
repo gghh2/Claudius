@@ -289,7 +289,7 @@ public class MainMenuManager : MonoBehaviour
 #endif
     }
     
-    IEnumerator LoadGameScene(bool isNewGame, string saveToLoad = null)
+    public IEnumerator LoadGameScene(bool isNewGame, string saveToLoad = null)
     {
         // Hide all panels first
         if (mainMenuPanel != null)

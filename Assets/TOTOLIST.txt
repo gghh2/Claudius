@@ -18,10 +18,18 @@ UI
 √ Enlever Texte Accepter / refuser des dialogue UI
 √ Quand dans un dialogue, la touche echap doit fermer le dialogue
 √ On voit PanelMenu derrier Load/Save Game
-- Le marker UI de la quête follow ne reste pas d'un allumage du jeu à l'autre
+- Le marker UI de la quête follow ne reste pas d'un allumage du jeu à l'autre avec le system de sauvegarde
 - F5 et F9 ne font rien
-- Les raccourcis dans PauseMenu ne fonctionnent plus 
-- Quand on sprint ça garde le zoom quand il y ades montagne
+√ Les raccourcis dans PauseMenu ne fonctionnent plus 
+- Quand on sprint ça garde le zoom quand il y a des montagne
+- La barre de Stamina ne semble plus fonctionnelle
+- Remettre les SciptUi sur les Objets dont elles gèrent le comportement et voir si soucis
+
+
+
+In progress : 3.7.2025
+MENU
+- Supprimer MenuPrincipal de la scene de jeu
 
 ========================================
 IA

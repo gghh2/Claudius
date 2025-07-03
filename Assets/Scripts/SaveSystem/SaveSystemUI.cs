@@ -36,8 +36,11 @@ public class SaveSystemUI : MonoBehaviour
     
     void Start()
     {
-        // Hide the save menu at start
-        if (saveMenuPanel != null)
+        // Check if we're in MainMenu scene - if so, don't hide the panel
+        bool isMainMenuScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainMenu";
+        
+        // Hide the save menu at start (except in MainMenu)
+        if (saveMenuPanel != null && !isMainMenuScene)
         {
             saveMenuPanel.SetActive(false);
         }
@@ -255,22 +258,48 @@ public class SaveSystemUI : MonoBehaviour
     
     void OnCloseClicked()
     {
-        Debug.Log("[SaveSystem] Close button clicked, using UnifiedUIManager.NavigateBack()");
+        Debug.Log("[SaveSystem] Close button clicked");
         
-        // Use UnifiedUIManager for proper navigation
-        if (UnifiedUIManager.Instance != null)
+        // Check if we're in MainMenu scene
+        bool isMainMenuScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainMenu";
+        
+        if (isMainMenuScene)
         {
-            UnifiedUIManager.Instance.NavigateBack();
-        }
-        else
-        {
-            // Fallback if UnifiedUIManager not available
+            // In MainMenu, just hide this panel and show main menu
             if (saveMenuPanel != null)
                 saveMenuPanel.SetActive(false);
                 
-            GameObject pausePanel = GameObject.Find("PauseMenuPanel");
-            if (pausePanel != null)
-                pausePanel.SetActive(true);
+            // Find and show main menu panel
+            MainMenuManager mainMenu = FindObjectOfType<MainMenuManager>();
+            if (mainMenu != null)
+            {
+                mainMenu.ShowMainMenu();
+            }
+            else
+            {
+                // Fallback - try to find MainMenuPanel directly
+                GameObject mainMenuPanel = GameObject.Find("MainMenuPanel");
+                if (mainMenuPanel != null)
+                    mainMenuPanel.SetActive(true);
+            }
+        }
+        else
+        {
+            // In Game scene, use UnifiedUIManager
+            if (UnifiedUIManager.Instance != null)
+            {
+                UnifiedUIManager.Instance.NavigateBack();
+            }
+            else
+            {
+                // Fallback if UnifiedUIManager not available
+                if (saveMenuPanel != null)
+                    saveMenuPanel.SetActive(false);
+                    
+                GameObject pausePanel = GameObject.Find("PauseMenuPanel");
+                if (pausePanel != null)
+                    pausePanel.SetActive(true);
+            }
         }
     }
     

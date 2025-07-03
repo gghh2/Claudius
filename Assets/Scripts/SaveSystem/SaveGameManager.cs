@@ -470,6 +470,42 @@ public class SaveGameManager : MonoBehaviour
         }
         return files;
     }
+    
+    /// <summary>
+    /// Get the save date/time for a specific save
+    /// </summary>
+    public System.DateTime GetSaveDateTime(string saveName)
+    {
+        string fullPath = Path.Combine(savePath, saveName + ".json");
+        
+        if (File.Exists(fullPath))
+        {
+            try
+            {
+                // Try to read the save time from the file
+                string jsonData = File.ReadAllText(fullPath);
+                SaveData data = JsonUtility.FromJson<SaveData>(jsonData);
+                
+                if (!string.IsNullOrEmpty(data.saveTime))
+                {
+                    if (System.DateTime.TryParse(data.saveTime, out System.DateTime saveTime))
+                    {
+                        return saveTime;
+                    }
+                }
+                
+                // Fallback to file modification time
+                return File.GetLastWriteTime(fullPath);
+            }
+            catch
+            {
+                // If we can't read the file, use file modification time
+                return File.GetLastWriteTime(fullPath);
+            }
+        }
+        
+        return System.DateTime.MinValue;
+    }
 }
 
 // Save data structures

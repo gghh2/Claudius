@@ -169,17 +169,60 @@ public class MainMenuManager : MonoBehaviour
         
         if (SaveGameManager.Instance != null)
         {
-            // Load the most recent save
+            // Get all saves
             string[] saves = SaveGameManager.Instance.GetAllSaves();
             if (saves.Length > 0)
             {
-                // Find most recent save (assuming they're named save_0, save_1, etc.)
-                string mostRecentSave = saves[saves.Length - 1];
+                // Find the most recent save by checking modification time
+                string mostRecentSave = FindMostRecentSave(saves);
+                
+                Debug.Log($"[MainMenu] Continue - Loading most recent save: {mostRecentSave}");
                 
                 // Start loading the game scene
                 StartCoroutine(LoadGameScene(false, mostRecentSave));
             }
         }
+    }
+    
+    string FindMostRecentSave(string[] saves)
+    {
+        if (saves.Length == 1)
+            return saves[0];
+            
+        string mostRecent = saves[0];
+        System.DateTime mostRecentTime = System.DateTime.MinValue;
+        
+        foreach (string save in saves)
+        {
+            // Try to get the save file info from SaveGameManager
+            var saveTime = SaveGameManager.Instance.GetSaveDateTime(save);
+            if (saveTime > mostRecentTime)
+            {
+                mostRecentTime = saveTime;
+                mostRecent = save;
+            }
+        }
+        
+        // Fallback: if we can't get dates, use the highest numbered save
+        if (mostRecentTime == System.DateTime.MinValue)
+        {
+            // Extract numbers and find highest
+            int highestNum = -1;
+            foreach (string save in saves)
+            {
+                string numStr = save.Replace("save_", "");
+                if (int.TryParse(numStr, out int num))
+                {
+                    if (num > highestNum)
+                    {
+                        highestNum = num;
+                        mostRecent = save;
+                    }
+                }
+            }
+        }
+        
+        return mostRecent;
     }
     
     void ShowLoadGameMenu()
@@ -339,13 +382,19 @@ public class MainMenuManager : MonoBehaviour
                 // Store what we need to do after loading
                 if (!isNewGame && !string.IsNullOrEmpty(saveToLoad))
                 {
+                    Debug.Log($"[MainMenu] Setting LoadOnStart to: {saveToLoad}");
                     PlayerPrefs.SetString("LoadOnStart", saveToLoad);
                 }
                 else
                 {
+                    Debug.Log("[MainMenu] Clearing LoadOnStart (new game)");
                     PlayerPrefs.DeleteKey("LoadOnStart");
                 }
                 PlayerPrefs.Save();
+                
+                // Verify it was saved
+                string check = PlayerPrefs.GetString("LoadOnStart", "EMPTY");
+                Debug.Log($"[MainMenu] LoadOnStart after save: {check}");
                 
                 // Store that we're coming from MainMenu
                 PlayerPrefs.SetString("PreviousScene", "MainMenu");

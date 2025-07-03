@@ -83,18 +83,6 @@ public class PlayerControllerCC : MonoBehaviour
     
     void Start()
     {
-        // Check if we're loading from menu - if so, skip initialization
-        if (GameSceneStartupManager.IsLoadingFromMenu())
-        {
-            Debug.Log("🎮 PlayerController waiting for save load...");
-            return;
-        }
-        
-        InitializePlayer();
-    }
-    
-    void InitializePlayer()
-    {
         // Get Character Controller
         controller = GetComponent<CharacterController>();
         if (controller == null)

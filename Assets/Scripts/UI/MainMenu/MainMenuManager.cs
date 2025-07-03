@@ -122,20 +122,6 @@ public class MainMenuManager : MonoBehaviour
         {
             string[] saves = SaveGameManager.Instance.GetAllSaves();
             hasSave = saves != null && saves.Length > 0;
-            
-            // Debug log
-            Debug.Log($"[MainMenu] SaveGameManager found. Saves found: {saves?.Length ?? 0}");
-            if (saves != null)
-            {
-                foreach (string save in saves)
-                {
-                    Debug.Log($"  - Save: {save}");
-                }
-            }
-        }
-        else
-        {
-            Debug.LogWarning("[MainMenu] SaveGameManager.Instance is NULL!");
         }
         
         continueButton.interactable = hasSave;
@@ -175,8 +161,6 @@ public class MainMenuManager : MonoBehaviour
             {
                 // Find the most recent save by checking modification time
                 string mostRecentSave = FindMostRecentSave(saves);
-                
-                Debug.Log($"[MainMenu] Continue - Loading most recent save: {mostRecentSave}");
                 
                 // Start loading the game scene
                 StartCoroutine(LoadGameScene(false, mostRecentSave));
@@ -231,7 +215,6 @@ public class MainMenuManager : MonoBehaviour
         
         if (loadGamePanel != null)
         {
-            Debug.Log("[MainMenu] Showing LoadGamePanel");
             mainMenuPanel.SetActive(false);
             loadGamePanel.SetActive(true);
             
@@ -239,10 +222,6 @@ public class MainMenuManager : MonoBehaviour
             SetupLoadGamePanelBackButton();
             
             // The SaveSystemUI or SimpleSaveGameUI should handle the rest
-        }
-        else
-        {
-            Debug.LogError("[MainMenu] LoadGamePanel is NULL! Please assign it in the Inspector.");
         }
     }
     
@@ -259,7 +238,6 @@ public class MainMenuManager : MonoBehaviour
                 btn.onClick.RemoveAllListeners();
                 // Add our simple back action
                 btn.onClick.AddListener(ShowMainMenu);
-                Debug.Log($"[MainMenu] Back button '{btn.name}' configured for LoadGamePanel");
             }
         }
     }
@@ -382,19 +360,13 @@ public class MainMenuManager : MonoBehaviour
                 // Store what we need to do after loading
                 if (!isNewGame && !string.IsNullOrEmpty(saveToLoad))
                 {
-                    Debug.Log($"[MainMenu] Setting LoadOnStart to: {saveToLoad}");
                     PlayerPrefs.SetString("LoadOnStart", saveToLoad);
                 }
                 else
                 {
-                    Debug.Log("[MainMenu] Clearing LoadOnStart (new game)");
                     PlayerPrefs.DeleteKey("LoadOnStart");
                 }
                 PlayerPrefs.Save();
-                
-                // Verify it was saved
-                string check = PlayerPrefs.GetString("LoadOnStart", "EMPTY");
-                Debug.Log($"[MainMenu] LoadOnStart after save: {check}");
                 
                 // Store that we're coming from MainMenu
                 PlayerPrefs.SetString("PreviousScene", "MainMenu");

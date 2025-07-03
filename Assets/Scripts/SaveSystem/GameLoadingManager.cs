@@ -15,7 +15,6 @@ public class GameLoadingManager : MonoBehaviour
         
         if (!string.IsNullOrEmpty(saveToLoad))
         {
-            Debug.Log($"[GameLoading] Detected save to load: {saveToLoad}");
             StartCoroutine(LoadGameWithSave(saveToLoad));
         }
     }
@@ -56,7 +55,6 @@ public class GameLoadingManager : MonoBehaviour
         // Load the save
         if (SaveGameManager.Instance.SaveExists(saveName))
         {
-            Debug.Log($"[GameLoading] Loading save: {saveName}");
             SaveGameManager.Instance.LoadGame(saveName);
             
             // Wait one more frame
@@ -74,7 +72,5 @@ public class GameLoadingManager : MonoBehaviour
             if (controller != null)
                 controller.enabled = true;
         }
-        
-        Debug.Log("[GameLoading] Load complete!");
     }
 }

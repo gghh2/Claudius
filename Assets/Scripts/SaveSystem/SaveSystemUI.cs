@@ -89,7 +89,7 @@ public class SaveSystemUI : MonoBehaviour
         // Log if we're in MainMenu
         if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainMenu")
         {
-            Debug.Log("[SaveSystem] MainMenu scene detected - Save and Delete buttons will be hidden");
+            // Silent in MainMenu
         }
     }
     

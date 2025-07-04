@@ -1,0 +1,505 @@
+SCENE_NAME: MainMenu
+EXPORT_DATE: 2025-07-04 10:02:41
+UNITY_VERSION: 2021.3.23f1
+=====================================
+
+HIERARCHY:
+GAMEOBJECT|ACTIVE|Main Camera
+	COMPONENT|Camera|UnityEngine
+	COMPONENT|AudioListener|UnityEngine
+	COMPONENT|UniversalAdditionalCameraData|UnityEngine.Rendering.Universal|SCRIPT
+GAMEOBJECT|ACTIVE|Directional Light
+	COMPONENT|Light|UnityEngine
+	COMPONENT|UniversalAdditionalLightData|UnityEngine.Rendering.Universal|SCRIPT
+GAMEOBJECT|ACTIVE|EventSystem
+	COMPONENT|EventSystem|UnityEngine.EventSystems|SCRIPT
+	COMPONENT|StandaloneInputModule|UnityEngine.EventSystems|SCRIPT
+	COMPONENT|BaseInput|UnityEngine.EventSystems|SCRIPT
+GAMEOBJECT|ACTIVE|Canvas
+	COMPONENT|Canvas|UnityEngine
+	COMPONENT|CanvasScaler|UnityEngine.UI|SCRIPT
+	COMPONENT|GraphicRaycaster|UnityEngine.UI|SCRIPT
+	COMPONENT|MainMenuUI|UnityEngine|SCRIPT
+	GAMEOBJECT|ACTIVE|Background
+		COMPONENT|CanvasRenderer|UnityEngine
+		COMPONENT|Image|UnityEngine.UI|SCRIPT
+	GAMEOBJECT|ACTIVE|MainMenuPanel
+		COMPONENT|Canvas|UnityEngine
+		COMPONENT|GraphicRaycaster|UnityEngine.UI|SCRIPT
+		GAMEOBJECT|ACTIVE|LogoContainer
+			GAMEOBJECT|ACTIVE|Logo
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|Image|UnityEngine.UI|SCRIPT
+			GAMEOBJECT|INACTIVE|GameTitle
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+		GAMEOBJECT|ACTIVE|ButtonsContainer
+			COMPONENT|VerticalLayoutGroup|UnityEngine.UI|SCRIPT
+			GAMEOBJECT|ACTIVE|NewGameButton
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|Image|UnityEngine.UI|SCRIPT
+				COMPONENT|Button|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|ACTIVE|Text (TMP)
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+			GAMEOBJECT|INACTIVE|ContinueButton
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|Image|UnityEngine.UI|SCRIPT
+				COMPONENT|Button|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|INACTIVE|Text (TMP)
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+			GAMEOBJECT|ACTIVE|LoadGameButton
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|Image|UnityEngine.UI|SCRIPT
+				COMPONENT|Button|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|ACTIVE|Text (TMP)
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+			GAMEOBJECT|ACTIVE|OptionsButton
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|Image|UnityEngine.UI|SCRIPT
+				COMPONENT|Button|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|ACTIVE|Text (TMP)
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+			GAMEOBJECT|ACTIVE|CreditsButton
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|Image|UnityEngine.UI|SCRIPT
+				COMPONENT|Button|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|ACTIVE|Text (TMP)
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+			GAMEOBJECT|ACTIVE|QuitButton
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|Image|UnityEngine.UI|SCRIPT
+				COMPONENT|Button|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|ACTIVE|Text (TMP)
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+		GAMEOBJECT|ACTIVE|VersionText
+			COMPONENT|CanvasRenderer|UnityEngine
+			COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+		GAMEOBJECT|INACTIVE|InteractionPrompt
+			COMPONENT|CanvasGroup|UnityEngine
+			COMPONENT|CanvasRenderer|UnityEngine
+			COMPONENT|Image|UnityEngine.UI|SCRIPT
+			GAMEOBJECT|INACTIVE|Text
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+	GAMEOBJECT|INACTIVE|LoadGamePanel
+		COMPONENT|SaveSystemUI|UnityEngine|SCRIPT
+		GAMEOBJECT|INACTIVE|LoadTitle
+			COMPONENT|CanvasRenderer|UnityEngine
+			COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+		GAMEOBJECT|INACTIVE|LoadSlotContainer
+			COMPONENT|VerticalLayoutGroup|UnityEngine.UI|SCRIPT
+			GAMEOBJECT|INACTIVE|SaveSlot_0
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|Image|UnityEngine.UI|SCRIPT
+				COMPONENT|HorizontalLayoutGroup|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|INACTIVE|SlotInfo
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+				GAMEOBJECT|INACTIVE|SaveButton
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|Image|UnityEngine.UI|SCRIPT
+					COMPONENT|Button|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Text
+						COMPONENT|CanvasRenderer|UnityEngine
+						COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+				GAMEOBJECT|INACTIVE|LoadButton
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|Image|UnityEngine.UI|SCRIPT
+					COMPONENT|Button|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Text
+						COMPONENT|CanvasRenderer|UnityEngine
+						COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+				GAMEOBJECT|INACTIVE|DeleteButton
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|Image|UnityEngine.UI|SCRIPT
+					COMPONENT|Button|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Text
+						COMPONENT|CanvasRenderer|UnityEngine
+						COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+			GAMEOBJECT|INACTIVE|SaveSlot_1
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|Image|UnityEngine.UI|SCRIPT
+				COMPONENT|HorizontalLayoutGroup|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|INACTIVE|SlotInfo
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+				GAMEOBJECT|INACTIVE|SaveButton
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|Image|UnityEngine.UI|SCRIPT
+					COMPONENT|Button|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Text
+						COMPONENT|CanvasRenderer|UnityEngine
+						COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+				GAMEOBJECT|INACTIVE|LoadButton
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|Image|UnityEngine.UI|SCRIPT
+					COMPONENT|Button|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Text
+						COMPONENT|CanvasRenderer|UnityEngine
+						COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+				GAMEOBJECT|INACTIVE|DeleteButton
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|Image|UnityEngine.UI|SCRIPT
+					COMPONENT|Button|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Text
+						COMPONENT|CanvasRenderer|UnityEngine
+						COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+			GAMEOBJECT|INACTIVE|SaveSlot_2
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|Image|UnityEngine.UI|SCRIPT
+				COMPONENT|HorizontalLayoutGroup|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|INACTIVE|SlotInfo
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+				GAMEOBJECT|INACTIVE|SaveButton
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|Image|UnityEngine.UI|SCRIPT
+					COMPONENT|Button|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Text
+						COMPONENT|CanvasRenderer|UnityEngine
+						COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+				GAMEOBJECT|INACTIVE|LoadButton
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|Image|UnityEngine.UI|SCRIPT
+					COMPONENT|Button|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Text
+						COMPONENT|CanvasRenderer|UnityEngine
+						COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+				GAMEOBJECT|INACTIVE|DeleteButton
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|Image|UnityEngine.UI|SCRIPT
+					COMPONENT|Button|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Text
+						COMPONENT|CanvasRenderer|UnityEngine
+						COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+			GAMEOBJECT|INACTIVE|SaveSlot_3
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|Image|UnityEngine.UI|SCRIPT
+				COMPONENT|HorizontalLayoutGroup|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|INACTIVE|SlotInfo
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+				GAMEOBJECT|INACTIVE|SaveButton
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|Image|UnityEngine.UI|SCRIPT
+					COMPONENT|Button|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Text
+						COMPONENT|CanvasRenderer|UnityEngine
+						COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+				GAMEOBJECT|INACTIVE|LoadButton
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|Image|UnityEngine.UI|SCRIPT
+					COMPONENT|Button|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Text
+						COMPONENT|CanvasRenderer|UnityEngine
+						COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+				GAMEOBJECT|INACTIVE|DeleteButton
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|Image|UnityEngine.UI|SCRIPT
+					COMPONENT|Button|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Text
+						COMPONENT|CanvasRenderer|UnityEngine
+						COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+			GAMEOBJECT|INACTIVE|SaveSlot_4
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|Image|UnityEngine.UI|SCRIPT
+				COMPONENT|HorizontalLayoutGroup|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|INACTIVE|SlotInfo
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+				GAMEOBJECT|INACTIVE|SaveButton
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|Image|UnityEngine.UI|SCRIPT
+					COMPONENT|Button|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Text
+						COMPONENT|CanvasRenderer|UnityEngine
+						COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+				GAMEOBJECT|INACTIVE|LoadButton
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|Image|UnityEngine.UI|SCRIPT
+					COMPONENT|Button|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Text
+						COMPONENT|CanvasRenderer|UnityEngine
+						COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+				GAMEOBJECT|INACTIVE|DeleteButton
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|Image|UnityEngine.UI|SCRIPT
+					COMPONENT|Button|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Text
+						COMPONENT|CanvasRenderer|UnityEngine
+						COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+		GAMEOBJECT|INACTIVE|SaveSlotPrefab
+			COMPONENT|CanvasRenderer|UnityEngine
+			COMPONENT|Image|UnityEngine.UI|SCRIPT
+			COMPONENT|HorizontalLayoutGroup|UnityEngine.UI|SCRIPT
+			GAMEOBJECT|INACTIVE|SlotInfo
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+			GAMEOBJECT|INACTIVE|SaveButton
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|Image|UnityEngine.UI|SCRIPT
+				COMPONENT|Button|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|INACTIVE|Text
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+			GAMEOBJECT|INACTIVE|LoadButton
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|Image|UnityEngine.UI|SCRIPT
+				COMPONENT|Button|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|INACTIVE|Text
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+			GAMEOBJECT|INACTIVE|DeleteButton
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|Image|UnityEngine.UI|SCRIPT
+				COMPONENT|Button|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|INACTIVE|Text
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+		GAMEOBJECT|INACTIVE|LoadBackButton
+			COMPONENT|CanvasRenderer|UnityEngine
+			COMPONENT|Image|UnityEngine.UI|SCRIPT
+			COMPONENT|Button|UnityEngine.UI|SCRIPT
+			GAMEOBJECT|INACTIVE|Text
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+	GAMEOBJECT|INACTIVE|OptionsPanel
+		COMPONENT|CanvasRenderer|UnityEngine
+		COMPONENT|Image|UnityEngine.UI|SCRIPT
+		COMPONENT|Canvas|UnityEngine
+		COMPONENT|GraphicRaycaster|UnityEngine.UI|SCRIPT
+		GAMEOBJECT|INACTIVE|OptionsTitle
+			COMPONENT|CanvasRenderer|UnityEngine
+			COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+		GAMEOBJECT|INACTIVE|AudioContainer
+			GAMEOBJECT|INACTIVE|AudioTitle
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+			GAMEOBJECT|INACTIVE|MusicContainer
+				GAMEOBJECT|INACTIVE|MusicLabel
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+				GAMEOBJECT|INACTIVE|MusicVolumeSlider
+					COMPONENT|Slider|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Background
+						COMPONENT|CanvasRenderer|UnityEngine
+						COMPONENT|Image|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Fill Area
+						GAMEOBJECT|INACTIVE|Fill
+							COMPONENT|CanvasRenderer|UnityEngine
+							COMPONENT|Image|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Handle Slide Area
+						GAMEOBJECT|INACTIVE|Handle
+							COMPONENT|CanvasRenderer|UnityEngine
+							COMPONENT|Image|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|INACTIVE|MusicVolumeText
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+			GAMEOBJECT|INACTIVE|SFXContainer
+				GAMEOBJECT|INACTIVE|SFXLabel
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+				GAMEOBJECT|INACTIVE|SFXVolumeSlider
+					COMPONENT|Slider|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Background
+						COMPONENT|CanvasRenderer|UnityEngine
+						COMPONENT|Image|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Fill Area
+						GAMEOBJECT|INACTIVE|Fill
+							COMPONENT|CanvasRenderer|UnityEngine
+							COMPONENT|Image|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Handle Slide Area
+						GAMEOBJECT|INACTIVE|Handle
+							COMPONENT|CanvasRenderer|UnityEngine
+							COMPONENT|Image|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|INACTIVE|SFXVolumeText
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+		GAMEOBJECT|INACTIVE|DebugControlsPanel
+			COMPONENT|CanvasRenderer|UnityEngine
+			COMPONENT|Image|UnityEngine.UI|SCRIPT
+			GAMEOBJECT|INACTIVE|JumpHeightContainer
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|Image|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|INACTIVE|JumpHeightLabel
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+				GAMEOBJECT|INACTIVE|JumpHeightSlider
+					COMPONENT|Slider|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Background
+						COMPONENT|CanvasRenderer|UnityEngine
+						COMPONENT|Image|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Fill Area
+						GAMEOBJECT|INACTIVE|Fill
+							COMPONENT|CanvasRenderer|UnityEngine
+							COMPONENT|Image|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Handle Slide Area
+						GAMEOBJECT|INACTIVE|Handle
+							COMPONENT|CanvasRenderer|UnityEngine
+							COMPONENT|Image|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|INACTIVE|JumpHeightValue
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+			GAMEOBJECT|INACTIVE|MoveSpeedContainer
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|Image|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|INACTIVE|MoveSpeedLabel
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+				GAMEOBJECT|INACTIVE|MoveSpeedSlider
+					COMPONENT|Slider|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Background
+						COMPONENT|CanvasRenderer|UnityEngine
+						COMPONENT|Image|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Fill Area
+						GAMEOBJECT|INACTIVE|Fill
+							COMPONENT|CanvasRenderer|UnityEngine
+							COMPONENT|Image|UnityEngine.UI|SCRIPT
+					GAMEOBJECT|INACTIVE|Handle Slide Area
+						GAMEOBJECT|INACTIVE|Handle
+							COMPONENT|CanvasRenderer|UnityEngine
+							COMPONENT|Image|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|INACTIVE|MoveSpeedValue
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+			GAMEOBJECT|INACTIVE|ResetDebugButton
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|Image|UnityEngine.UI|SCRIPT
+				COMPONENT|Button|UnityEngine.UI|SCRIPT
+				GAMEOBJECT|INACTIVE|Text (TMP)
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+		GAMEOBJECT|INACTIVE|ResetAudioButton
+			COMPONENT|CanvasRenderer|UnityEngine
+			COMPONENT|Image|UnityEngine.UI|SCRIPT
+			COMPONENT|Button|UnityEngine.UI|SCRIPT
+			GAMEOBJECT|INACTIVE|Text (TMP)
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+		GAMEOBJECT|INACTIVE|ResetAllButton
+			COMPONENT|CanvasRenderer|UnityEngine
+			COMPONENT|Image|UnityEngine.UI|SCRIPT
+			COMPONENT|Button|UnityEngine.UI|SCRIPT
+			GAMEOBJECT|INACTIVE|Text (TMP)
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+		GAMEOBJECT|INACTIVE|BackOptionsButton
+			COMPONENT|CanvasRenderer|UnityEngine
+			COMPONENT|Image|UnityEngine.UI|SCRIPT
+			COMPONENT|Button|UnityEngine.UI|SCRIPT
+			GAMEOBJECT|INACTIVE|Text (TMP)
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+	GAMEOBJECT|INACTIVE|CreditsPanel
+		COMPONENT|CanvasRenderer|UnityEngine
+		COMPONENT|Image|UnityEngine.UI|SCRIPT
+		GAMEOBJECT|INACTIVE|CreditsTitle
+			COMPONENT|CanvasRenderer|UnityEngine
+			COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+		GAMEOBJECT|INACTIVE|CreditText
+			COMPONENT|CanvasRenderer|UnityEngine
+			COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+		GAMEOBJECT|INACTIVE|BackCreditsButton
+			COMPONENT|CanvasRenderer|UnityEngine
+			COMPONENT|Image|UnityEngine.UI|SCRIPT
+			COMPONENT|Button|UnityEngine.UI|SCRIPT
+			GAMEOBJECT|INACTIVE|Text (TMP)
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+	GAMEOBJECT|INACTIVE|LoadingScreen
+		COMPONENT|CanvasRenderer|UnityEngine
+		COMPONENT|Image|UnityEngine.UI|SCRIPT
+		GAMEOBJECT|INACTIVE|LoadingText
+			COMPONENT|CanvasRenderer|UnityEngine
+			COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+		GAMEOBJECT|INACTIVE|LoadingBar
+			COMPONENT|Slider|UnityEngine.UI|SCRIPT
+			GAMEOBJECT|INACTIVE|Background
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|Image|UnityEngine.UI|SCRIPT
+			GAMEOBJECT|INACTIVE|Fill Area
+				GAMEOBJECT|INACTIVE|Fill
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|Image|UnityEngine.UI|SCRIPT
+			GAMEOBJECT|INACTIVE|Handle Slide Area
+				GAMEOBJECT|INACTIVE|Handle
+					COMPONENT|CanvasRenderer|UnityEngine
+					COMPONENT|Image|UnityEngine.UI|SCRIPT
+	GAMEOBJECT|INACTIVE|NotificationPanel
+		COMPONENT|CanvasRenderer|UnityEngine
+		COMPONENT|Image|UnityEngine.UI|SCRIPT
+		COMPONENT|Outline|UnityEngine.UI|SCRIPT
+		COMPONENT|Canvas|UnityEngine
+		COMPONENT|GraphicRaycaster|UnityEngine.UI|SCRIPT
+		GAMEOBJECT|INACTIVE|Text
+			COMPONENT|CanvasRenderer|UnityEngine
+			COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+	GAMEOBJECT|INACTIVE|ConfirmDialog
+		COMPONENT|CanvasRenderer|UnityEngine
+		COMPONENT|Image|UnityEngine.UI|SCRIPT
+		COMPONENT|Canvas|UnityEngine
+		COMPONENT|GraphicRaycaster|UnityEngine.UI|SCRIPT
+		GAMEOBJECT|INACTIVE|Text
+			COMPONENT|CanvasRenderer|UnityEngine
+			COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+		GAMEOBJECT|INACTIVE|Yes
+			COMPONENT|CanvasRenderer|UnityEngine
+			COMPONENT|Image|UnityEngine.UI|SCRIPT
+			COMPONENT|Button|UnityEngine.UI|SCRIPT
+			GAMEOBJECT|INACTIVE|Text
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+		GAMEOBJECT|INACTIVE|No
+			COMPONENT|CanvasRenderer|UnityEngine
+			COMPONENT|Image|UnityEngine.UI|SCRIPT
+			COMPONENT|Button|UnityEngine.UI|SCRIPT
+			GAMEOBJECT|INACTIVE|Text
+				COMPONENT|CanvasRenderer|UnityEngine
+				COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
+GAMEOBJECT|ACTIVE|Manager
+	GAMEOBJECT|ACTIVE|CursorManager
+		COMPONENT|SmartCursorManager|UnityEngine|SCRIPT
+	GAMEOBJECT|ACTIVE|MainMenuManager
+		COMPONENT|MainMenuManager|UnityEngine|SCRIPT
+		COMPONENT|AudioSource|UnityEngine
+	GAMEOBJECT|ACTIVE|SceneNavigationManager
+		COMPONENT|SceneNavigationManager|UnityEngine|SCRIPT
+	GAMEOBJECT|ACTIVE|MusicManager
+	GAMEOBJECT|ACTIVE|SoundEffectsManager
+	GAMEOBJECT|ACTIVE|SaveGameManager
+		COMPONENT|SaveGameManager|UnityEngine|SCRIPT
+	GAMEOBJECT|ACTIVE|HierarchyDebuggerManager
+		COMPONENT|HierarchyDebugger|UnityEngine|SCRIPT
+
+
+SCRIPT_SUMMARY:
+SCRIPT|BaseInput|COUNT:1
+SCRIPT|UnifiedUIManager|COUNT:1
+SCRIPT|DebugUpdater|COUNT:1
+SCRIPT|TextMeshProUGUI|COUNT:57
+SCRIPT|Image|COUNT:64
+SCRIPT|InteractionPrompt|COUNT:1
+SCRIPT|SaveGameManager|COUNT:1
+SCRIPT|UniversalAdditionalLightData|COUNT:1
+SCRIPT|HorizontalLayoutGroup|COUNT:6
+SCRIPT|Button|COUNT:32
+SCRIPT|UniversalAdditionalCameraData|COUNT:1
+SCRIPT|SmartCursorManager|COUNT:1
+SCRIPT|SceneNavigationManager|COUNT:1
+SCRIPT|HierarchyDebugger|COUNT:1
+SCRIPT|Slider|COUNT:5
+SCRIPT|MainMenuManager|COUNT:1
+SCRIPT|GraphicRaycaster|COUNT:5
+SCRIPT|Outline|COUNT:1
+SCRIPT|StandaloneInputModule|COUNT:1
+SCRIPT|EventSystem|COUNT:1
+SCRIPT|VerticalLayoutGroup|COUNT:2
+SCRIPT|MainMenuUI|COUNT:1
+SCRIPT|CanvasScaler|COUNT:1
+SCRIPT|SaveSystemUI|COUNT:1

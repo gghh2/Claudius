@@ -65,15 +65,11 @@ public class QuestJournalUI : MonoBehaviour
         // Setup button listeners
         SetupButtons();
     }
+
     
     void OnEnable()
     {
-        // Auto-refresh when panel becomes active
-        if (journalPanel != null && journalPanel.activeInHierarchy)
-        {
-            isJournalOpen = true;
-            SwitchTab(QuestStatus.InProgress);
-        }
+        // Ne pas faire de refresh ici - c'est géré par QuestJournalPanelHelper
     }
     
     void OnDisable()
@@ -116,18 +112,16 @@ public class QuestJournalUI : MonoBehaviour
     {
         if (journalPanel != null)
         {
+            isJournalOpen = true;
+            
             if (UnifiedUIManager.Instance != null)
             {
                 UnifiedUIManager.Instance.NavigateTo(UnifiedUIPanelNames.QuestJournal);
-                isJournalOpen = true;
             }
             else
             {
                 journalPanel.SetActive(true);
-                isJournalOpen = true;
             }
-            
-            SwitchTab(QuestStatus.InProgress);
         }
     }
     
@@ -181,10 +175,10 @@ public class QuestJournalUI : MonoBehaviour
             questDescriptionText.text = quest.description;
             
         if (questGiverText != null)
-            questGiverText.text = $"Donneur de quête: {TextFormatter.FormatName(quest.giverNPCName)}";
+            questGiverText.text = "Donneur de quête: " + TextFormatter.FormatName(quest.giverNPCName);
             
         if (questProgressText != null)
-            questProgressText.text = $"Progression: {quest.GetProgressText()}";
+            questProgressText.text = "Progression: " + quest.GetProgressText();
             
         if (questStatusText != null)
         {
@@ -219,7 +213,10 @@ public class QuestJournalUI : MonoBehaviour
             }
         }
         
-        if (QuestJournal.Instance == null) return;
+        if (QuestJournal.Instance == null)
+        {
+            return;
+        }
         
         // Get quests based on current tab
         List<JournalQuest> questsToShow = GetQuestsForCurrentTab();
@@ -254,7 +251,7 @@ public class QuestJournalUI : MonoBehaviour
         if (questCountText != null)
         {
             string tabName = GetTabName();
-            questCountText.text = $"Quêtes {tabName}: {count}";
+            questCountText.text = "Quêtes " + tabName + ": " + count;
         }
     }
     
@@ -271,7 +268,10 @@ public class QuestJournalUI : MonoBehaviour
     
     void CreateQuestListItem(JournalQuest quest)
     {
-        if (questItemPrefab == null || questListParent == null) return;
+        if (questListParent == null || questItemPrefab == null)
+        {
+            return;
+        }
         
         GameObject questItem = Instantiate(questItemPrefab, questListParent);
         
@@ -281,6 +281,7 @@ public class QuestJournalUI : MonoBehaviour
             questComponent.SetupQuest(quest);
         }
     }
+
     
     void UpdateTabAppearance()
     {

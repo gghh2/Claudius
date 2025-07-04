@@ -97,7 +97,20 @@ public class PauseMenuUI : MonoBehaviour
         if (optionsPanel != null)
             optionsPanel.SetActive(false);
         
-        StartCoroutine(ApplyAudioVolumesDelayed());
+        // Don't start coroutine if gameObject is inactive
+        if (gameObject.activeInHierarchy)
+        {
+            StartCoroutine(ApplyAudioVolumesDelayed());
+        }
+        else
+        {
+            // Apply volumes directly without delay if inactive
+            float savedMusicVolume = PlayerPrefs.GetFloat(MUSIC_VOLUME_KEY, DEFAULT_MUSIC_VOLUME);
+            float savedSFXVolume = PlayerPrefs.GetFloat(SFX_VOLUME_KEY, DEFAULT_SFX_VOLUME);
+            
+            ApplyMusicVolume(savedMusicVolume);
+            ApplySFXVolume(savedSFXVolume);
+        }
     }
     
     void CacheCursorManagers()
@@ -210,20 +223,27 @@ public class PauseMenuUI : MonoBehaviour
         }
     }
     
-    public void Pause()
+    void OnEnable()
+    {
+        // Called when the panel becomes active
+        if (!isPaused)
+        {
+            OnPauseMenuOpened();
+        }
+    }
+    
+    void OnDisable()
+    {
+        // Called when the panel becomes inactive
+        if (isPaused)
+        {
+            OnPauseMenuClosed();
+        }
+    }
+    
+    void OnPauseMenuOpened()
     {
         isPaused = true;
-        
-        if (UnifiedUIManager.Instance != null)
-        {
-            UnifiedUIManager.Instance.NavigateTo(UnifiedUIPanelNames.PauseMenu);
-        }
-        else
-        {
-            Time.timeScale = 0f;
-            if (pauseMenuPanel != null)
-                pauseMenuPanel.SetActive(true);
-        }
         
         cursorWasLocked = Cursor.lockState == CursorLockMode.Locked;
         Cursor.visible = true;
@@ -234,23 +254,13 @@ public class PauseMenuUI : MonoBehaviour
         if (playerController != null)
             playerController.enabled = false;
             
+        // Start coroutine to force cursor visible
         StartCoroutine(ForceCursorVisible());
     }
     
-    public void Resume()
+    void OnPauseMenuClosed()
     {
         isPaused = false;
-        
-        if (UnifiedUIManager.Instance != null)
-        {
-            UnifiedUIManager.Instance.NavigateBack();
-        }
-        else
-        {
-            Time.timeScale = 1f;
-            if (pauseMenuPanel != null)
-                pauseMenuPanel.SetActive(false);
-        }
         
         SetCursorManagersEnabled(true);
         
@@ -264,11 +274,36 @@ public class PauseMenuUI : MonoBehaviour
             playerController.enabled = true;
     }
     
-    void ShowSaveMenu()
+    public void Pause()
     {
+        // This method is now deprecated - UnifiedUIManager handles navigation
         if (UnifiedUIManager.Instance != null)
         {
+            UnifiedUIManager.Instance.NavigateTo(UnifiedUIPanelNames.PauseMenu);
+        }
+    }
+    
+    public void Resume()
+    {
+        // Use UnifiedUIManager for navigation
+        if (UnifiedUIManager.Instance != null)
+        {
+            UnifiedUIManager.Instance.NavigateBack();
+        }
+    }
+    
+    void ShowSaveMenu()
+    {
+        Debug.Log("[PauseMenu] ShowSaveMenu called");
+        
+        if (UnifiedUIManager.Instance != null)
+        {
+            Debug.Log("[PauseMenu] UnifiedUIManager found, navigating to SaveMenu");
             UnifiedUIManager.Instance.NavigateTo(UnifiedUIPanelNames.SaveMenu);
+        }
+        else
+        {
+            Debug.LogError("[PauseMenu] UnifiedUIManager.Instance is null!");
         }
     }
     

@@ -36,8 +36,8 @@ public class InventoryUI : MonoBehaviour
     
     void Start()
     {
-        // Cache le panel au démarrage
-        gameObject.SetActive(false);
+        // NE PAS désactiver gameObject car cela désactive tout l'UI !
+        // UnifiedUIManager gère la visibilité des panels
         
         // Configure le bouton de fermeture
         if (closeButton != null)

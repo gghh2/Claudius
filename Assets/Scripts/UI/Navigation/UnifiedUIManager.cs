@@ -154,6 +154,9 @@ public class UnifiedUIManager : MonoBehaviour
         // Start in game state
         navigationStack.Clear();
         currentPanel = GAME_STATE;
+        
+        // Hide all panels at start (they will be shown as needed)
+        HideAllPanelsAtStart();
     }
 
     PanelConfig ConfigurePanel(string name, GameObject panel, int sortOrder, bool blocksPause, bool blocksGameplay, string[] allowedTransitions = null)
@@ -176,6 +179,37 @@ public class UnifiedUIManager : MonoBehaviour
         foreach (var config in panelConfigs)
         {
             SetupPanelCanvas(config.Value.gameObject, config.Value.sortOrder);
+        }
+    }
+    
+    void HideAllPanelsAtStart()
+    {
+        // Check if we're in the MainMenu scene
+        bool isMainMenuScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainMenu";
+        
+        foreach (var kvp in panelConfigs)
+        {
+            if (kvp.Value.gameObject != null)
+            {
+                // In MainMenu scene, only hide non-MainMenu panels
+                // In Game scene, hide all panels
+                if (!isMainMenuScene || kvp.Key != UnifiedUIPanelNames.MainMenu)
+                {
+                    kvp.Value.gameObject.SetActive(false);
+                }
+            }
+        }
+        
+        // If we're in MainMenu scene, ensure MainMenu is visible and set as current
+        if (isMainMenuScene && panelConfigs.ContainsKey(UnifiedUIPanelNames.MainMenu))
+        {
+            var mainMenuConfig = panelConfigs[UnifiedUIPanelNames.MainMenu];
+            if (mainMenuConfig.gameObject != null)
+            {
+                mainMenuConfig.gameObject.SetActive(true);
+                currentPanel = UnifiedUIPanelNames.MainMenu;
+                navigationStack.Clear();
+            }
         }
     }
 
@@ -229,15 +263,33 @@ public class UnifiedUIManager : MonoBehaviour
     /// </summary>
     public void NavigateTo(string panelName)
     {
+        Debug.Log($"[UnifiedUIManager] NavigateTo called: {panelName}");
+        
         // Block navigation if a modal dialog is open
         if (IsModalDialogOpen() && panelName != UnifiedUIPanelNames.Confirmation)
         {
+            Debug.Log("[UnifiedUIManager] Navigation blocked by modal dialog");
             return;
         }
         
         // Check if transition is allowed
         if (!IsTransitionAllowed(currentPanel, panelName))
         {
+            Debug.Log($"[UnifiedUIManager] Transition not allowed from {currentPanel} to {panelName}");
+            return;
+        }
+        
+        // Check if panel exists in config
+        if (!panelConfigs.ContainsKey(panelName))
+        {
+            Debug.LogError($"[UnifiedUIManager] Panel not found in configs: {panelName}");
+            return;
+        }
+        
+        // Check if panel GameObject is assigned
+        if (panelConfigs[panelName].gameObject == null)
+        {
+            Debug.LogError($"[UnifiedUIManager] Panel GameObject is null for: {panelName}");
             return;
         }
         
@@ -270,6 +322,8 @@ public class UnifiedUIManager : MonoBehaviour
             // Show new panel
             ShowPanel(panelName);
             currentPanel = panelName;
+            
+            Debug.Log($"[UnifiedUIManager] Successfully navigated to: {panelName}");
         }
     }
 

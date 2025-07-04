@@ -10,12 +10,25 @@ public class GameLoadingManager : MonoBehaviour
     
     void Awake()
     {
+        // IMPORTANT: Ensure UI is active first
+        EnsureUIIsActive();
+        
         // Check if we're loading a save
         string saveToLoad = PlayerPrefs.GetString("LoadOnStart", "");
         
         if (!string.IsNullOrEmpty(saveToLoad))
         {
             StartCoroutine(LoadGameWithSave(saveToLoad));
+        }
+    }
+    
+    void EnsureUIIsActive()
+    {
+        GameObject uiObject = GameObject.Find("UI");
+        if (uiObject != null && !uiObject.activeSelf)
+        {
+            Debug.Log("🔧 GameLoadingManager: Activating UI GameObject");
+            uiObject.SetActive(true);
         }
     }
     

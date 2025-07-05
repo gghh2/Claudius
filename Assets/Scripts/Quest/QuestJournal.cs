@@ -40,10 +40,23 @@ public class JournalQuest
     
     public string GetProgressText()
     {
-        if (maxProgress > 1)
-            return $"{currentProgress}/{maxProgress}";
-        else
-            return status == QuestStatus.Completed ? "Terminé" : "En cours";
+        // Handle special statuses first
+        switch (status)
+        {
+            case QuestStatus.Completed:
+                return "Terminé";
+            case QuestStatus.Cancelled:
+                return "Annulée";
+            case QuestStatus.Failed:
+                return "Échouée";
+            case QuestStatus.InProgress:
+                if (maxProgress > 1)
+                    return $"{currentProgress}/{maxProgress}";
+                else
+                    return "En cours";
+            default:
+                return "Inconnu";
+        }
     }
     
     public string GetStatusText()
@@ -201,6 +214,18 @@ public class QuestJournal : MonoBehaviour
             if (QuestManager.Instance != null)
             {
                 QuestManager.Instance.CancelQuest(questId);
+            }
+            
+            // Met à jour la quête suivie si c'était celle-ci
+            if (trackedQuestId == questId)
+            {
+                UpdateTrackedQuestAfterCompletion(questId);
+            }
+            
+            // Force le rafraîchissement de l'UI si elle est ouverte
+            if (QuestJournalUI.Instance != null && QuestJournalUI.Instance.IsJournalOpen())
+            {
+                QuestJournalUI.Instance.RefreshCurrentTab();
             }
         }
     }

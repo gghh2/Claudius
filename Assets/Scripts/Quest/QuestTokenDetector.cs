@@ -282,7 +282,7 @@ public class QuestTokenDetector : MonoBehaviour
         return "";
     }
     
-    QuestZoneType? ParseZoneType(string zoneName)
+    public QuestZoneType? ParseZoneType(string zoneName)
 	{
 	    string zoneNameLower = zoneName.ToLower();
 	    

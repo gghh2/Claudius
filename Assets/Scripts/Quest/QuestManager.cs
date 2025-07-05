@@ -536,6 +536,14 @@ public class QuestManager : MonoBehaviour
         return activeQuests.FirstOrDefault(q => q.questId == questId);
     }
     
+    /// <summary>
+    /// Public method to get active quest (for SaveSystem)
+    /// </summary>
+    public ActiveQuest GetActiveQuestPublic(string questId)
+    {
+        return GetActiveQuest(questId);
+    }
+    
     bool AddItemToInventory(string itemName, int quantity, string questId)
     {
         if (PlayerInventory.Instance != null)

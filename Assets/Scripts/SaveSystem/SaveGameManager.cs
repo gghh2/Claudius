@@ -2,6 +2,8 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
 using System;
+using System.Collections;
+using System.Linq;
 
 /// <summary>
 /// Main save game system - handles saving and loading game state
@@ -195,50 +197,180 @@ public class SaveGameManager : MonoBehaviour
                 completedQuests = new List<string>()
             };
             
+            Debug.Log($"[SaveGame] Saving quests - Journal has {QuestJournal.Instance.allQuests.Count} total quests");
+            
             // Active quests
             foreach (var quest in QuestJournal.Instance.GetActiveQuests())
             {
+                Debug.Log($"[SaveGame] Processing active quest: {quest.questTitle} (ID: {quest.questId})");
+                
                 // Get the original quest from QuestManager to get full details
                 var questManager = QuestManager.Instance;
                 string objectName = "";
                 string targetName = "";
                 
-                // Try to extract object/target names based on quest type
-                // This is a simplified approach - in production you'd store these in JournalQuest
-                if (quest.questType == QuestType.FETCH || quest.questType == QuestType.INTERACT)
+                // Get quest details from QuestManager if available
+                ActiveQuest activeQuest = null;
+                string exactZoneName = quest.zoneName; // Start with journal zone name
+                
+                if (questManager != null)
                 {
-                    // Extract from description like "Trouvez 3 cristal_energie dans laboratory"
-                    var match = System.Text.RegularExpressions.Regex.Match(quest.description, @"\d+\s+(\w+)");
-                    if (match.Success) objectName = match.Groups[1].Value;
-                }
-                else if (quest.questType == QuestType.TALK || quest.questType == QuestType.DELIVERY)
-                {
-                    // Extract from description like "Parlez à scientist dans laboratory"
-                    var match = System.Text.RegularExpressions.Regex.Match(quest.description, @"à\s+(\w+)");
-                    if (match.Success) targetName = match.Groups[1].Value;
+                    activeQuest = questManager.GetActiveQuestPublic(quest.questId);
+                    if (activeQuest != null && activeQuest.questData != null)
+                    {
+                        // Get details directly from the quest token
+                        objectName = activeQuest.questData.objectName ?? "";
+                        targetName = activeQuest.questData.targetName ?? "";
+                        
+                        // IMPORTANT: Get the exact zone name from the quest token
+                        if (!string.IsNullOrEmpty(activeQuest.questData.zoneName))
+                        {
+                            exactZoneName = activeQuest.questData.zoneName;
+                        }
+                        
+                        Debug.Log($"[SaveGame] Got quest details from QuestManager - objectName: {objectName}, targetName: {targetName}, zoneName: {exactZoneName}");
+                        
+                        // Also try to get the actual zone from the quest
+                        var targetZone = activeQuest.GetTargetZone();
+                        if (targetZone != null)
+                        {
+                            exactZoneName = targetZone.zoneName;
+                            Debug.Log($"[SaveGame] Got exact zone name from target zone: {exactZoneName}");
+                        }
+                    }
                 }
                 
-                data.questData.activeQuests.Add(new QuestSaveInfo
+                // Fallback: Try to extract object/target names from description if not found
+                if (string.IsNullOrEmpty(objectName) && string.IsNullOrEmpty(targetName))
+                {
+                    if (quest.questType == QuestType.FETCH || quest.questType == QuestType.INTERACT)
+                    {
+                        // Extract from description like "Trouvez 3 cristal_energie dans laboratory"
+                        var match = System.Text.RegularExpressions.Regex.Match(quest.description, @"\d+\s+(\w+)");
+                        if (match.Success) objectName = match.Groups[1].Value;
+                    }
+                    else if (quest.questType == QuestType.TALK || quest.questType == QuestType.DELIVERY)
+                    {
+                        // Extract from description like "Parlez à scientist dans laboratory"
+                        var match = System.Text.RegularExpressions.Regex.Match(quest.description, @"à\s+(\w+)");
+                        if (match.Success) targetName = match.Groups[1].Value;
+                    }
+                    Debug.Log($"[SaveGame] Extracted from description - objectName: {objectName}, targetName: {targetName}");
+                }
+                
+                // Get spawned objects from QuestManager
+                var spawnedObjects = new List<QuestObjectSaveInfo>();
+                if (QuestManager.Instance != null && activeQuest != null)
+                {
+                    if (activeQuest.spawnedObjects != null)
+                    {
+                        Debug.Log($"[SaveGame] Quest has {activeQuest.spawnedObjects.Count} spawned objects");
+                        foreach (var obj in activeQuest.spawnedObjects)
+                        {
+                            if (obj != null)
+                            {
+                                string objType = "item";
+                                if (obj.GetComponent<NPC>() != null) objType = "npc";
+                                else if (obj.GetComponent<QuestObject>() != null) objType = "quest_object";
+                                else if (obj.name.Contains("terminal") || obj.name.Contains("Terminal")) objType = "terminal";
+                                
+                                spawnedObjects.Add(new QuestObjectSaveInfo
+                                {
+                                    objectName = obj.name,
+                                    position = obj.transform.position,
+                                    rotation = obj.transform.rotation.eulerAngles,
+                                    isActive = obj.activeSelf,
+                                    objectType = objType
+                                });
+                                
+                                Debug.Log($"[SaveGame] Saved object: {obj.name} at {obj.transform.position}");
+                            }
+                        }
+                    }
+                }
+                else if (activeQuest == null)
+                {
+                    Debug.LogWarning($"[SaveGame] No active quest found in QuestManager for ID: {quest.questId}");
+                }
+                
+                var questSaveInfo = new QuestSaveInfo
                 {
                     questId = quest.questId,
                     questTitle = quest.questTitle,
                     description = quest.description,
                     questType = quest.questType,
+                    status = quest.status,
                     currentProgress = quest.currentProgress,
                     maxProgress = quest.maxProgress,
                     giverNPCName = quest.giverNPCName,
                     isTracked = QuestJournal.Instance.IsQuestTracked(quest.questId),
                     objectName = objectName,
-                    zoneName = quest.zoneName,
-                    targetName = targetName
-                });
+                    zoneName = exactZoneName,  // Use the exact zone name
+                    targetName = targetName,
+                    spawnedObjects = spawnedObjects
+                };
+                
+                data.questData.activeQuests.Add(questSaveInfo);
+                Debug.Log($"[SaveGame] Added quest to save data: {quest.questTitle} with {spawnedObjects.Count} objects");
             }
             
-            // Completed quests
+            // Completed quests - save full info instead of just IDs
             foreach (var quest in QuestJournal.Instance.GetCompletedQuests())
             {
+                // Save completed quest as a full QuestSaveInfo for potential restoration
+                var completedQuestInfo = new QuestSaveInfo
+                {
+                    questId = quest.questId,
+                    questTitle = quest.questTitle,
+                    description = quest.description,
+                    questType = quest.questType,
+                    status = quest.status,
+                    currentProgress = quest.currentProgress,
+                    maxProgress = quest.maxProgress,
+                    giverNPCName = quest.giverNPCName,
+                    isTracked = false,
+                    objectName = "",
+                    zoneName = quest.zoneName,
+                    targetName = "",
+                    spawnedObjects = new List<QuestObjectSaveInfo>()
+                };
+                
+                // Add to activeQuests list but with Completed status
+                data.questData.activeQuests.Add(completedQuestInfo);
                 data.questData.completedQuests.Add(quest.questId);
+                Debug.Log($"[SaveGame] Added completed quest: {quest.questTitle}");
             }
+            // Cancelled quests - save full info
+            foreach (var quest in QuestJournal.Instance.GetCancelledQuests())
+            {
+                // Save cancelled quest as a full QuestSaveInfo
+                var cancelledQuestInfo = new QuestSaveInfo
+                {
+                    questId = quest.questId,
+                    questTitle = quest.questTitle,
+                    description = quest.description,
+                    questType = quest.questType,
+                    status = quest.status,
+                    currentProgress = quest.currentProgress,
+                    maxProgress = quest.maxProgress,
+                    giverNPCName = quest.giverNPCName,
+                    isTracked = false,
+                    objectName = "",
+                    zoneName = quest.zoneName,
+                    targetName = "",
+                    spawnedObjects = new List<QuestObjectSaveInfo>()
+                };
+                
+                // Add to activeQuests list but with Cancelled status
+                data.questData.activeQuests.Add(cancelledQuestInfo);
+                Debug.Log($"[SaveGame] Added cancelled quest: {quest.questTitle}");
+            }
+            
+            Debug.Log($"[SaveGame] Total saved: {data.questData.activeQuests.Count} quests ({QuestJournal.Instance.GetActiveQuests().Count} active, {QuestJournal.Instance.GetCompletedQuests().Count} completed, {QuestJournal.Instance.GetCancelledQuests().Count} cancelled)");
+        }
+        else
+        {
+            Debug.LogError("[SaveGame] QuestJournal.Instance is NULL during save!");
         }
         
         // NPC data
@@ -358,39 +490,62 @@ public class SaveGameManager : MonoBehaviour
         }
         
         // Quests
-        if (data.questData != null && QuestJournal.Instance != null)
+        if (data.questData != null)
         {
-            // Clear current quests
-            QuestJournal.Instance.ClearAllQuests();
+            Debug.Log($"[SaveGame] Loading quest data: {data.questData.activeQuests.Count} active quests, {data.questData.completedQuests.Count} completed quests");
             
-            // Restore active quests
-            foreach (var questInfo in data.questData.activeQuests)
+            if (QuestJournal.Instance != null)
             {
-                // Recreate quest token
-                QuestToken token = new QuestToken(questInfo.questType, questInfo.questId);
-                token.description = questInfo.description;
-                
-                // Restore quest details from saved info
-                token.objectName = questInfo.objectName;
-                token.zoneName = questInfo.zoneName;
-                token.targetName = questInfo.targetName;
-                token.quantity = questInfo.maxProgress;
-                
-                // Add quest directly to journal list since AddQuest might create a new ID
-                JournalQuest journalQuest = new JournalQuest(token, questInfo.giverNPCName);
-                journalQuest.currentProgress = questInfo.currentProgress;
-                journalQuest.maxProgress = questInfo.maxProgress;
-                journalQuest.status = questInfo.currentProgress >= questInfo.maxProgress ? 
-                    QuestStatus.Completed : QuestStatus.InProgress;
-                
-                QuestJournal.Instance.allQuests.Add(journalQuest);
-                
-                // Set tracking
-                if (questInfo.isTracked)
+                // Clear current quests in both systems
+                QuestJournal.Instance.ClearAllQuests();
+                if (QuestManager.Instance != null)
                 {
-                    QuestJournal.Instance.SetTrackedQuest(questInfo.questId);
+                    QuestManager.Instance.ClearAllQuests();
                 }
+                else
+                {
+                    Debug.LogError("[SaveGame] QuestManager.Instance is NULL during load!");
+                }
+                
+                // Restore all quests to the journal first
+                foreach (var questInfo in data.questData.activeQuests)
+                {
+                    // Handle completed and cancelled quests
+                    if (questInfo.status == QuestStatus.Completed || questInfo.status == QuestStatus.Cancelled)
+                    {
+                        QuestToken token = new QuestToken(questInfo.questType, questInfo.questId);
+                        token.description = questInfo.description;
+                        
+                        JournalQuest restoredQuest = new JournalQuest(token, questInfo.giverNPCName);
+                        restoredQuest.status = questInfo.status;
+                        restoredQuest.currentProgress = questInfo.currentProgress;
+                        restoredQuest.maxProgress = questInfo.maxProgress;
+                        
+                        QuestJournal.Instance.allQuests.Add(restoredQuest);
+                        Debug.Log($"[SaveGame] Restored {questInfo.status} quest to journal: {restoredQuest.questTitle}");
+                    }
+                }
+                
+                // Filter out only the truly active (InProgress) quests for recreation
+                var activeQuestsToRecreate = data.questData.activeQuests
+                    .Where(q => q.status == QuestStatus.InProgress)
+                    .ToList();
+                
+                Debug.Log($"[SaveGame] Found {activeQuestsToRecreate.Count} in-progress quests to recreate in world");
+                Debug.Log($"[SaveGame] Journal restored with {QuestJournal.Instance.allQuests.Count} total quests");
+                
+                // Then recreate active quests in the world (this will handle both QuestManager and QuestJournal)
+                Debug.Log("[SaveGame] Starting coroutine to recreate active quest objects...");
+                StartCoroutine(RecreateQuestObjectsAfterLoad(activeQuestsToRecreate));
             }
+            else
+            {
+                Debug.LogError("[SaveGame] QuestJournal.Instance is NULL during load!");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[SaveGame] No quest data in save file");
         }
         
         // NPCs
@@ -469,6 +624,173 @@ public class SaveGameManager : MonoBehaviour
             files[i] = Path.GetFileNameWithoutExtension(files[i]);
         }
         return files;
+    }
+    
+    /// <summary>
+    /// Coroutine to refresh markers after everything is loaded
+    /// </summary>
+    IEnumerator RefreshMarkersAfterLoad()
+    {
+        // Wait for end of frame to ensure everything is initialized
+        yield return new WaitForEndOfFrame();
+        
+        // Force a journal refresh first
+        if (QuestJournal.Instance != null)
+        {
+            var trackedQuest = QuestJournal.Instance.GetTrackedQuest();
+            if (trackedQuest != null)
+            {
+                Debug.Log($"[SaveGame] Tracked quest after load: {trackedQuest.questTitle}");
+            }
+        }
+        
+        // Then refresh the markers
+        if (QuestMarkerSystem.Instance != null)
+        {
+            QuestMarkerSystem.Instance.RefreshMarkers();
+            Debug.Log("[SaveGame] Quest markers refreshed after load");
+        }
+    }
+    
+    /// <summary>
+    /// Coroutine to recreate quest objects after load
+    /// </summary>
+    IEnumerator RecreateQuestObjectsAfterLoad(List<QuestSaveInfo> questInfos)
+    {
+        // Wait a frame to ensure everything is initialized
+        yield return null;
+        
+        if (QuestManager.Instance == null)
+        {
+            Debug.LogError("[SaveGame] QuestManager.Instance is null, cannot recreate quest objects");
+            yield break;
+        }
+        
+        // Clear any existing quests first
+        QuestManager.Instance.ClearAllQuests();
+        
+        foreach (var questInfo in questInfos)
+        {
+            if (questInfo.status == QuestStatus.InProgress)
+            {
+                Debug.Log($"[SaveGame] Recreating quest: {questInfo.questTitle} (ID: {questInfo.questId})");
+                Debug.Log($"[SaveGame] Quest details - Type: {questInfo.questType}, Zone: {questInfo.zoneName}, Object: {questInfo.objectName}, Target: {questInfo.targetName}");
+                
+                // Create the quest in QuestManager
+                QuestToken token = new QuestToken(questInfo.questType, questInfo.questId);
+                token.description = questInfo.description;
+                token.objectName = questInfo.objectName;
+                token.zoneName = questInfo.zoneName;
+                token.targetName = questInfo.targetName;
+                token.quantity = questInfo.maxProgress;
+                
+                // Try to determine the zone type from the zone name
+                if (!string.IsNullOrEmpty(questInfo.zoneName))
+                {
+                    // First try to find the actual zone in the world
+                    QuestZone[] allZones = FindObjectsOfType<QuestZone>();
+                    foreach (var zone in allZones)
+                    {
+                        if (zone.zoneName == questInfo.zoneName)
+                        {
+                            token.zoneType = zone.zoneType;
+                            Debug.Log($"[SaveGame] Found matching zone: {zone.zoneName} of type {zone.zoneType}");
+                            break;
+                        }
+                    }
+                    
+                    // If we didn't find the exact zone, try to parse the zone type
+                    if (!token.zoneType.HasValue)
+                    {
+                        token.zoneType = QuestTokenDetector.Instance?.ParseZoneType(questInfo.zoneName);
+                        Debug.Log($"[SaveGame] Parsed zone type from name: {token.zoneType}");
+                    }
+                }
+                
+                // Remove the quest from journal temporarily to avoid duplication
+                var journalQuest = QuestJournal.Instance.allQuests.FirstOrDefault(q => q.questId == questInfo.questId);
+                if (journalQuest != null)
+                {
+                    QuestJournal.Instance.allQuests.Remove(journalQuest);
+                }
+                
+                // This will create the quest and spawn default objects
+                bool created = QuestManager.Instance.CreateQuestFromToken(token, questInfo.giverNPCName);
+                
+                if (!created)
+                {
+                    Debug.LogError($"[SaveGame] Failed to recreate quest: {questInfo.questTitle}");
+                    Debug.LogError($"[SaveGame] Make sure zone '{questInfo.zoneName}' supports object type required for {questInfo.questType} quests");
+                    
+                    // Re-add to journal if creation failed
+                    if (journalQuest != null)
+                    {
+                        QuestJournal.Instance.allQuests.Add(journalQuest);
+                    }
+                    continue;
+                }
+                
+                // Wait a frame for objects to be created
+                yield return null;
+                
+                // Update the quest progress in QuestManager
+                var activeQuest = QuestManager.Instance.GetActiveQuestPublic(questInfo.questId);
+                if (activeQuest != null)
+                {
+                    activeQuest.currentProgress = questInfo.currentProgress;
+                    Debug.Log($"[SaveGame] Updated quest progress: {questInfo.currentProgress}/{questInfo.maxProgress}");
+                    
+                    // Update progress in journal too
+                    var newJournalQuest = QuestJournal.Instance.allQuests.FirstOrDefault(q => q.questId == questInfo.questId);
+                    if (newJournalQuest != null)
+                    {
+                        newJournalQuest.currentProgress = questInfo.currentProgress;
+                        newJournalQuest.status = questInfo.status;
+                    }
+                    
+                    // If we have saved object positions, restore them
+                    if (questInfo.spawnedObjects != null && questInfo.spawnedObjects.Count > 0)
+                    {
+                        Debug.Log($"[SaveGame] Quest {questInfo.questTitle} had {questInfo.spawnedObjects.Count} spawned objects saved");
+                        
+                        // Try to restore positions of spawned objects
+                        for (int i = 0; i < activeQuest.spawnedObjects.Count && i < questInfo.spawnedObjects.Count; i++)
+                        {
+                            var spawnedObj = activeQuest.spawnedObjects[i];
+                            var savedObj = questInfo.spawnedObjects[i];
+                            
+                            if (spawnedObj != null)
+                            {
+                                spawnedObj.transform.position = savedObj.position;
+                                spawnedObj.transform.rotation = Quaternion.Euler(savedObj.rotation);
+                                spawnedObj.SetActive(savedObj.isActive);
+                                Debug.Log($"[SaveGame] Restored position for {savedObj.objectName} at {savedObj.position}");
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    Debug.LogError($"[SaveGame] Could not find active quest after creation: {questInfo.questId}");
+                }
+            }
+        }
+        
+        // Restore tracked quest
+        var trackedQuest = questInfos.FirstOrDefault(q => q.isTracked);
+        if (trackedQuest != null)
+        {
+            QuestJournal.Instance.SetTrackedQuest(trackedQuest.questId);
+            Debug.Log($"[SaveGame] Restored tracked quest: {trackedQuest.questTitle}");
+        }
+        
+        // Final refresh of markers
+        yield return null;
+        if (QuestMarkerSystem.Instance != null)
+        {
+            QuestMarkerSystem.Instance.RefreshMarkers();
+            Debug.Log("[SaveGame] Final marker refresh after recreating quest objects");
+        }
     }
     
     /// <summary>
@@ -555,6 +877,7 @@ public class QuestSaveInfo
     public string questTitle;
     public string description;
     public QuestType questType;
+    public QuestStatus status;
     public int currentProgress;
     public int maxProgress;
     public string giverNPCName;
@@ -563,6 +886,18 @@ public class QuestSaveInfo
     public string objectName;
     public string zoneName;
     public string targetName;
+    // Quest objects in world
+    public List<QuestObjectSaveInfo> spawnedObjects;
+}
+
+[System.Serializable]
+public class QuestObjectSaveInfo
+{
+    public string objectName;
+    public Vector3 position;
+    public Vector3 rotation;
+    public bool isActive;
+    public string objectType; // "item", "npc", "marker", "terminal"
 }
 
 [System.Serializable]

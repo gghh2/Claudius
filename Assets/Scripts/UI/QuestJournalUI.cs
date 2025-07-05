@@ -305,9 +305,14 @@ public class QuestJournalUI : MonoBehaviour
                 QuestJournal.Instance.CancelQuest(selectedQuest.questId);
             }
             
-            questDetailsPanel.SetActive(false);
-            selectedQuest = null;
-            RefreshQuestList();
+            // Refresh the details panel to show the updated status
+            ShowQuestDetails(selectedQuest);
+            
+            // If we're on the active quests tab, refresh the list
+            if (currentTab == QuestStatus.InProgress)
+            {
+                RefreshQuestList();
+            }
         }
     }
     

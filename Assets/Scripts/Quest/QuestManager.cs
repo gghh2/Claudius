@@ -581,11 +581,15 @@ public class QuestManager : MonoBehaviour
     {
         Debug.Log(string.Format(QuestSystemConfig.QuestCompletedMessage, quest.giverNPCName));
         
+        // BUG FIX: Commenté car l'item est déjà ajouté dans QuestObject.CollectItem()
+        // Cela causait un doublon pour les quêtes FETCH avec quantity = 1
+        /*
         // Pour les quêtes FETCH à 1 objet, ajoute à l'inventaire
         if (quest.questData.questType == QuestType.FETCH && quest.questData.quantity == 1)
         {
             AddItemToInventory(quest.questData.objectName, 1, quest.questId);
         }
+        */
     }
     
     void UpdateJournalAndUI(string questId)

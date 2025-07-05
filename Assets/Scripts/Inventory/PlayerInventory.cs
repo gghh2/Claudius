@@ -43,14 +43,21 @@ public class PlayerInventory : MonoBehaviour
     
     public void AddItem(string itemName, int quantity = 1, string questId = "")
     {
+        // LOG DÉTAILLÉ POUR DEBUG
+        Debug.LogWarning($"[PlayerInventory.AddItem] CALLED - Item: {itemName}, Quantity: {quantity}, QuestId: {questId}");
+        Debug.LogWarning($"[PlayerInventory.AddItem] Stack Trace:\n{System.Environment.StackTrace}");
+        
         InventoryItem existingItem = items.FirstOrDefault(i => i.itemName == itemName && i.questId == questId);
         
         if (existingItem != null)
         {
+            Debug.LogWarning($"[PlayerInventory.AddItem] EXISTING ITEM FOUND - Current quantity: {existingItem.quantity}, Adding: {quantity}");
             existingItem.quantity += quantity;
+            Debug.LogWarning($"[PlayerInventory.AddItem] NEW QUANTITY: {existingItem.quantity}");
         }
         else
         {
+            Debug.LogWarning($"[PlayerInventory.AddItem] NEW ITEM - Creating with quantity: {quantity}");
             items.Add(new InventoryItem(itemName, quantity, questId));
         }
         
@@ -58,6 +65,13 @@ public class PlayerInventory : MonoBehaviour
         {
             Debug.Log($"📦 INVENTAIRE: Ajouté {quantity}x {itemName} (Quête: {questId})");
             ShowInventory(); // Debug automatique
+        }
+        
+        // Force un log de l'inventaire complet
+        Debug.LogWarning("[PlayerInventory.AddItem] INVENTORY AFTER ADD:");
+        foreach (var item in items)
+        {
+            Debug.LogWarning($"  - {item.quantity}x {item.itemName} (Quest: {item.questId})");
         }
     }
     

@@ -64,24 +64,22 @@ public class MainMenuUI : MonoBehaviour
             gameTitleText.text = gameTitle;
         }
         
-        // Ensure menu is visible using UnifiedUIManager
-        if (UnifiedUIManager.Instance != null)
-        {
-            UnifiedUIManager.Instance.NavigateTo(UnifiedUIPanelNames.MainMenu);
-        }
-        else if (mainMenuPanel != null)
+        // In MainMenu scene, UnifiedUIManager shouldn't try to navigate
+        // Just ensure the menu is visible directly
+        if (mainMenuPanel != null)
         {
             mainMenuPanel.SetActive(true);
-            // Fallback - pause the game
-            Time.timeScale = 0f;
-            
-            // Ensure cursor is visible
-            Cursor.visible = true;
-            Cursor.lockState = CursorLockMode.None;
-            
-            // Disable player control
-            DisablePlayerControl();
         }
+        
+        // Pause the game
+        Time.timeScale = 0f;
+        
+        // Ensure cursor is visible
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+        
+        // Disable player control
+        DisablePlayerControl();
         
         // Hide all other UI elements that shouldn't be visible
         HideGameplayUI();
@@ -251,17 +249,25 @@ public class MainMenuUI : MonoBehaviour
     
     void OpenLoadMenu()
     {
-        if (UnifiedUIManager.Instance != null)
+        // In MainMenu, manage panels directly without UnifiedUIManager
+        GameObject loadPanel = GameObject.Find("LoadGamePanel");
+        if (loadPanel != null)
         {
-            UnifiedUIManager.Instance.NavigateTo(UnifiedUIPanelNames.SaveMenu);
+            loadPanel.SetActive(true);
+            if (mainMenuPanel != null)
+                mainMenuPanel.SetActive(false);
         }
     }
     
     void OpenOptions()
     {
-        if (UnifiedUIManager.Instance != null)
+        // In MainMenu, manage panels directly without UnifiedUIManager
+        GameObject optionsPanel = GameObject.Find("OptionsPanel");
+        if (optionsPanel != null)
         {
-            UnifiedUIManager.Instance.NavigateTo(UnifiedUIPanelNames.Settings);
+            optionsPanel.SetActive(true);
+            if (mainMenuPanel != null)
+                mainMenuPanel.SetActive(false);
         }
     }
     
@@ -307,27 +313,20 @@ public class MainMenuUI : MonoBehaviour
             yield return new WaitForSecondsRealtime(0.5f);
         }
         
-        // Hide main menu using UnifiedUIManager
-        if (UnifiedUIManager.Instance != null)
-        {
-            UnifiedUIManager.Instance.ResetToGame();
-        }
-        else
-        {
-            // Fallback
-            if (mainMenuPanel != null)
-                mainMenuPanel.SetActive(false);
-                
-            // Resume game time
-            Time.timeScale = 1f;
+        // Don't use UnifiedUIManager in MainMenu
+        // Just hide the menu and restore game state
+        if (mainMenuPanel != null)
+            mainMenuPanel.SetActive(false);
             
-            // Enable player control
-            EnablePlayerControl();
-            
-            // Hide cursor for gameplay
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
-        }
+        // Resume game time
+        Time.timeScale = 1f;
+        
+        // Enable player control
+        EnablePlayerControl();
+        
+        // Hide cursor for gameplay
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
         
         // Show gameplay UI
         ShowGameplayUI();
@@ -362,11 +361,8 @@ public class MainMenuUI : MonoBehaviour
     public void ReturnToMainMenu()
     {
         // Called when returning from game to main menu
-        if (UnifiedUIManager.Instance != null)
-        {
-            UnifiedUIManager.Instance.NavigateTo(UnifiedUIPanelNames.MainMenu);
-        }
-        else if (mainMenuPanel != null)
+        // Don't use UnifiedUIManager in MainMenu
+        if (mainMenuPanel != null)
         {
             mainMenuPanel.SetActive(true);
         }
@@ -378,7 +374,8 @@ public class MainMenuUI : MonoBehaviour
         CheckForExistingSaves();
         UpdateButtonVisibility();
         
-        // Pause game is handled by UnifiedUIManager
+        // Pause game
+        Time.timeScale = 0f;
         
         // Disable player
         DisablePlayerControl();

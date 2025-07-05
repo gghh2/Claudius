@@ -1,0 +1,106 @@
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+/// <summary>
+/// Manages scene transitions and ensures UI state is correct
+/// </summary>
+public class SceneTransitionManager : MonoBehaviour
+{
+    private static SceneTransitionManager instance;
+    
+    void Awake()
+    {
+        if (instance == null)
+        {
+            instance = this;
+            DontDestroyOnLoad(gameObject);
+            
+            // Subscribe to scene loaded event
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+    
+    void OnDestroy()
+    {
+        if (instance == this)
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+    }
+    
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        Debug.Log($"[SceneTransitionManager] Scene loaded: {scene.name}");
+        
+        // Handle different scenes
+        switch (scene.name)
+        {
+            case "MainMenu":
+                HandleMainMenuSceneLoaded();
+                break;
+                
+            case "Game":
+                HandleGameSceneLoaded();
+                break;
+        }
+    }
+    
+    void HandleMainMenuSceneLoaded()
+    {
+        // In MainMenu, we don't use UnifiedUIManager for the main menu
+        // Just ensure game state is properly reset
+        Time.timeScale = 0f; // Menu should pause time
+        
+        // Destroy UnifiedUIManager if it exists from previous game session
+        if (UnifiedUIManager.Instance != null)
+        {
+            GameObject uiManager = UnifiedUIManager.Instance.gameObject;
+            if (uiManager.name.Contains("UnifiedUIManager"))
+            {
+                Debug.Log("[SceneTransitionManager] Destroying UnifiedUIManager in MainMenu");
+                Destroy(uiManager);
+            }
+        }
+    }
+    
+    void HandleGameSceneLoaded()
+    {
+        // In Game scene, ensure UnifiedUIManager is properly set up
+        if (UnifiedUIManager.Instance != null)
+        {
+            Debug.Log("[SceneTransitionManager] Resetting UnifiedUIManager for Game scene");
+            
+            // Wait a frame for all objects to be initialized
+            StartCoroutine(ResetUIManagerNextFrame());
+        }
+        
+        // Ensure game time is running
+        Time.timeScale = 1f;
+        
+        // Ensure player can move
+        var player = FindObjectOfType<PlayerControllerCC>();
+        if (player != null)
+        {
+            player.EnableControls(true);
+        }
+        
+        // Ensure cursor is hidden for gameplay
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+    }
+    
+    System.Collections.IEnumerator ResetUIManagerNextFrame()
+    {
+        yield return null; // Wait one frame
+        
+        if (UnifiedUIManager.Instance != null)
+        {
+            UnifiedUIManager.Instance.RefreshPanelReferences();
+            UnifiedUIManager.Instance.ResetToGame();
+        }
+    }
+}

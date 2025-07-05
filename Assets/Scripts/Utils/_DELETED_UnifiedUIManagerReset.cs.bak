@@ -1,0 +1,37 @@
+using UnityEngine;
+
+/// <summary>
+/// Ensures UnifiedUIManager is properly reset when entering Game scene
+/// </summary>
+public class UnifiedUIManagerReset : MonoBehaviour
+{
+    void Awake()
+    {
+        // Reset UnifiedUIManager when entering Game scene
+        if (UnifiedUIManager.Instance != null)
+        {
+            Debug.Log("[UnifiedUIManagerReset] Resetting UnifiedUIManager to GAME state");
+            UnifiedUIManager.Instance.ResetToGame();
+            
+            // Force refresh of panel references
+            UnifiedUIManager.Instance.RefreshPanelReferences();
+        }
+    }
+    
+    void Start()
+    {
+        // Double-check player control is enabled
+        var player = FindObjectOfType<PlayerControllerCC>();
+        if (player != null)
+        {
+            player.EnableControls(true);
+        }
+        
+        // Ensure cursor is properly set for gameplay
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+        
+        // Ensure Time.timeScale is 1
+        Time.timeScale = 1f;
+    }
+}

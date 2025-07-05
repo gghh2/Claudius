@@ -500,7 +500,7 @@ public class UnifiedUIManager : MonoBehaviour
         var player = FindObjectOfType<PlayerControllerCC>();
         if (player != null)
         {
-            player.DisableControl();
+            player.EnableControls(false);
         }
         
         Cursor.visible = true;
@@ -519,7 +519,7 @@ public class UnifiedUIManager : MonoBehaviour
         if (player != null)
         {
             player.enabled = true;
-            player.EnableControl();
+            player.EnableControls(true);
             Time.timeScale = 1f;
         }
         

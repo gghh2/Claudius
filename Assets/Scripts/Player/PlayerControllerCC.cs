@@ -303,7 +303,7 @@ public class PlayerControllerCC : MonoBehaviour
         
         if (animator != null)
         {
-            animator.SetTrigger("Jump");
+            SetAnimatorTriggerSafe("Jump");
         }
         
         if (footstepSystem != null)
@@ -409,7 +409,7 @@ public class PlayerControllerCC : MonoBehaviour
         
         if (animator != null)
         {
-            animator.SetBool("IsSprinting", true);
+            SetAnimatorBoolSafe("IsSprinting", true);
         }
     }
     
@@ -433,7 +433,7 @@ public class PlayerControllerCC : MonoBehaviour
         
         if (animator != null)
         {
-            animator.SetBool("IsSprinting", false);
+            SetAnimatorBoolSafe("IsSprinting", false);
         }
     }
     
@@ -441,19 +441,78 @@ public class PlayerControllerCC : MonoBehaviour
     {
         if (animator == null) return;
         
-        animator.SetFloat("Speed", currentSpeed);
-        animator.SetBool("IsGrounded", isGrounded);
+        // Use safe parameter setting with HasParameter check
+        SetAnimatorFloatSafe("Speed", currentSpeed);
+        SetAnimatorBoolSafe("IsGrounded", isGrounded);
         
         bool isMoving = currentSpeed > 0.1f;
-        animator.SetBool("IsMoving", isMoving);
+        SetAnimatorBoolSafe("IsMoving", isMoving);
         
-        animator.SetBool("IsSprinting", isSprinting);
-        animator.SetFloat("SprintSpeed", isSprinting ? 1f : 0f);
+        SetAnimatorBoolSafe("IsSprinting", isSprinting);
+        SetAnimatorFloatSafe("SprintSpeed", isSprinting ? 1f : 0f);
         
         if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player) && Input.GetKeyDown(KeyCode.F1))
         {
-            Debug.Log($"🎭 Animator State: Speed={currentSpeed:F2}, IsMoving={isMoving}, IsSprinting={isSprinting}");
+            ListAnimatorParameters();
         }
+    }
+    
+    // Safe methods to set animator parameters
+    void SetAnimatorBoolSafe(string paramName, bool value)
+    {
+        if (animator == null) return;
+        
+        // Check if parameter exists before setting it
+        foreach (AnimatorControllerParameter param in animator.parameters)
+        {
+            if (param.name == paramName && param.type == AnimatorControllerParameterType.Bool)
+            {
+                animator.SetBool(paramName, value);
+                return;
+            }
+        }
+    }
+    
+    void SetAnimatorFloatSafe(string paramName, float value)
+    {
+        if (animator == null) return;
+        
+        // Check if parameter exists before setting it
+        foreach (AnimatorControllerParameter param in animator.parameters)
+        {
+            if (param.name == paramName && param.type == AnimatorControllerParameterType.Float)
+            {
+                animator.SetFloat(paramName, value);
+                return;
+            }
+        }
+    }
+    
+    void SetAnimatorTriggerSafe(string paramName)
+    {
+        if (animator == null) return;
+        
+        // Check if parameter exists before setting it
+        foreach (AnimatorControllerParameter param in animator.parameters)
+        {
+            if (param.name == paramName && param.type == AnimatorControllerParameterType.Trigger)
+            {
+                animator.SetTrigger(paramName);
+                return;
+            }
+        }
+    }
+    
+    void ListAnimatorParameters()
+    {
+        if (animator == null) return;
+        
+        Debug.Log("=== Animator Parameters ===");
+        foreach (AnimatorControllerParameter param in animator.parameters)
+        {
+            Debug.Log($"- {param.name} ({param.type})");
+        }
+        Debug.Log("==========================");
     }
     
     void ReenableFootsteps()
@@ -464,28 +523,65 @@ public class PlayerControllerCC : MonoBehaviour
         }
     }
     
-    // Public methods
-    public void ToggleFootsteps(bool enabled)
+    public void EnableControls(bool enable)
     {
-        if (footstepSystem != null)
+        isControlEnabled = enable;
+        
+        if (!enable)
         {
-            footstepSystem.SetFootstepsEnabled(enabled);
-            Debug.Log($"🦶 Bruits de pas {(enabled ? "activés" : "désactivés")}");
+            inputX = 0f;
+            inputY = 0f;
+            moveDirection = Vector3.zero;
+            currentSpeed = 0f;
+            
+            if (isSprinting)
+            {
+                StopSprint();
+            }
+            
+            UpdateAnimator();
         }
     }
     
-    public void SetFootstepVolume(float volume)
+    void FixModelPosition()
     {
-        if (footstepSystem != null)
+        Transform modelTransform = transform.Find("Model");
+        if (modelTransform == null)
         {
-            footstepSystem.SetFootstepVolume(volume);
-            Debug.Log($"🦶 Volume des pas: {volume:F2}");
+            modelTransform = transform.Find("Visuals");
+        }
+        if (modelTransform == null)
+        {
+            modelTransform = GetComponentInChildren<SkinnedMeshRenderer>()?.transform;
+        }
+        
+        if (modelTransform != null)
+        {
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
+            {
+                Debug.Log($"🔧 Modèle trouvé: {modelTransform.name} à la position locale {modelTransform.localPosition}");
+            }
+            
+            // Force correct alignment
+            modelTransform.localPosition = new Vector3(0, 0, 0);
+            modelTransform.localRotation = Quaternion.identity;
+        }
+        else
+        {
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
+            {
+                Debug.LogWarning("⚠️ Aucun modèle trouvé sous 'Model', 'Visuals' ou avec SkinnedMeshRenderer");
+            }
         }
     }
     
-    public float GetCurrentSpeed()
+    public Vector3 GetVelocity()
     {
-        return currentSpeed;
+        if (controller != null)
+        {
+            return controller.velocity;
+        }
+        return Vector3.zero;
     }
     
     public bool IsMoving()
@@ -493,109 +589,30 @@ public class PlayerControllerCC : MonoBehaviour
         return currentSpeed > 0.1f;
     }
     
+    // For UI and systems
+    public float GetCurrentStaminaPercentage()
+    {
+        return currentStamina / maxStamina;
+    }
+    
     public bool IsSprinting()
     {
         return isSprinting;
     }
     
-    public Vector3 GetMoveDirection()
+    void OnDrawGizmos()
     {
-        return moveDirection;
-    }
-    
-    public float GetStaminaPercentage()
-    {
-        return useStamina ? (currentStamina / maxStamina) : 1f;
-    }
-    
-    public void DisableControl()
-    {
-        isControlEnabled = false;
-        moveDirection = Vector3.zero;
-        if (isSprinting) StopSprint();
-    }
-    
-    public void EnableControl()
-    {
-        isControlEnabled = true;
-    }
-    
-    void FixModelPosition()
-    {
-        Transform spaceManModel = transform.Find("space_man_model");
-        if (spaceManModel == null)
+        Vector3 pos = transform.position;
+        
+        // Ground check sphere
+        Gizmos.color = isGrounded ? Color.green : Color.red;
+        Gizmos.DrawWireSphere(pos + Vector3.down * groundCheckDistance, 0.2f);
+        
+        // Movement direction
+        if (Application.isPlaying && moveDirection.magnitude > 0.1f)
         {
-            Debug.LogWarning("⚠️ space_man_model non trouvé dans les enfants");
-            return;
-        }
-        
-        // Adjust model position based on Character Controller
-        if (controller != null)
-        {
-            float bottomY = -controller.height / 2f;
-            spaceManModel.localPosition = new Vector3(0, bottomY, 0);
-            Debug.Log($"🔧 Position du modèle ajustée pour Character Controller: Y={bottomY:F2}");
-        }
-    }
-    
-    void OnGUI()
-    {
-        if (!GlobalDebugManager.IsDebugEnabled(DebugSystem.Player)) return;
-        
-        GUILayout.BeginArea(new Rect(10, 10, 300, 280));
-        GUILayout.Label("=== PLAYER DEBUG CC (F1) ===");
-        GUILayout.Label($"Vitesse actuelle: {currentSpeed:F2}");
-        GUILayout.Label($"Vitesse de déplacement: {currentMoveSpeed:F2}");
-        GUILayout.Label($"Au sol: {(isGrounded ? "✅" : "❌")}");
-        GUILayout.Label($"Direction: {moveDirection}");
-        GUILayout.Label($"En mouvement: {(IsMoving() ? "✅" : "❌")}");
-        GUILayout.Label($"Sprint: {(isSprinting ? "✅ ACTIF" : "❌")}");
-        GUILayout.Label($"Step Offset: {controller.stepOffset:F2}m");
-        GUILayout.Label($"Velocity Y: {velocity.y:F2}");
-        
-        if (useStamina)
-        {
-            GUILayout.Label($"Stamina: {currentStamina:F0}/{maxStamina:F0} ({GetStaminaPercentage()*100:F0}%)");
-            GUILayout.Label($"Regen dans: {(staminaRegenTimer > 0 ? staminaRegenTimer.ToString("F1") + "s" : "Active")}");
-        }
-        
-        if (animator != null)
-        {
-            GUILayout.Label($"État anim: {animator.GetCurrentAnimatorStateInfo(0).shortNameHash}");
-        }
-        
-        if (GUILayout.Button("Debug Model Position"))
-        {
-            FixModelPosition();
-        }
-        
-        if (GUILayout.Button("Toggle Sprint"))
-        {
-            if (isSprinting) StopSprint();
-            else StartSprint();
-        }
-        
-        GUILayout.EndArea();
-    }
-    
-    [ContextMenu("Fix Model Position")]
-    public void ManualFixModelPosition()
-    {
-        FixModelPosition();
-    }
-    
-    // Handle Character Controller collisions
-    void OnControllerColliderHit(ControllerColliderHit hit)
-    {
-        // This is called when the Character Controller hits something
-        // You can add custom collision handling here if needed
-        
-        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
-        {
-            if (hit.gameObject.layer != gameObject.layer)
-            {
-                Debug.Log($"💥 Collision with: {hit.gameObject.name}");
-            }
+            Gizmos.color = Color.blue;
+            Gizmos.DrawRay(pos, moveDirection * 2f);
         }
     }
 }

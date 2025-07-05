@@ -346,7 +346,7 @@ public class MainMenuUI : MonoBehaviour
         var player = FindObjectOfType<PlayerControllerCC>();
         if (player != null)
         {
-            player.DisableControl();
+            player.EnableControls(false);
         }
     }
     
@@ -355,7 +355,7 @@ public class MainMenuUI : MonoBehaviour
         var player = FindObjectOfType<PlayerControllerCC>();
         if (player != null)
         {
-            player.EnableControl();
+            player.EnableControls(true);
         }
     }
     

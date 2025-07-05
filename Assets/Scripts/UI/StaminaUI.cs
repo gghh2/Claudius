@@ -177,7 +177,7 @@ public class StaminaUI : MonoBehaviour
         if (playerController == null) return;
         
         // Récupère le pourcentage de stamina
-        float staminaPercentage = playerController.GetStaminaPercentage();
+        float staminaPercentage = playerController.GetCurrentStaminaPercentage();
         
         // Met à jour la barre
         UpdateStaminaBar(staminaPercentage);

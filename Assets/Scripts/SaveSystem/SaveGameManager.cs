@@ -35,6 +35,15 @@ public class SaveGameManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+            
+            // Check if this GameObject is a root object
+            if (transform.parent != null)
+            {
+                Debug.LogWarning("[SaveGame] SaveGameManager is not on a root GameObject. Moving to root...");
+                // Detach from parent to make it a root object
+                transform.SetParent(null);
+            }
+            
             DontDestroyOnLoad(gameObject);
             InitializeSavePath();
         }

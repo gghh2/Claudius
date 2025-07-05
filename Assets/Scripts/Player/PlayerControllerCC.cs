@@ -57,7 +57,6 @@ public class PlayerControllerCC : MonoBehaviour
     
     [Header("Camera Effects (Optional)")]
     public CameraFollow cameraFollow;
-    public float sprintZoomMultiplier = 0.8f;
     
     // Components
     private CharacterController controller;
@@ -70,7 +69,6 @@ public class PlayerControllerCC : MonoBehaviour
     private bool canSprint = true;
     private float currentMoveSpeed;
     private float targetMoveSpeed;
-    private float savedCameraZoom = -1f;
     private bool isControlEnabled = true;
     
     // Input variables
@@ -399,14 +397,6 @@ public class PlayerControllerCC : MonoBehaviour
             audioSource.PlayOneShot(sprintStartSound, 0.5f);
         }
         
-        if (cameraFollow != null && cameraFollow.enableZoom)
-        {
-            savedCameraZoom = cameraFollow.GetCurrentZoom();
-            float newZoom = savedCameraZoom * sprintZoomMultiplier;
-            cameraFollow.SetZoom(newZoom);
-            Debug.Log($"📷 Sprint Zoom: {savedCameraZoom:F1} → {newZoom:F1}");
-        }
-        
         if (animator != null)
         {
             SetAnimatorBoolSafe("IsSprinting", true);
@@ -422,13 +412,6 @@ public class PlayerControllerCC : MonoBehaviour
         if (sprintStopSound != null && audioSource != null)
         {
             audioSource.PlayOneShot(sprintStopSound, 0.3f);
-        }
-        
-        if (cameraFollow != null && cameraFollow.enableZoom && savedCameraZoom > 0)
-        {
-            cameraFollow.SetZoom(savedCameraZoom);
-            Debug.Log($"📷 Zoom restauré: {savedCameraZoom:F1}");
-            savedCameraZoom = -1f;
         }
         
         if (animator != null)

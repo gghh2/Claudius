@@ -8,20 +8,13 @@ public class CameraFollow : MonoBehaviour
     [Header("Camera Settings")]
     public Vector3 offset = new Vector3(10f, 10f, -10f); // Position relative à la caméra
     public float smoothSpeed = 0.125f; // Vitesse de suivi
-    public bool followX = true;
-    public bool followZ = true;
-    public bool followY = false;
     
-    [Header("Altitude Following")]
-    [Tooltip("Maintient une hauteur relative constante par rapport au joueur")]
-    public bool maintainRelativeHeight = true;
+    [Header("Follow Mode")]
+    [Tooltip("Maintient toujours la même distance entre la caméra et le joueur")]
+    public bool maintainConstantDistance = true;
     
-    [Tooltip("Hauteur de la caméra au-dessus du joueur")]
-    public float relativeHeight = 9f;
-    
-    [Tooltip("Vitesse de suivi de l'altitude (0 = instantané, 1 = très lent)")]
-    [Range(0f, 1f)]
-    public float heightSmoothness = 0.125f;
+    [Tooltip("Distance fixe à maintenir avec le joueur")]
+    public float fixedDistance = 14.14f; // Distance par défaut (correspond à offset 10,10,-10)
     
     [Header("Zoom Settings (Orthographic)")]
     public bool enableZoom = true;
@@ -68,6 +61,13 @@ public class CameraFollow : MonoBehaviour
             }
         }
         
+        // Calcule la distance fixe basée sur l'offset initial
+        if (maintainConstantDistance)
+        {
+            fixedDistance = offset.magnitude;
+            Debug.Log($"Distance fixe calculée: {fixedDistance:F2}");
+        }
+        
         // Initialise le zoom
         cam.orthographicSize = defaultSize;
         targetSize = defaultSize;
@@ -91,38 +91,20 @@ public class CameraFollow : MonoBehaviour
             return; // No zoom when any UI panel is open
         }
         
-        // ALTERNATIVE ROBUSTE : Gestion de la molette ET des raccourcis
-        
         // Récupère l'input de la molette
         float scrollInput = Input.GetAxis("Mouse ScrollWheel");
         
         if (scrollInput != 0f)
         {
-            // Ajuste le zoom cible
+            // Ajuste le zoom
             targetSize -= scrollInput * zoomSpeed;
             targetSize = Mathf.Clamp(targetSize, minSize, maxSize);
-            
-            //Debug.Log($"Zoom - Taille cible: {targetSize:F1}");
         }
         
-        // Raccourcis clavier (aussi désactivés pendant les dialogues)
+        // Raccourcis clavier
         if (Input.GetKeyDown(KeyCode.R))
         {
             ResetZoom();
-            //Debug.Log("Zoom resetté");
-        }
-        
-        // BONUS SUPPLÉMENTAIRE : Raccourcis + et - pour le zoom
-        if (Input.GetKey(KeyCode.Plus) || Input.GetKey(KeyCode.KeypadPlus))
-        {
-            targetSize -= Time.deltaTime * zoomSpeed; // + pour zoom avant
-            targetSize = Mathf.Clamp(targetSize, minSize, maxSize);
-        }
-        
-        if (Input.GetKey(KeyCode.Minus) || Input.GetKey(KeyCode.KeypadMinus))
-        {
-            targetSize += Time.deltaTime * zoomSpeed; // - pour zoom arrière
-            targetSize = Mathf.Clamp(targetSize, minSize, maxSize);
         }
     }
     
@@ -136,23 +118,21 @@ public class CameraFollow : MonoBehaviour
     {
         if (target == null) return;
         
-        // Position désirée de base
-        Vector3 desiredPosition = target.position + offset;
+        Vector3 desiredPosition;
         
-        // Si on maintient une hauteur relative
-        if (maintainRelativeHeight)
+        if (maintainConstantDistance)
         {
-            // La position Y désirée est la position Y du joueur + la hauteur relative
-            desiredPosition.y = target.position.y + relativeHeight;
+            // NOUVEAU : Maintient toujours la même distance
+            // La direction reste la même (offset normalisé)
+            Vector3 direction = offset.normalized;
+            
+            // Position désirée = position du joueur + direction * distance fixe
+            desiredPosition = target.position + direction * fixedDistance;
         }
         else
         {
-            // Comportement original avec les restrictions d'axes
-            Vector3 currentPos = transform.position;
-            
-            if (!followX) desiredPosition.x = currentPos.x;
-            if (!followY) desiredPosition.y = currentPos.y;
-            if (!followZ) desiredPosition.z = currentPos.z;
+            // Ancien comportement : suit avec l'offset fixe
+            desiredPosition = target.position + offset;
         }
         
         // Applique les limites si activées
@@ -163,21 +143,7 @@ public class CameraFollow : MonoBehaviour
         }
         
         // Mouvement fluide vers la position désirée
-        Vector3 smoothedPosition;
-        
-        if (maintainRelativeHeight)
-        {
-            // Lissage différencié pour X/Z et Y
-            smoothedPosition.x = Mathf.Lerp(transform.position.x, desiredPosition.x, smoothSpeed);
-            smoothedPosition.z = Mathf.Lerp(transform.position.z, desiredPosition.z, smoothSpeed);
-            smoothedPosition.y = Mathf.Lerp(transform.position.y, desiredPosition.y, heightSmoothness);
-        }
-        else
-        {
-            // Lissage uniforme
-            smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
-        }
-        
+        Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
         transform.position = smoothedPosition;
     }
     

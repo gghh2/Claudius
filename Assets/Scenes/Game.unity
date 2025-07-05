@@ -16367,7 +16367,7 @@ CharacterController:
   m_StepOffset: 0.4
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: 1, z: 0}
 --- !u!114 &763364917
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16380,15 +16380,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff00d8b8237732043b9b772423481e12, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 5
-  sprintSpeed: 8
+  moveSpeed: 7
+  sprintSpeed: 10
   sprintKey: 304
   sprintTransitionSpeed: 0.3
   canSprintInAir: 0
   useStamina: 1
   maxStamina: 100
-  staminaDrainRate: 20
-  staminaRegenRate: 15
+  staminaDrainRate: 10
+  staminaRegenRate: 5
   staminaRegenDelay: 1
   currentStamina: 0
   jumpHeight: 2
@@ -16407,7 +16407,6 @@ MonoBehaviour:
   sprintStopSound: {fileID: 0}
   animator: {fileID: 0}
   cameraFollow: {fileID: 0}
-  sprintZoomMultiplier: 0.8
 --- !u!1 &764560754
 GameObject:
   m_ObjectHideFlags: 0
@@ -20269,12 +20268,8 @@ MonoBehaviour:
   target: {fileID: 763364911}
   offset: {x: 10, y: 10, z: -10}
   smoothSpeed: 0.125
-  followX: 1
-  followZ: 1
-  followY: 0
-  maintainRelativeHeight: 1
-  relativeHeight: 8.1
-  heightSmoothness: 0.125
+  maintainConstantDistance: 1
+  fixedDistance: 14.14
   enableZoom: 1
   zoomSpeed: 10
   minSize: 1

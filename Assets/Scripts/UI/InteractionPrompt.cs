@@ -143,22 +143,45 @@ public class InteractionPrompt : MonoBehaviour
     
     void Update()
     {
+        // Check if currentPrompt still exists
+        if (currentPrompt == null)
+        {
+            CreatePromptUI();
+            return;
+        }
+        
         if (currentPrompt.activeSelf)
         {
             // Update position
-            if (target != null)
+            if (target != null && Camera.main != null)
             {
-                Vector3 screenPos = Camera.main.WorldToScreenPoint(target.position + offset);
-                currentPrompt.transform.position = screenPos;
+                // Check if target GameObject still exists (not just != null)
+                try 
+                {
+                    Vector3 screenPos = Camera.main.WorldToScreenPoint(target.position + offset);
+                    currentPrompt.transform.position = screenPos;
+                }
+                catch (MissingReferenceException)
+                {
+                    // Target was destroyed, hide the prompt
+                    HidePrompt();
+                }
+            }
+            else
+            {
+                // No target or no camera, hide the prompt
+                HidePrompt();
             }
             
             // Fade in
-            canvasGroup.alpha = Mathf.Lerp(canvasGroup.alpha, 1f, Time.deltaTime * fadeSpeed);
+            if (canvasGroup != null)
+                canvasGroup.alpha = Mathf.Lerp(canvasGroup.alpha, 1f, Time.deltaTime * fadeSpeed);
         }
         else
         {
             // Fade out
-            canvasGroup.alpha = Mathf.Lerp(canvasGroup.alpha, 0f, Time.deltaTime * fadeSpeed);
+            if (canvasGroup != null)
+                canvasGroup.alpha = Mathf.Lerp(canvasGroup.alpha, 0f, Time.deltaTime * fadeSpeed);
         }
     }
 }

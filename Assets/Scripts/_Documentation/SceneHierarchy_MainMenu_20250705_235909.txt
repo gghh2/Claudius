@@ -1,5 +1,5 @@
 SCENE_NAME: MainMenu
-EXPORT_DATE: 2025-07-04 10:02:41
+EXPORT_DATE: 2025-07-05 23:59:09
 UNITY_VERSION: 2021.3.23f1
 =====================================
 
@@ -14,7 +14,6 @@ GAMEOBJECT|ACTIVE|Directional Light
 GAMEOBJECT|ACTIVE|EventSystem
 	COMPONENT|EventSystem|UnityEngine.EventSystems|SCRIPT
 	COMPONENT|StandaloneInputModule|UnityEngine.EventSystems|SCRIPT
-	COMPONENT|BaseInput|UnityEngine.EventSystems|SCRIPT
 GAMEOBJECT|ACTIVE|Canvas
 	COMPONENT|Canvas|UnityEngine
 	COMPONENT|CanvasScaler|UnityEngine.UI|SCRIPT
@@ -42,11 +41,11 @@ GAMEOBJECT|ACTIVE|Canvas
 				GAMEOBJECT|ACTIVE|Text (TMP)
 					COMPONENT|CanvasRenderer|UnityEngine
 					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
-			GAMEOBJECT|INACTIVE|ContinueButton
+			GAMEOBJECT|ACTIVE|ContinueButton
 				COMPONENT|CanvasRenderer|UnityEngine
 				COMPONENT|Image|UnityEngine.UI|SCRIPT
 				COMPONENT|Button|UnityEngine.UI|SCRIPT
-				GAMEOBJECT|INACTIVE|Text (TMP)
+				GAMEOBJECT|ACTIVE|Text (TMP)
 					COMPONENT|CanvasRenderer|UnityEngine
 					COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
 			GAMEOBJECT|ACTIVE|LoadGameButton
@@ -80,13 +79,6 @@ GAMEOBJECT|ACTIVE|Canvas
 		GAMEOBJECT|ACTIVE|VersionText
 			COMPONENT|CanvasRenderer|UnityEngine
 			COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
-		GAMEOBJECT|INACTIVE|InteractionPrompt
-			COMPONENT|CanvasGroup|UnityEngine
-			COMPONENT|CanvasRenderer|UnityEngine
-			COMPONENT|Image|UnityEngine.UI|SCRIPT
-			GAMEOBJECT|INACTIVE|Text
-				COMPONENT|CanvasRenderer|UnityEngine
-				COMPONENT|TextMeshProUGUI|TMPro|SCRIPT
 	GAMEOBJECT|INACTIVE|LoadGamePanel
 		COMPONENT|SaveSystemUI|UnityEngine|SCRIPT
 		GAMEOBJECT|INACTIVE|LoadTitle
@@ -467,7 +459,6 @@ GAMEOBJECT|ACTIVE|Manager
 		COMPONENT|SmartCursorManager|UnityEngine|SCRIPT
 	GAMEOBJECT|ACTIVE|MainMenuManager
 		COMPONENT|MainMenuManager|UnityEngine|SCRIPT
-		COMPONENT|AudioSource|UnityEngine
 	GAMEOBJECT|ACTIVE|SceneNavigationManager
 		COMPONENT|SceneNavigationManager|UnityEngine|SCRIPT
 	GAMEOBJECT|ACTIVE|MusicManager
@@ -479,13 +470,9 @@ GAMEOBJECT|ACTIVE|Manager
 
 
 SCRIPT_SUMMARY:
-SCRIPT|BaseInput|COUNT:1
-SCRIPT|UnifiedUIManager|COUNT:1
-SCRIPT|DebugUpdater|COUNT:1
-SCRIPT|TextMeshProUGUI|COUNT:57
-SCRIPT|Image|COUNT:64
-SCRIPT|InteractionPrompt|COUNT:1
 SCRIPT|SaveGameManager|COUNT:1
+SCRIPT|Image|COUNT:63
+SCRIPT|TextMeshProUGUI|COUNT:56
 SCRIPT|UniversalAdditionalLightData|COUNT:1
 SCRIPT|HorizontalLayoutGroup|COUNT:6
 SCRIPT|Button|COUNT:32

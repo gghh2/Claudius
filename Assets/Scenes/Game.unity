@@ -16400,7 +16400,7 @@ MonoBehaviour:
   stepOffset: 0.3
   slopeLimit: 45
   jumpEffect: {fileID: 0}
-  jumpSound: {fileID: 0}
+  jumpSound: {fileID: 8300000, guid: 48466666a0db3504fb12c1e81bb82da4, type: 3}
   audioSource: {fileID: 0}
   sprintEffect: {fileID: 0}
   sprintStartSound: {fileID: 0}
@@ -23474,6 +23474,61 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c67a23c620a18a74991c753fc2340c40, type: 3}
+--- !u!1 &1062606310
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1062606311}
+  - component: {fileID: 1062606312}
+  m_Layer: 0
+  m_Name: NotificationManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1062606311
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1062606310}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1777231199}
+  m_RootOrder: 13
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1062606312
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1062606310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f8e7d6c5b4a3e2f1a0b9c8d7e6f5a4b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  notificationPanel: {fileID: 0}
+  notificationText: {fileID: 0}
+  backgroundImage: {fileID: 0}
+  defaultDuration: 2
+  fadeInTime: 0.3
+  fadeOutTime: 0.3
+  successColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.9}
+  errorColor: {r: 0.8, g: 0.2, b: 0.2, a: 0.9}
+  infoColor: {r: 0.2, g: 0.5, b: 0.8, a: 0.9}
+  warningColor: {r: 0.8, g: 0.6, b: 0.2, a: 0.9}
+  enableDebugLogs: 1
 --- !u!1001 &1064244161
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -40225,6 +40280,7 @@ Transform:
   - {fileID: 495044199}
   - {fileID: 1235219245}
   - {fileID: 1583482084}
+  - {fileID: 1062606311}
   m_Father: {fileID: 0}
   m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

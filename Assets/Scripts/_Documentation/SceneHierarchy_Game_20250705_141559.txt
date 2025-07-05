@@ -1,5 +1,5 @@
 SCENE_NAME: Game
-EXPORT_DATE: 2025-07-04 15:05:30
+EXPORT_DATE: 2025-07-05 14:15:59
 UNITY_VERSION: 2021.3.23f1
 =====================================
 
@@ -2793,7 +2793,6 @@ GAMEOBJECT|ACTIVE|Manager
 		COMPONENT|SoundEffectsManager|UnityEngine|SCRIPT
 		COMPONENT|AudioDistanceManager|UnityEngine|SCRIPT
 	GAMEOBJECT|ACTIVE|PauseManager
-		COMPONENT|MISSING_SCRIPT
 	GAMEOBJECT|ACTIVE|AIDialogueManager
 		COMPONENT|AIDialogueManager|UnityEngine|SCRIPT
 	GAMEOBJECT|ACTIVE|ConfirmDialogManager
@@ -2807,7 +2806,6 @@ GAMEOBJECT|ACTIVE|Manager
 	GAMEOBJECT|ACTIVE|UnifiedUIManager
 		COMPONENT|UnifiedUIManager|UnityEngine|SCRIPT
 	GAMEOBJECT|ACTIVE|GameSetupManager
-		COMPONENT|MISSING_SCRIPT
 GAMEOBJECT|ACTIVE|Global Volume
 	COMPONENT|Volume|UnityEngine.Rendering|SCRIPT
 GAMEOBJECT|ACTIVE|HierarchyDebugger
@@ -2815,26 +2813,24 @@ GAMEOBJECT|ACTIVE|HierarchyDebugger
 
 
 SCRIPT_SUMMARY:
-SCRIPT|QuestJournalPanelHelper|COUNT:1
-SCRIPT|QuestJournalUI|COUNT:1
+SCRIPT|UINavigationButton|COUNT:4
+SCRIPT|Image|COUNT:98
+SCRIPT|Button|COUNT:46
+SCRIPT|TextMeshProUGUI|COUNT:81
 SCRIPT|SaveGameManager|COUNT:1
 SCRIPT|Monitor|COUNT:3
 SCRIPT|ButtonLamp|COUNT:5
-SCRIPT|Image|COUNT:98
-SCRIPT|TextMeshProUGUI|COUNT:81
 SCRIPT|NPC|COUNT:5
 SCRIPT|NPCNameDisplay|COUNT:5
 SCRIPT|NPCMovement|COUNT:5
 SCRIPT|NPCQuestTurnIn|COUNT:5
 SCRIPT|Slider|COUNT:4
-SCRIPT|Button|COUNT:46
 SCRIPT|QuestZone|COUNT:13
 SCRIPT|AmbientSoundZone|COUNT:4
 SCRIPT|TextMeshPro|COUNT:1
 SCRIPT|MeshyGenerator|COUNT:1
 SCRIPT|HorizontalLayoutGroup|COUNT:6
 SCRIPT|APITester|COUNT:1
-SCRIPT|UINavigationButton|COUNT:4
 SCRIPT|VerticalLayoutGroup|COUNT:5
 SCRIPT|ContentSizeFitter|COUNT:2
 SCRIPT|LayoutElement|COUNT:1
@@ -2870,6 +2866,7 @@ SCRIPT|InventoryUI|COUNT:1
 SCRIPT|DialogueUI|COUNT:1
 SCRIPT|SaveMenuIntegration|COUNT:1
 SCRIPT|PauseMenuUI|COUNT:1
+SCRIPT|QuestJournalUI|COUNT:1
 SCRIPT|Outline|COUNT:1
 SCRIPT|GraphicRaycaster|COUNT:10
 SCRIPT|DynamicAssetManager|COUNT:1
@@ -2885,6 +2882,7 @@ SCRIPT|ScrollRect|COUNT:3
 SCRIPT|GlobalDebugManager|COUNT:1
 SCRIPT|CSMGenerator|COUNT:1
 SCRIPT|HierarchyDebugger|COUNT:1
+SCRIPT|QuestJournalPanelHelper|COUNT:1
 SCRIPT|QuestZoneManager|COUNT:1
 SCRIPT|AssetManagerTester|COUNT:1
 SCRIPT|AIDialogueManager|COUNT:1

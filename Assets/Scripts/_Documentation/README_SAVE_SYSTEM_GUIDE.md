@@ -5,9 +5,10 @@
 Le système de sauvegarde permet de sauvegarder et charger l'état complet du jeu incluant :
 - Position et état du joueur
 - Stamina et santé
-- **Zoom de la caméra** (nouveau)
+- **Zoom de la caméra** (orthographicSize ou FOV)
 - Companion (position, type)
-- Quêtes actives et complétées
+- **Quêtes actives, complétées ET annulées** (NOUVEAU)
+- **Positions exactes des objets de quête** (NOUVEAU)
 - Positions des NPCs
 - Inventaire
 - Paramètres audio
@@ -20,14 +21,15 @@ Le système de sauvegarde permet de sauvegarder et charger l'état complet du je
    - Gère la sauvegarde/chargement des données
    - Sérialise en JSON
    - Pas d'autosave (supprimé)
+   - **Gère la recréation des quêtes et leurs objets** (NOUVEAU)
 
 2. **SaveGameUI.cs** : Interface utilisateur
-   - Gère l'affichage du menu de sauvegarde
+   - Intégré avec UnifiedUIManager
    - Boîtes de dialogue de confirmation
    - Notifications
 
 3. **SaveMenuIntegration.cs** : Intégration menu pause
-   - Ajoute le bouton Save/Load au menu pause
+   - Utilise UnifiedUIManager.NavigateTo()
    - Gère la navigation entre menus
 
 4. **ProgressiveSaveSlots.cs** : Gestion des slots
@@ -69,21 +71,19 @@ SaveMenuPanel
 └── NotificationPanel
 ```
 
-### 3. Intégration menu pause
+### 3. Intégration avec UnifiedUIManager
 
-Sur l'objet avec ModernPauseMenu :
-- Ajouter `SaveMenuIntegration`
-- Assigner le bouton Save/Load
+Le SaveMenuPanel doit être assigné dans UnifiedUIManager !
 
 ## Utilisation
 
 ### Navigation
 1. **ESC** → Menu pause
-2. **Save/Load** → Menu de sauvegarde
+2. **Save/Load** → Menu de sauvegarde (via UnifiedUIManager)
 3. **Save** → Sauvegarde et retour au jeu
 4. **Load** → Chargement et retour au jeu
 5. **Delete** → Suppression avec confirmation
-6. **Close** → Retour au menu pause
+6. **Close/ESC** → Retour au menu pause
 
 ### Comportement des slots
 - **Mode progressif** (par défaut) :
@@ -93,29 +93,39 @@ Sur l'objet avec ModernPauseMenu :
 
 - **Noms des sauvegardes** :
   - Slot vide : "Empty"
-  - Slot utilisé : "Claudius-1", "Claudius-2", etc.
-
-- **Boutons dynamiques** :
-  - Save : toujours visible
-  - Load/Delete : visibles seulement si sauvegarde existe
+  - Slot utilisé : Date et heure de la sauvegarde
 
 ## Ce qui est sauvegardé
 
 ### Joueur
-- Position et rotation
+- Position et rotation exactes
 - Stamina actuelle
 - Santé (si implémentée)
-- **Zoom de la caméra** (orthographicSize)
+- Zoom de la caméra (orthographicSize ou fieldOfView)
+- Position de spawn pour le respawn
 
 ### Companion
 - Présence du companion
 - Type de companion
 - Position et rotation
 
-### Quêtes
-- Toutes les quêtes actives avec progression
-- Quête actuellement suivie
-- Quêtes complétées
+### Quêtes (SYSTÈME AMÉLIORÉ)
+- **Quêtes actives** :
+  - Toutes les infos de la quête (id, titre, description, type, etc.)
+  - Progression actuelle
+  - **Nom exact de la zone** (ex: "Zone_Ruins_Temple_3")
+  - **Noms des objets/cibles** (objectName, targetName)
+  - **Positions des objets spawnés** (NOUVEAU)
+  - Quête actuellement suivie (tracked)
+  
+- **Quêtes complétées** : Infos complètes sauvegardées
+- **Quêtes annulées** : Infos complètes sauvegardées (NOUVEAU)
+
+- **Au chargement** :
+  - Les quêtes sont recréées dans QuestManager
+  - Les objets de quête sont respawnés aux positions sauvegardées
+  - La progression est restaurée
+  - Le suivi (tracking) est restauré
 
 ### NPCs
 - Position de chaque NPC
@@ -142,6 +152,13 @@ Sur l'objet avec ModernPauseMenu :
 - Linux : `~/.config/unity3d/[CompanyName]/[GameName]/saves/`
 
 **Noms des fichiers** : `save_0.json`, `save_1.json`, etc.
+
+## Debug des quêtes
+
+Si les quêtes ne se rechargent pas correctement :
+1. Vérifiez les logs pour "[SaveGame]"
+2. Assurez-vous que les zones de quête ont les bons "supportedObjects"
+3. Vérifiez que le nom de zone est exact (pas juste "ruins" mais "Zone_Ruins_Temple_3")
 
 ## Personnalisation
 
@@ -173,31 +190,45 @@ public class MyCustomData
 → Vérifier que ProgressiveSaveSlots est actif
 
 ### Le menu ne s'ouvre pas
-→ Vérifier SaveMenuPanel dans l'Inspector de SaveGameUI
+→ Vérifier SaveMenuPanel dans UnifiedUIManager ET SaveGameUI
 
 ### Les slots ne se mettent pas à jour
 → Clic droit sur ProgressiveSaveSlots → "Force Update"
 
-### La suppression ne rafraîchit pas l'affichage
-→ Le système fait plusieurs mises à jour automatiques, attendez 0.5s
+### Les quêtes ne se rechargent pas
+→ Vérifier les logs "[SaveGame]"
+→ Vérifier que les zones supportent les bons types d'objets
+→ S'assurer que QuestManager et QuestJournal sont DontDestroyOnLoad
+
+### Position du joueur ne se restaure pas
+→ Vérifier que CharacterController est bien désactivé/réactivé
 
 ## Notes importantes
 
 - **Pas de quicksave F5/F9** (supprimé pour simplifier)
 - **Pas d'autosave** (supprimé)
-- **Save/Load retourne directement au jeu** (pas au menu pause)
+- **Save/Load retourne directement au jeu**
 - Le système utilise les événements pour se mettre à jour automatiquement
+- **IMPORTANT** : Les noms de zones doivent être exacts pour les quêtes
 
 ## Performance
 
 - Sauvegarde : < 100ms
-- Chargement : < 200ms
+- Chargement : < 200ms (+ temps de recréation des quêtes)
 - Taille moyenne : 10-50 KB par sauvegarde
 - Mise à jour UI : instantanée avec plusieurs passes
 
 ## Changelog
 
-### v2.0 (Version actuelle)
+### v2.1 (Version actuelle - Décembre 2024)
+- **NOUVEAU** : Sauvegarde complète des quêtes annulées
+- **NOUVEAU** : Sauvegarde des positions exactes des objets de quête
+- **NOUVEAU** : Stockage du nom exact des zones (fix du bug "ruins")
+- **FIX** : Recréation correcte des quêtes au chargement
+- **FIX** : Restauration de la progression des quêtes
+- Amélioration des logs de debug
+
+### v2.0 
 - Ajout sauvegarde du zoom caméra
 - Système de slots progressif
 - Suppression autosave et quicksave

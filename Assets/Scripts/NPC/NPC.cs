@@ -4,29 +4,26 @@ using System.Collections;
 
 public class NPC : MonoBehaviour
 {
-    [Header("===== AI CONFIGURATION - Used by AI System =====")]
+    [Header("===== NPC Configuration =====")]
     
-    [Header("NPC Identity (AI)")]
-    [Tooltip("AI SYSTEM - NPC name displayed in dialogues")]
+    [Header("NPC Identity")]
+    [Tooltip("NPC name displayed in dialogues")]
     public string npcName = "Alien Trader";
     
-    [Tooltip("AI SYSTEM - Role determines personality and dialogue style")]
+    [Tooltip("Role determines personality and dialogue style")]
     public string npcRole = "Trader";
     
-    [Header("NPC Description (AI)")]
-    [Tooltip("AI SYSTEM - Detailed description for coherent dialogue generation")]
+    [Header("NPC Description")]
+    [Tooltip("Detailed description for AI dialogue generation")]
     [TextArea(2, 4)]
     public string npcDescription = "Un marchand alien qui vend des équipements spatiaux";
     
-    [Space(20)]
-    [Header("===== TECHNICAL CONFIGURATION - Not used by AI =====")]
-    
     [Header("Interaction Settings")]
-    [Tooltip("Technical - Distance at which player can interact")]
+    [Tooltip("Distance at which player can interact")]
     public float interactionRange = 3f;
     
     [Header("Visual Settings")]
-    [Tooltip("Visual - NPC color (optional - for visual differentiation)")]
+    [Tooltip("NPC color (optional - for visual differentiation)")]
     public Color npcColor = Color.white;
     
     private Transform player;
@@ -75,7 +72,6 @@ public class NPC : MonoBehaviour
         // Interaction avec E - SEULEMENT si aucun dialogue n'est ouvert
         if (playerInRange && Input.GetKeyDown(KeyCode.E))
         {
-            // Vérifier si l'UI de dialogue est ouverte
             if (DialogueUI.Instance != null && !DialogueUI.Instance.IsDialogueOpen())
             {
                 StartDialogue();
@@ -91,7 +87,6 @@ public class NPC : MonoBehaviour
         {
             Debug.Log($"Appuyez sur E pour parler à {npcName} ({npcRole})");
             
-            // Utilise le NPCNameDisplay s'il existe
             if (nameDisplay != null)
             {
                 string formattedName = TextFormatter.FormatName(npcName);
@@ -100,14 +95,12 @@ public class NPC : MonoBehaviour
             }
             else
             {
-                // Fallback sur InteractionPrompt si pas de NPCNameDisplay
                 string formattedName = TextFormatter.FormatName(npcName);
                 InteractionPrompt.Show($"Appuyez sur E pour parler à {formattedName}", transform, new Vector3(0, 2f, 0));
             }
         }
         else
         {
-            // Restaure l'affichage normal
             if (nameDisplay != null)
             {
                 nameDisplay.RefreshDisplayName();
@@ -130,37 +123,39 @@ public class NPC : MonoBehaviour
             movement.StopMovement();
         }
         
-        // Cache le nom pendant le dialogue (optionnel)
+        // Cache le nom pendant le dialogue
         NPCNameDisplay nameDisplay = GetComponent<NPCNameDisplay>();
         if (nameDisplay != null)
         {
             nameDisplay.HideName();
         }
         
-        // Vérifie si c'est un NPC de livraison
+        // Vérifie les cas spéciaux de quêtes
         QuestObject questObj = GetComponent<QuestObject>();
+        
+        // Cas 1: NPC de livraison
         if (questObj != null && questObj.isDeliveryTarget)
         {
             HandleDeliveryDialogue(questObj);
+            return;
+        }
+        
+        // Cas 2: Vérifier si le joueur peut rendre une quête FETCH
+        bool hasFetchQuestReady = CheckForFetchQuestCompletion();
+        if (hasFetchQuestReady)
+        {
+            // Le dialogue sera géré par CheckForFetchQuestCompletion
+            return;
+        }
+        
+        // Cas normal: Dialogue IA standard
+        if (DialogueUI.Instance != null)
+        {
+            DialogueUI.Instance.StartDialogue(GetNPCData());
         }
         else
         {
-            // NOUVEAU: Vérifie si le joueur a une quête FETCH active avec ce NPC
-            bool hasFetchQuestReady = CheckForFetchQuestCompletion();
-            
-            // Si pas de quête FETCH prête, dialogue normal
-            if (!hasFetchQuestReady)
-            {
-                // Dialogue normal avec IA
-                if (DialogueUI.Instance != null)
-                {
-                    DialogueUI.Instance.StartDialogue(GetNPCData());
-                }
-                else
-                {
-                    Debug.LogError("DialogueUI non trouvé !");
-                }
-            }
+            Debug.LogError("DialogueUI non trouvé !");
         }
     }
     
@@ -173,35 +168,20 @@ public class NPC : MonoBehaviour
         string packageName = activeQuest.questData.objectName;
         string giverName = activeQuest.giverNPCName;
         
-        // NOUVEAU: Formate les noms pour l'affichage
-        string formattedPackageName = TextFormatter.FormatName(packageName);
-        string formattedGiverName = TextFormatter.FormatName(giverName);
-        string formattedNPCName = TextFormatter.FormatName(npcName);
-        
         // Vérifie si le joueur a le colis
         bool hasPackage = PlayerInventory.Instance != null && 
                          PlayerInventory.Instance.HasItemsForQuest(packageName, 1, questObj.questId);
         
         if (DialogueUI.Instance != null)
         {
-            // Ouvre le dialogue
+            // Démarre le dialogue avec l'IA
             DialogueUI.Instance.StartDialogue(GetNPCData());
             
-            // Affiche le message approprié
+            // L'IA devrait gérer le dialogue de livraison
+            // Mais on configure quand même le bouton si le joueur a le paquet
             if (hasPackage)
             {
-                string message = $"{formattedNPCName}: Ah ! Vous avez {formattedPackageName} de la part de {formattedGiverName} ! " +
-                               $"C'est exactement ce que j'attendais. Merci beaucoup pour la livraison !";
-                DialogueUI.Instance.ShowText(message);
-                
-                // Configure un bouton spécial pour rendre la quête
                 DialogueUI.Instance.ShowDeliveryButton(questObj.questId, packageName);
-            }
-            else
-            {
-                string message = $"{formattedNPCName}: Bonjour ! J'attends {formattedPackageName} de la part de {formattedGiverName}. " +
-                               $"Revenez me voir quand vous l'aurez.";
-                DialogueUI.Instance.ShowText(message);
             }
         }
     }
@@ -210,9 +190,7 @@ public class NPC : MonoBehaviour
     {
         if (QuestJournal.Instance == null || PlayerInventory.Instance == null) return false;
         
-        // Cherche une quête FETCH active avec ce NPC
         var activeQuests = QuestJournal.Instance.GetActiveQuests();
-        // IMPORTANT: Compare avec le nom original, pas formaté
         
         Debug.Log($"[FETCH] Recherche quête pour NPC: '{npcName}'");
         Debug.Log($"[FETCH] Quêtes actives: {activeQuests.Count}");
@@ -243,59 +221,45 @@ public class NPC : MonoBehaviour
             {
                 Debug.Log($"✅ Le joueur a tous les objets pour la quête FETCH: {fetchQuest.questTitle}");
                 
-                // Configure le dialogue pour afficher le bouton de rendu
                 if (DialogueUI.Instance != null)
                 {
                     // Démarre le dialogue d'abord
                     DialogueUI.Instance.StartDialogue(GetNPCData());
                     
-                    // Attend un frame pour éviter les conflits
+                    // Configure le bouton de rendu après un frame
                     StartCoroutine(ShowFetchQuestDialogueDelayed(fetchQuest.questId, objectName, fetchQuest.maxProgress));
                 }
                 
-                return true; // Indique qu'une quête FETCH est prête
+                return true;
             }
         }
         else
         {
             Debug.Log($"[FETCH] Aucune quête FETCH trouvée pour '{npcName}'");
-            foreach (var quest in activeQuests)
-            {
-                Debug.Log($"  - Quête: {quest.questTitle}, Donneur: '{quest.giverNPCName}', Type: {quest.questType}");
-            }
         }
         
-        return false; // Pas de quête FETCH prête
+        return false;
     }
     
-    System.Collections.IEnumerator ShowFetchQuestDialogueDelayed(string questId, string objectName, int quantity)
+    IEnumerator ShowFetchQuestDialogueDelayed(string questId, string objectName, int quantity)
     {
         // Attend un frame pour que le dialogue soit bien initialisé
         yield return null;
         
-        // NOUVEAU: Formate les noms pour l'affichage
-        string formattedNPCName = TextFormatter.FormatName(npcName);
-        string formattedObjectName = TextFormatter.FormatName(objectName);
-        
-        // Affiche le message et le bouton de rendu
-        string message = $"{formattedNPCName}: Ah ! Je vois que vous avez récupéré tous les {formattedObjectName} que je vous avais demandés ! " +
-                       $"Excellent travail ! Voulez-vous me les remettre ?";
-        
-        DialogueUI.Instance.ShowText(message);
+        // Configure le bouton de rendu
         DialogueUI.Instance.ShowFetchQuestButton(questId, objectName, quantity);
     }
     
     string ExtractObjectNameFromDescription(string description)
     {
-        // La description est maintenant formatée, donc on doit chercher avec une casse insensible
-        // Format attendu: "Trouvez X objet name dans zone"
+        // La description est formatée, on doit extraire le nom de l'objet
         string[] words = description.Split(' ');
         
         for (int i = 0; i < words.Length - 2; i++)
         {
             if (words[i].ToLower() == "trouvez" && int.TryParse(words[i + 1], out _))
             {
-                // Reconstitue le nom de l'objet (peut être sur plusieurs mots)
+                // Reconstitue le nom de l'objet
                 string objectName = "";
                 for (int j = i + 2; j < words.Length; j++)
                 {
@@ -303,14 +267,14 @@ public class NPC : MonoBehaviour
                         break;
                     
                     if (!string.IsNullOrEmpty(objectName))
-                        objectName += " "; // Utilise espace au lieu de underscore
+                        objectName += " ";
                     objectName += words[j];
                 }
                 
-                // Convertit en format avec underscores pour correspondre au système interne
+                // Convertit en format avec underscores pour le système interne
                 string internalName = objectName.Replace(" ", "_").ToLower();
                 
-                Debug.Log($"[EXTRACT] Description: '{description}' -> Objet formaté: '{objectName}' -> Objet interne: '{internalName}'");
+                Debug.Log($"[EXTRACT] Description: '{description}' -> Objet interne: '{internalName}'");
                 return internalName;
             }
         }
@@ -319,7 +283,6 @@ public class NPC : MonoBehaviour
         return "objet_inconnu";
     }
     
-    // Méthode utile pour récupérer les infos du PNJ (pour l'IA)
     public NPCData GetNPCData()
     {
         return new NPCData
@@ -330,13 +293,15 @@ public class NPC : MonoBehaviour
         };
     }
     
-    [ContextMenu("Debug AI Fields")]
-    public void DebugAIFields()
+    [ContextMenu("Debug NPC Info")]
+    public void DebugNPCInfo()
     {
-        Debug.Log($"=== AI FIELDS for {gameObject.name} ===");
-        Debug.Log($"NPC Name: {npcName}");
-        Debug.Log($"NPC Role: {npcRole}");
-        Debug.Log($"NPC Description: {npcDescription}");
+        Debug.Log($"=== NPC Info for {gameObject.name} ===");
+        Debug.Log($"Name: {npcName}");
+        Debug.Log($"Role: {npcRole}");
+        Debug.Log($"Description: {npcDescription}");
+        Debug.Log($"Interaction Range: {interactionRange}");
+        Debug.Log($"Color: {npcColor}");
         Debug.Log("=====================================");
     }
 }

@@ -2,7 +2,8 @@ using UnityEngine;
 using System.Collections;
 
 /// <summary>
-/// Simple startup manager that delays player initialization when loading from menu
+/// Manages game initialization when loading from MainMenu with a saved game.
+/// Ensures proper state restoration including Time.timeScale, player controls, and UI.
 /// </summary>
 public class GameLoadingManager : MonoBehaviour
 {
@@ -10,24 +11,20 @@ public class GameLoadingManager : MonoBehaviour
     
     void Awake()
     {
-        Debug.Log("[GameLoadingManager] Awake called");
-        
         // IMPORTANT: Ensure UI is active first
         EnsureUIIsActive();
         
-        // Check if we're loading a save
+        // Check if we're loading a save from MainMenu
         string saveToLoad = PlayerPrefs.GetString("LoadOnStart", "");
-        Debug.Log($"[GameLoadingManager] LoadOnStart value: '{saveToLoad}'");
         
         if (!string.IsNullOrEmpty(saveToLoad))
         {
-            Debug.Log($"[GameLoadingManager] Starting coroutine to load save: {saveToLoad}");
+            Debug.Log($"[GameLoadingManager] Loading save on start: {saveToLoad}");
             StartCoroutine(LoadGameWithSave(saveToLoad));
         }
         else
         {
-            Debug.Log("[GameLoadingManager] No save to load on start");
-            // Hide any loading screen that might be visible
+            // No save to load - ensure game is ready to play
             HideLoadingScreen();
         }
     }
@@ -54,14 +51,10 @@ public class GameLoadingManager : MonoBehaviour
     
     IEnumerator LoadGameWithSave(string saveName)
     {
-        Debug.Log($"[GameLoadingManager] LoadGameWithSave coroutine started for: {saveName}");
-        
-        // Disable player immediately
+        // Disable player immediately to prevent wrong position save
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
         {
-            Debug.Log("[GameLoadingManager] Disabling player");
-            // Force player to origin to prevent saving wrong position
             CharacterController cc = player.GetComponent<CharacterController>();
             if (cc != null)
             {
@@ -74,55 +67,43 @@ public class GameLoadingManager : MonoBehaviour
             if (controller != null)
                 controller.enabled = false;
         }
-        else
-        {
-            Debug.LogWarning("[GameLoadingManager] Player not found!");
-        }
         
-        // Clear the flag
+        // Clear the flag immediately
         PlayerPrefs.DeleteKey("LoadOnStart");
         PlayerPrefs.Save();
-        Debug.Log("[GameLoadingManager] LoadOnStart flag cleared");
         
-        // Wait a bit for all systems to initialize
-        Debug.Log($"[GameLoadingManager] Waiting {initDelay} seconds...");
+        // Wait for all systems to initialize
         yield return new WaitForSeconds(initDelay);
         
         // Ensure SaveGameManager is ready
-        Debug.Log("[GameLoadingManager] Waiting for SaveGameManager...");
         int waitFrames = 0;
         while (SaveGameManager.Instance == null)
         {
             waitFrames++;
             if (waitFrames > 300) // 5 seconds at 60fps
             {
-                Debug.LogError("[GameLoadingManager] SaveGameManager not found after 5 seconds!");
+                Debug.LogError("[GameLoadingManager] SaveGameManager timeout!");
                 HideLoadingScreen();
                 yield break;
             }
             yield return null;
         }
-        Debug.Log($"[GameLoadingManager] SaveGameManager found after {waitFrames} frames");
         
         // Load the save
         if (SaveGameManager.Instance.SaveExists(saveName))
         {
-            Debug.Log($"[GameLoadingManager] Save exists, loading: {saveName}");
             SaveGameManager.Instance.LoadGame(saveName);
-            
-            // Wait one more frame
-            yield return null;
-            Debug.Log("[GameLoadingManager] Save loaded successfully");
+            yield return null; // Wait one frame for load to complete
+            Debug.Log($"[GameLoadingManager] Save loaded: {saveName}");
         }
         else
         {
-            Debug.LogError($"[GameLoadingManager] Save does not exist: {saveName}");
+            Debug.LogError($"[GameLoadingManager] Save not found: {saveName}");
         }
         
         // Re-enable player
         if (player != null)
         {
-            Debug.Log("[GameLoadingManager] Re-enabling player");
             CharacterController cc = player.GetComponent<CharacterController>();
             if (cc != null)
                 cc.enabled = true;
@@ -132,29 +113,20 @@ public class GameLoadingManager : MonoBehaviour
                 controller.enabled = true;
         }
         
-        // Hide loading screen
-        Debug.Log("[GameLoadingManager] Hiding loading screen");
+        // Ensure game is ready to play
         HideLoadingScreen();
     }
     
     void HideLoadingScreen()
     {
-        Debug.Log("[GameLoadingManager] HideLoadingScreen called");
-        
-        // First, ensure Time.timeScale is restored
+        // CRITICAL: Ensure Time.timeScale is restored
         Time.timeScale = 1f;
-        Debug.Log("[GameLoadingManager] Time.timeScale restored to 1");
         
         // Try to find and hide the loading screen (might not exist in Game scene)
         GameObject loadingScreen = GameObject.Find("LoadingScreen");
         if (loadingScreen != null)
         {
-            Debug.Log("[GameLoadingManager] LoadingScreen found and hidden");
             loadingScreen.SetActive(false);
-        }
-        else
-        {
-            Debug.Log("[GameLoadingManager] LoadingScreen not found (normal if coming from MainMenu)");
         }
         
         // Ensure player controls are enabled
@@ -165,20 +137,17 @@ public class GameLoadingManager : MonoBehaviour
             if (controller != null)
             {
                 controller.enabled = true;
-                Debug.Log("[GameLoadingManager] Player controller re-enabled");
             }
         }
         
         // Force cursor to game state
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
-        Debug.Log("[GameLoadingManager] Cursor locked for gameplay");
         
         // Close any open UI panels that might be blocking
         if (UnifiedUIManager.Instance != null)
         {
             UnifiedUIManager.Instance.CloseAllPanels();
-            Debug.Log("[GameLoadingManager] All UI panels closed");
         }
     }
 }

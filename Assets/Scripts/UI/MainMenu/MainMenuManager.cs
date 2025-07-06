@@ -319,29 +319,22 @@ public class MainMenuManager : MonoBehaviour
     
     public IEnumerator LoadGameScene(bool isNewGame, string saveToLoad = null)
     {
-    	Debug.Log($"[MainMenu] LoadGameScene started - isNewGame: {isNewGame}, saveToLoad: {saveToLoad}");
-
-        // IMPORTANT: Make sure this GameObject doesn't get disabled during loading
-        // Some UI frameworks might disable parent objects when showing loading screens
+        // Ensure this GameObject stays active during loading
         gameObject.SetActive(true);
         
-        // CRITICAL: Store what we need to do after loading BEFORE any yields
-        // This ensures the data is saved even if the coroutine is interrupted
+        // CRITICAL: Store save info BEFORE any yields to prevent coroutine interruption issues
         if (!isNewGame && !string.IsNullOrEmpty(saveToLoad))
         {
             PlayerPrefs.SetString("LoadOnStart", saveToLoad);
-            Debug.Log($"[MainMenu] Set LoadOnStart to: {saveToLoad}");
         }
         else
         {
             PlayerPrefs.DeleteKey("LoadOnStart");
-            Debug.Log("[MainMenu] Cleared LoadOnStart");
         }
         PlayerPrefs.SetString("PreviousScene", "MainMenu");
         PlayerPrefs.Save();
-        Debug.Log("[MainMenu] PlayerPrefs saved BEFORE hiding panels");
         
-        // Hide all panels first
+        // Hide all panels
         if (mainMenuPanel != null)
             mainMenuPanel.SetActive(false);
         if (loadGamePanel != null)
@@ -355,36 +348,27 @@ public class MainMenuManager : MonoBehaviour
         if (loadingScreen != null)
         {
             loadingScreen.SetActive(true);
-            Debug.Log("[MainMenu] LoadingScreen activated");
             if (loadingBar != null)
                 loadingBar.value = 0f;
             if (loadingText != null)
                 loadingText.text = "Loading...";
         }
         else
-		{
-		    Debug.LogError("[MainMenu] LoadingScreen is NULL!");
-		}
+        {
+            Debug.LogError("[MainMenu] LoadingScreen reference is missing!");
+        }
         
         // Small delay for UI feedback
-		Debug.Log("[MainMenu] About to wait 0.1 seconds...");
-        Debug.Log($"[MainMenu] This GameObject active: {gameObject.activeInHierarchy}");
-        Debug.Log($"[MainMenu] This Component enabled: {enabled}");
-        
-        yield return new WaitForSecondsRealtime(0.1f);  // Use RealTime in case TimeScale is 0
-        
-        Debug.Log("[MainMenu] Wait completed, starting async load...");
-        Debug.Log($"[MainMenu] Still active after wait: {gameObject.activeInHierarchy}");
+        yield return new WaitForSecondsRealtime(0.1f);
         
         // Start async loading
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(gameSceneName);
-		if (asyncLoad == null)
-		{
-		    Debug.LogError($"[MainMenu] Failed to load scene: {gameSceneName}");
-		    yield break;
-		}
+        if (asyncLoad == null)
+        {
+            Debug.LogError($"[MainMenu] Failed to load scene: {gameSceneName}");
+            yield break;
+        }
 
-		Debug.Log($"[MainMenu] AsyncOperation started for scene: {gameSceneName}");
         asyncLoad.allowSceneActivation = false;
         
         // Update loading bar
@@ -392,14 +376,7 @@ public class MainMenuManager : MonoBehaviour
         while (!asyncLoad.isDone)
         {
             timer += Time.unscaledDeltaTime;
-            
             float progress = Mathf.Clamp01(asyncLoad.progress / 0.9f);
-            
-            // Less frequent logging to reduce spam
-            if (Time.frameCount % 30 == 0) // Log every 30 frames
-            {
-                Debug.Log($"[MainMenu] Loading progress: {asyncLoad.progress} ({progress * 100}%) - Timer: {timer}s");
-            }
 
             if (loadingBar != null)
                 loadingBar.value = progress;
@@ -410,31 +387,25 @@ public class MainMenuManager : MonoBehaviour
             // Allow scene activation when ready
             if (asyncLoad.progress >= 0.9f)
             {
-                Debug.Log("[MainMenu] Scene ready, preparing to activate...");
-                
                 // Add artificial delay if desired
                 if (artificialLoadDelay > 0)
                 {
-                    Debug.Log($"[MainMenu] Adding artificial delay of {artificialLoadDelay}s");
                     yield return new WaitForSecondsRealtime(artificialLoadDelay);
                 }
                 
-                Debug.Log("[MainMenu] Allowing scene activation NOW");
                 asyncLoad.allowSceneActivation = true;
             }
             
             // Safety timeout
-            if (timer > 30f) // 30 seconds timeout
+            if (timer > 30f)
             {
-                Debug.LogError("[MainMenu] Loading timeout! Forcing scene activation");
+                Debug.LogError("[MainMenu] Loading timeout!");
                 asyncLoad.allowSceneActivation = true;
                 break;
             }
             
             yield return null;
         }
-        
-        Debug.Log("[MainMenu] LoadGameScene coroutine completed!");
     }
     
     void PlayClickSound()

@@ -229,47 +229,26 @@ public class SaveSystemUI : MonoBehaviour
         if (isMainMenuScene)
         {
             // In MainMenu, load directly without confirmation
-            Debug.Log($"[SaveSystem] MainMenu scene - loading directly: {saveName}");
+            if (debugMode)
+                Debug.Log($"[SaveSystem] Loading save from MainMenu: {saveName}");
             
             // DON'T hide the panel in MainMenu - LoadingScreen will cover it
-            
-            Debug.Log("[SaveSystem] Point 1 - Before finding MainMenuManager");
+            // The panel will be automatically hidden when scene changes
             
             MainMenuManager mainMenu = FindObjectOfType<MainMenuManager>();
-            
-            Debug.Log($"[SaveSystem] Point 2 - MainMenuManager found: {mainMenu != null}");
-            
             if (mainMenu != null)
             {
-                Debug.Log("[SaveSystem] Point 3 - Inside if block");
-                
-                // Call ContinueGame with specific save
+                // Store save to load after scene transition
                 PlayerPrefs.SetString("LoadOnStart", saveName);
                 PlayerPrefs.Save();
                 
-                Debug.Log("[SaveSystem] Point 4 - PlayerPrefs saved");
-                
-                try
-                {
-                    // Try the original way first
-                    mainMenu.StartCoroutine(mainMenu.LoadGameScene(false, saveName));
-                    Debug.Log("[SaveSystem] Point 5 - StartCoroutine called");
-                }
-                catch (System.Exception e)
-                {
-                    Debug.LogError($"[SaveSystem] Exception in StartCoroutine: {e.Message}");
-                    Debug.LogError($"[SaveSystem] Stack trace: {e.StackTrace}");
-                }
-                
-                Debug.Log($"[SaveSystem] MainMenuManager active: {mainMenu.gameObject.activeInHierarchy}");
-                Debug.Log($"[SaveSystem] MainMenuManager enabled: {mainMenu.enabled}");
+                // Start loading the game scene
+                mainMenu.StartCoroutine(mainMenu.LoadGameScene(false, saveName));
             }
             else
             {
                 Debug.LogError("[SaveSystem] MainMenuManager not found!");
             }
-            
-            Debug.Log("[SaveSystem] Point 6 - End of MainMenu load section");
         }
         else
         {

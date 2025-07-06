@@ -218,9 +218,28 @@ public class MyCustomData
 - Taille moyenne : 10-50 KB par sauvegarde
 - Mise à jour UI : instantanée avec plusieurs passes
 
+## Bugs connus et solutions
+
+### LoadingScreen reste bloqué après chargement depuis MainMenu
+**Symptôme** : Après avoir cliqué sur LOAD dans le MainMenu, l'écran de chargement reste affiché et le jeu semble gelé.
+
+**Cause** : Le LoadingScreen du MainMenu n'existe plus dans la scène Game, et le Time.timeScale pouvait rester à 0.
+
+**Solution** : Le GameLoadingManager restaure maintenant automatiquement :
+- Time.timeScale = 1
+- Contrôles du joueur activés
+- Curseur en mode jeu
+- Fermeture des panneaux UI bloquants
+
 ## Changelog
 
-### v2.1 (Version actuelle - Décembre 2024)
+### v2.2 (Version actuelle - Juillet 2025)
+- **FIX** : Correction du bug du LoadingScreen bloqué lors du chargement depuis MainMenu
+- **AMÉLIORATION** : GameLoadingManager gère maintenant complètement l'état du jeu après chargement
+- **REFACTORING** : Nettoyage des logs de debug excessifs
+- **REFACTORING** : Code simplifié et plus robuste
+
+### v2.1 (Décembre 2024)
 - **NOUVEAU** : Sauvegarde complète des quêtes annulées
 - **NOUVEAU** : Sauvegarde des positions exactes des objets de quête
 - **NOUVEAU** : Stockage du nom exact des zones (fix du bug "ruins")

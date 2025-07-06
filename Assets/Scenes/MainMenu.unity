@@ -13278,7 +13278,7 @@ MonoBehaviour:
   saveMenuPanel: {fileID: 1691683708}
   saveSlotContainer: {fileID: 1230366959}
   closeButton: {fileID: 2105454031}
-  debugMode: 0
+  debugMode: 1
 --- !u!1 &1745377712
 GameObject:
   m_ObjectHideFlags: 0

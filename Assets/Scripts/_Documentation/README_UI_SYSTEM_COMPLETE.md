@@ -64,10 +64,13 @@ Game (scène)
 
 ### Dans la scène Game
 
-1. **Créez UnifiedUIManager** :
-   - GameObject vide → "UnifiedUIManager"
-   - Ajoutez le composant UnifiedUIManager
-   - DontDestroyOnLoad est géré automatiquement
+1. **UnifiedUIManager DOIT être dans la scène** :
+   - Il devrait être sous Manager/UnifiedUIManager
+   - Vérifiez que le composant UnifiedUIManager est attaché
+   - DontDestroyOnLoad est géré automatiquement par le script
+   
+   **IMPORTANT** : Ne pas compter sur la création automatique du Singleton !
+   L'UnifiedUIManager doit exister dans la scène avec toutes ses références.
 
 2. **Assignez TOUS les panels** dans l'Inspector :
    - **Pause Menu Panel** : Canvas/PauseMenuPanel

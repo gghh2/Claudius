@@ -19,11 +19,11 @@ public class UnifiedUIManager : MonoBehaviour
             if (instance == null)
             {
                 instance = FindObjectOfType<UnifiedUIManager>();
+                // DO NOT create a new empty instance!
+                // The UnifiedUIManager must exist in the scene with proper references
                 if (instance == null)
                 {
-                    GameObject go = new GameObject("UnifiedUIManager");
-                    instance = go.AddComponent<UnifiedUIManager>();
-                    DontDestroyOnLoad(go);
+                    Debug.LogWarning("[UnifiedUIManager] No instance found in scene! Make sure UnifiedUIManager exists in the Game scene.");
                 }
             }
             return instance;

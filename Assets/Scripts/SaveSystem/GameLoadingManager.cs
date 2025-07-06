@@ -25,7 +25,7 @@ public class GameLoadingManager : MonoBehaviour
         else
         {
             // No save to load - ensure game is ready to play
-            HideLoadingScreen();
+            EnsureGameIsPlayable();
         }
     }
     
@@ -36,6 +36,12 @@ public class GameLoadingManager : MonoBehaviour
         {
             Debug.LogWarning("[GameLoadingManager] Time.timeScale was 0 at Start! Restoring to 1");
             Time.timeScale = 1f;
+        }
+        
+        // Double-check UnifiedUIManager exists
+        if (UnifiedUIManager.Instance == null)
+        {
+            Debug.LogError("[GameLoadingManager] UnifiedUIManager not found in scene! ESCAPE key won't work.");
         }
     }
     
@@ -145,9 +151,30 @@ public class GameLoadingManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         
         // Close any open UI panels that might be blocking
+        // Only for save loading, not for new games
         if (UnifiedUIManager.Instance != null)
         {
             UnifiedUIManager.Instance.CloseAllPanels();
         }
+    }
+    
+    void EnsureGameIsPlayable()
+    {
+        // For new game starts, just ensure basic state without closing panels
+        Time.timeScale = 1f;
+        
+        // Hide loading screen if present
+        GameObject loadingScreen = GameObject.Find("LoadingScreen");
+        if (loadingScreen != null)
+        {
+            loadingScreen.SetActive(false);
+        }
+        
+        // Setup cursor for gameplay
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+        
+        // DO NOT close panels or mess with UnifiedUIManager for new games
+        // Let it initialize naturally
     }
 }

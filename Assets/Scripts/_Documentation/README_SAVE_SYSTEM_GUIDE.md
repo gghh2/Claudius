@@ -81,9 +81,15 @@ Le SaveMenuPanel doit être assigné dans UnifiedUIManager !
 1. **ESC** → Menu pause
 2. **Save/Load** → Menu de sauvegarde (via UnifiedUIManager)
 3. **Save** → Sauvegarde et retour au jeu
-4. **Load** → Chargement et retour au jeu
+4. **Load** → Chargement et retour au jeu (met à jour la "dernière sauvegarde utilisée")
 5. **Delete** → Suppression avec confirmation
 6. **Close/ESC** → Retour au menu pause
+
+### Comportement du bouton "Continuer" (MainMenu)
+- Charge la **dernière sauvegarde utilisée** (sauvegardée ou chargée)
+- Si aucune "dernière sauvegarde utilisée", charge la plus récente par date
+- La "dernière sauvegarde utilisée" est conservée dans PlayerPrefs
+- Nouvelle partie ne réinitialise PAS cette valeur (sécurité si le joueur quitte sans sauvegarder)
 
 ### Comportement des slots
 - **Mode progressif** (par défaut) :
@@ -203,6 +209,11 @@ public class MyCustomData
 ### Position du joueur ne se restaure pas
 → Vérifier que CharacterController est bien désactivé/réactivé
 
+### Le bouton Continuer charge la mauvaise sauvegarde
+→ Le système utilise maintenant PlayerPrefs("LastLoadedSave")
+→ Cette valeur est mise à jour à chaque Save/Load
+→ Si elle n'existe pas, le système utilise la sauvegarde la plus récente par date
+
 ## Notes importantes
 
 - **Pas de quicksave F5/F9** (supprimé pour simplifier)
@@ -233,7 +244,13 @@ public class MyCustomData
 
 ## Changelog
 
-### v2.2 (Version actuelle - Juillet 2025)
+### v2.3 (Version actuelle - Juillet 2025)
+- **NOUVEAU** : Le bouton "Continuer" se souvient maintenant de la dernière sauvegarde utilisée
+- **FIX** : Continuer charge maintenant la dernière sauvegarde chargée/sauvegardée, pas forcément la plus récente
+- **AMÉLIORATION** : Nouvelle partie ne réinitialise plus la "dernière sauvegarde utilisée"
+- **AJOUT** : Méthodes `GetLastUsedSave()` et `ClearLastUsedSave()` dans SaveGameManager
+
+### v2.2 (Juillet 2025)
 - **FIX** : Correction du bug du LoadingScreen bloqué lors du chargement depuis MainMenu
 - **AMÉLIORATION** : GameLoadingManager gère maintenant complètement l'état du jeu après chargement
 - **REFACTORING** : Nettoyage des logs de debug excessifs

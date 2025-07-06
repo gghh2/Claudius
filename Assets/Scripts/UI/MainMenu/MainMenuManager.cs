@@ -146,6 +146,10 @@ public class MainMenuManager : MonoBehaviour
             // For now, just start new game
         }
         
+        // NOTE: We do NOT clear LastLoadedSave here anymore
+        // It will only be updated when the player actually saves or loads a game
+        // This way, if they quit without saving, Continue still works with their last save
+        
         // Use SceneLoader for reliable loading
         StartCoroutine(LoadGameScene(true));
     }
@@ -160,11 +164,33 @@ public class MainMenuManager : MonoBehaviour
             string[] saves = SaveGameManager.Instance.GetAllSaves();
             if (saves.Length > 0)
             {
-                // Find the most recent save by checking modification time
-                string mostRecentSave = FindMostRecentSave(saves);
+                string saveToLoad = null;
+                
+                // First, check if we have a "last loaded save" preference
+                string lastLoadedSave = PlayerPrefs.GetString("LastLoadedSave", "");
+                if (!string.IsNullOrEmpty(lastLoadedSave))
+                {
+                    // Verify this save still exists
+                    foreach (string save in saves)
+                    {
+                        if (save == lastLoadedSave)
+                        {
+                            saveToLoad = lastLoadedSave;
+                            Debug.Log($"[MainMenu] Continue will load last used save: {saveToLoad}");
+                            break;
+                        }
+                    }
+                }
+                
+                // If no last loaded save or it doesn't exist, find the most recent
+                if (string.IsNullOrEmpty(saveToLoad))
+                {
+                    saveToLoad = FindMostRecentSave(saves);
+                    Debug.Log($"[MainMenu] Continue will load most recent save: {saveToLoad}");
+                }
                 
                 // Start loading the game scene
-				StartCoroutine(LoadGameScene(false, mostRecentSave));
+                StartCoroutine(LoadGameScene(false, saveToLoad));
             }
         }
     }

@@ -98,8 +98,15 @@ public class SaveGameManager : MonoBehaviour
             
             File.WriteAllText(filePath, json);
             
+            // IMPORTANT: Update last loaded save for Continue button
+            PlayerPrefs.SetString("LastLoadedSave", saveName);
+            PlayerPrefs.Save();
+            
             if (debugMode)
+            {
                 Debug.Log($"[SaveGame] Game saved to: {filePath}");
+                Debug.Log($"[SaveGame] Updated LastLoadedSave to: {saveName}");
+            }
             
             OnGameSaved?.Invoke();
         }
@@ -132,8 +139,15 @@ public class SaveGameManager : MonoBehaviour
             
             ApplySaveData(saveData);
             
+            // IMPORTANT: Update last loaded save for Continue button
+            PlayerPrefs.SetString("LastLoadedSave", saveName);
+            PlayerPrefs.Save();
+            
             if (debugMode)
+            {
                 Debug.Log($"[SaveGame] Game loaded from: {filePath}");
+                Debug.Log($"[SaveGame] Updated LastLoadedSave to: {saveName}");
+            }
             
             OnGameLoaded?.Invoke();
         }
@@ -836,6 +850,23 @@ public class SaveGameManager : MonoBehaviour
         }
         
         return System.DateTime.MinValue;
+    }
+    
+    /// <summary>
+    /// Get the last loaded/saved game name for Continue functionality
+    /// </summary>
+    public string GetLastUsedSave()
+    {
+        return PlayerPrefs.GetString("LastLoadedSave", "");
+    }
+    
+    /// <summary>
+    /// Clear the last used save (useful when starting a new game)
+    /// </summary>
+    public void ClearLastUsedSave()
+    {
+        PlayerPrefs.DeleteKey("LastLoadedSave");
+        PlayerPrefs.Save();
     }
 }
 

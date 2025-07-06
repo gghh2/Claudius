@@ -737,8 +737,8 @@ public class SaveGameManager : MonoBehaviour
                     QuestJournal.Instance.allQuests.Remove(journalQuest);
                 }
                 
-                // This will create the quest and spawn default objects
-                bool created = QuestManager.Instance.CreateQuestFromToken(token, questInfo.giverNPCName);
+                // This will create the quest and spawn only remaining objects
+                bool created = QuestManager.Instance.CreateQuestFromToken(token, questInfo.giverNPCName, questInfo.currentProgress);
                 
                 if (!created)
                 {
@@ -756,12 +756,11 @@ public class SaveGameManager : MonoBehaviour
                 // Wait a frame for objects to be created
                 yield return null;
                 
-                // Update the quest progress in QuestManager
+                // Update progress in journal
                 var activeQuest = QuestManager.Instance.GetActiveQuestPublic(questInfo.questId);
                 if (activeQuest != null)
                 {
-                    activeQuest.currentProgress = questInfo.currentProgress;
-                    Debug.Log($"[SaveGame] Updated quest progress: {questInfo.currentProgress}/{questInfo.maxProgress}");
+                    Debug.Log($"[SaveGame] Quest recreated with progress: {questInfo.currentProgress}/{questInfo.maxProgress}");
                     
                     // Update progress in journal too
                     var newJournalQuest = QuestJournal.Instance.allQuests.FirstOrDefault(q => q.questId == questInfo.questId);
@@ -776,11 +775,15 @@ public class SaveGameManager : MonoBehaviour
                     {
                         Debug.Log($"[SaveGame] Quest {questInfo.questTitle} had {questInfo.spawnedObjects.Count} spawned objects saved");
                         
+                        // Only restore positions for ACTIVE objects (not collected)
+                        var activeObjects = questInfo.spawnedObjects.Where(obj => obj.isActive).ToList();
+                        Debug.Log($"[SaveGame] {activeObjects.Count} objects are still active (not collected)");
+                        
                         // Try to restore positions of spawned objects
-                        for (int i = 0; i < activeQuest.spawnedObjects.Count && i < questInfo.spawnedObjects.Count; i++)
+                        for (int i = 0; i < activeQuest.spawnedObjects.Count && i < activeObjects.Count; i++)
                         {
                             var spawnedObj = activeQuest.spawnedObjects[i];
-                            var savedObj = questInfo.spawnedObjects[i];
+                            var savedObj = activeObjects[i];
                             
                             if (spawnedObj != null)
                             {

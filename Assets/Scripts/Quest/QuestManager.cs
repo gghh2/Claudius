@@ -11,12 +11,28 @@ public class ActiveQuest
     public int currentProgress = 0;
     public List<GameObject> spawnedObjects = new List<GameObject>();
     public string giverNPCName;
+    public QuestZone targetZone; // Store the exact zone reference
     
     public ActiveQuest(QuestToken token, string npcName)
     {
         questId = token.questId;
         questData = token;
         giverNPCName = npcName;
+    }
+    
+    public void SetTargetZone(QuestZone zone)
+    {
+        targetZone = zone;
+        // Also update the token with the exact zone name
+        if (zone != null && !string.IsNullOrEmpty(zone.zoneName))
+        {
+            questData.zoneName = zone.zoneName;
+        }
+    }
+    
+    public QuestZone GetTargetZone()
+    {
+        return targetZone;
     }
 }
 
@@ -124,12 +140,21 @@ public class QuestManager : MonoBehaviour
     /// </summary>
     public bool CreateQuestFromToken(QuestToken token, string giverNPCName)
     {
+        return CreateQuestFromToken(token, giverNPCName, 0);
+    }
+    
+    /// <summary>
+    /// Crée une nouvelle quête à partir d'un token avec une progression initiale (pour le système de sauvegarde)
+    /// </summary>
+    public bool CreateQuestFromToken(QuestToken token, string giverNPCName, int initialProgress)
+    {
         if (!CanCreateNewQuest())
             return false;
         
-        debugMode.LogQuest("[QUEST] Création de quête: {0}", token.description);
+        debugMode.LogQuest("[QUEST] Création de quête: {0} (Progress: {1})", token.description, initialProgress);
         
         ActiveQuest newQuest = new ActiveQuest(token, giverNPCName);
+        newQuest.currentProgress = initialProgress; // Set initial progress BEFORE creating objects
         
         bool success = CreateQuestByType(newQuest);
         
@@ -180,6 +205,18 @@ public class QuestManager : MonoBehaviour
         if (QuestJournal.Instance != null)
         {
             QuestJournal.Instance.AddQuest(token, giverNPCName);
+            
+            // If the quest is EXPLORE and we have an exact zone name, update the journal
+            if (quest.questData.questType == QuestType.EXPLORE && !string.IsNullOrEmpty(quest.questData.zoneName))
+            {
+                var journalQuest = QuestJournal.Instance.GetQuest(quest.questId);
+                if (journalQuest != null)
+                {
+                    // Keep the exact zone name without formatting
+                    journalQuest.zoneName = quest.questData.zoneName;
+                    Debug.Log($"[QUEST] Updated journal zone name to exact: {journalQuest.zoneName}");
+                }
+            }
         }
         else
         {
@@ -207,16 +244,28 @@ public class QuestManager : MonoBehaviour
         
         quest.SetTargetZone(targetZone);
         
-        // Spawn les objets
-        debugMode.LogQuest("[FETCH] Spawning {0} items of type {1}", token.quantity, token.objectName);
+        // Détermine combien d'objets spawner (tenir compte de la progression existante)
+        int objectsToSpawn = token.quantity - quest.currentProgress;
         
-        for (int i = 0; i < token.quantity; i++)
+        // Si tous les objets ont déjà été collectés, ne rien spawner
+        if (objectsToSpawn <= 0)
+        {
+            debugMode.LogQuest("[FETCH] All items already collected ({0}/{1}), skipping spawn", 
+                quest.currentProgress, token.quantity);
+            return true; // Return true because the quest is valid, just already progressed
+        }
+        
+        // Spawn les objets
+        debugMode.LogQuest("[FETCH] Spawning {0} items of type {1} (Progress: {2}/{3})", 
+            objectsToSpawn, token.objectName, quest.currentProgress, token.quantity);
+        
+        for (int i = 0; i < objectsToSpawn; i++)
         {
             GameObject spawnedItem = targetZone.SpawnQuestObject(itemPrefab, QuestObjectType.Item);
             if (spawnedItem != null)
             {
                 QuestManagerHelper.ConfigureQuestObject(spawnedItem, quest, token.objectName, QuestObjectType.Item);
-                debugMode.LogQuest("[FETCH] Item {0}/{1} spawned successfully", i + 1, token.quantity);
+                debugMode.LogQuest("[FETCH] Item {0}/{1} spawned successfully", i + 1, objectsToSpawn);
             }
         }
         
@@ -277,12 +326,22 @@ public class QuestManager : MonoBehaviour
         QuestZone targetZone = QuestManagerHelper.GetQuestZone(token, QuestObjectType.Marker, debugMode);
         if (targetZone == null) return false;
         
+        // IMPORTANT: Update the token with the exact zone name
+        string exactZoneName = targetZone.zoneName;
+        if (!string.IsNullOrEmpty(exactZoneName) && exactZoneName != token.zoneName)
+        {
+            Debug.Log($"[EXPLORE] Updating zone name from '{token.zoneName}' to exact zone '{exactZoneName}'");
+            token.zoneName = exactZoneName;
+            quest.questData.zoneName = exactZoneName;
+        }
+        
         quest.SetTargetZone(targetZone);
         
         GameObject marker = targetZone.SpawnQuestObject(markerPrefab, QuestObjectType.Marker);
         if (marker != null)
         {
-            QuestManagerHelper.ConfigureQuestObject(marker, quest, token.zoneName, QuestObjectType.Marker);
+            // Use the exact zone name for the marker
+            QuestManagerHelper.ConfigureQuestObject(marker, quest, exactZoneName, QuestObjectType.Marker);
             return true;
         }
         

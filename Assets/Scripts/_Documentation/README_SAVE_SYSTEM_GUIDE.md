@@ -129,8 +129,9 @@ Le SaveMenuPanel doit être assigné dans UnifiedUIManager !
 
 - **Au chargement** :
   - Les quêtes sont recréées dans QuestManager
-  - Les objets de quête sont respawnés aux positions sauvegardées
-  - La progression est restaurée
+  - **NOUVEAU** : Seuls les objets non collectés sont respawnés
+  - Les objets actifs sont repositionnés aux positions sauvegardées
+  - La progression est restaurée correctement
   - Le suivi (tracking) est restauré
 
 ### NPCs
@@ -247,8 +248,13 @@ public class MyCustomData
 ### v2.3 (Version actuelle - Juillet 2025)
 - **NOUVEAU** : Le bouton "Continuer" se souvient maintenant de la dernière sauvegarde utilisée
 - **FIX** : Continuer charge maintenant la dernière sauvegarde chargée/sauvegardée, pas forcément la plus récente
+- **FIX** : Les objets de quête déjà collectés ne sont plus recréés lors du chargement
+- **FIX** : Les quêtes EXPLORE gardent maintenant la zone exacte après sauvegarde/chargement
 - **AMÉLIORATION** : Nouvelle partie ne réinitialise plus la "dernière sauvegarde utilisée"
+- **AMÉLIORATION** : QuestManager supporte maintenant une progression initiale lors de la création de quête
+- **AMÉLIORATION** : ActiveQuest stocke maintenant la référence de zone exacte
 - **AJOUT** : Méthodes `GetLastUsedSave()` et `ClearLastUsedSave()` dans SaveGameManager
+- **AJOUT** : Méthodes `SetTargetZone()` et `GetTargetZone()` dans ActiveQuest
 
 ### v2.2 (Juillet 2025)
 - **FIX** : Correction du bug du LoadingScreen bloqué lors du chargement depuis MainMenu

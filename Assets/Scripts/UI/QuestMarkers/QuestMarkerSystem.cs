@@ -50,9 +50,6 @@ public class QuestMarkerSystem : MonoBehaviour
     [SerializeField] private bool useCustomSprite = true;
     [SerializeField] private Vector2 customSpriteSize = new Vector2(QuestSystemConfig.DefaultMarkerSize, QuestSystemConfig.DefaultMarkerSize);
     
-    [Header("Debug")]
-    [SerializeField] private bool debugMode = false;
-    
     // Composants
     private Camera mainCamera;
     private Transform player;
@@ -190,7 +187,7 @@ public class QuestMarkerSystem : MonoBehaviour
                 
                 // Chercher la zone la plus proche
                 float minDistance = float.MaxValue;
-                QuestZone[] allZones = FindObjectsOfType<QuestZone>();
+                QuestZone[] allZones = FindObjectsByType<QuestZone>(FindObjectsSortMode.None);
                 foreach (var z in allZones)
                 {
                     float dist = Vector3.Distance(obj.transform.position, z.transform.position);
@@ -232,7 +229,7 @@ public class QuestMarkerSystem : MonoBehaviour
     
     private QuestZone FindQuestZoneByName(string zoneName)
     {
-        QuestZone[] allZones = FindObjectsOfType<QuestZone>();
+        QuestZone[] allZones = FindObjectsByType<QuestZone>(FindObjectsSortMode.None);
         
         // Recherche exacte d'abord
         foreach (var zone in allZones)

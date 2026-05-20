@@ -22,7 +22,7 @@ public class SaveMenuIntegration : MonoBehaviour
         // Find SaveSystemUI if not assigned
         if (saveSystemUI == null)
         {
-            saveSystemUI = FindObjectOfType<SaveSystemUI>();
+            saveSystemUI = FindFirstObjectByType<SaveSystemUI>();
         }
         
         // Setup button if assigned

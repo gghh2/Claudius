@@ -1,0 +1,463 @@
+using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+using System.Collections;
+using System.Collections.Generic;
+using System.Text;
+using UnityEngine.Networking;
+
+/// <summary>
+/// Journal de bord narratif du joueur, enrichi par l'IA
+/// </summary>
+public class AdventureJournalUI : MonoBehaviour
+{
+    [Header("UI Elements")]
+    [Tooltip("Panel principal du journal")]
+    public GameObject journalPanel;
+    
+    [Tooltip("Titre du journal")]
+    public TextMeshProUGUI journalTitle;
+    
+    [Tooltip("Contenu du journal")]
+    public TextMeshProUGUI journalContent;
+    
+    [Tooltip("Indicateur de chargement")]
+    public GameObject loadingIndicator;
+    
+    [Tooltip("Bouton fermer")]
+    public Button closeButton;
+    
+    [Tooltip("Bouton rafraîchir")]
+    public Button refreshButton;
+    
+    [Tooltip("ScrollRect pour le contenu")]
+    public ScrollRect scrollRect;
+    
+    [Header("Journal Settings")]
+    [Tooltip("Nombre maximum d'entrées")]
+    public int maxEntries = 50;
+    
+    [Tooltip("Délai minimum entre les mises à jour IA (secondes)")]
+    public float aiUpdateCooldown = 30f;
+    
+    // Journal entries
+    private List<JournalEntry> journalEntries = new List<JournalEntry>();
+    private float lastAIUpdateTime = -999f;
+    private bool isUpdatingJournal = false;
+    
+    // Events tracking
+    private List<string> pendingEvents = new List<string>();
+    
+    public static AdventureJournalUI Instance { get; private set; }
+    
+    [System.Serializable]
+    public class JournalEntry
+    {
+        public string timestamp;
+        public string content;
+        public bool isAIGenerated;
+        
+        public JournalEntry(string content, bool isAI = false)
+        {
+            this.timestamp = System.DateTime.Now.ToString("HH:mm");
+            this.content = content;
+            this.isAIGenerated = isAI;
+        }
+    }
+    
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+    
+    void Start()
+    {
+        if (journalPanel != null)
+            journalPanel.SetActive(false);
+            
+        if (closeButton != null)
+            closeButton.onClick.AddListener(CloseJournal);
+            
+        if (refreshButton != null)
+            refreshButton.onClick.AddListener(RefreshJournalWithAI);
+            
+        // Ajouter l'entrée initiale
+        AddEntry("Votre aventure commence ici...", true);
+        
+        // S'abonner aux événements du jeu
+        SubscribeToGameEvents();
+    }
+    
+    void Update()
+    {
+        // Touche L pour ouvrir/fermer le journal
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            if (IsJournalOpen())
+                CloseJournal();
+            else
+                OpenJournal();
+        }
+    }
+    
+    void SubscribeToGameEvents()
+    {
+        // Ici on pourrait s'abonner à différents événements du jeu
+        // Pour l'instant, on va créer des méthodes publiques que les autres systèmes peuvent appeler
+    }
+    
+    /// <summary>
+    /// Ouvre le journal
+    /// </summary>
+    public void OpenJournal()
+    {
+        if (UnifiedUIManager.Instance != null)
+        {
+            UnifiedUIManager.Instance.NavigateTo("AdventureJournal");
+        }
+        else
+        {
+            journalPanel.SetActive(true);
+        }
+        
+        UpdateJournalDisplay();
+        
+        // Scroll en bas pour voir les dernières entrées
+        if (scrollRect != null)
+        {
+            Canvas.ForceUpdateCanvases();
+            scrollRect.verticalNormalizedPosition = 0f;
+        }
+        
+        // Vérifier si on peut faire une mise à jour IA
+        if (Time.time - lastAIUpdateTime > aiUpdateCooldown && pendingEvents.Count > 0)
+        {
+            RefreshJournalWithAI();
+        }
+    }
+    
+    /// <summary>
+    /// Ferme le journal
+    /// </summary>
+    public void CloseJournal()
+    {
+        if (UnifiedUIManager.Instance != null)
+        {
+            UnifiedUIManager.Instance.NavigateBack();
+        }
+        else
+        {
+            journalPanel.SetActive(false);
+        }
+    }
+    
+    /// <summary>
+    /// Vérifie si le journal est ouvert
+    /// </summary>
+    public bool IsJournalOpen()
+    {
+        return journalPanel != null && journalPanel.activeInHierarchy;
+    }
+    
+    /// <summary>
+    /// Ajoute une entrée simple au journal
+    /// </summary>
+    public void AddEntry(string content, bool isAIGenerated = false)
+    {
+        var entry = new JournalEntry(content, isAIGenerated);
+        journalEntries.Add(entry);
+        
+        // Limiter le nombre d'entrées
+        if (journalEntries.Count > maxEntries)
+        {
+            journalEntries.RemoveAt(0);
+        }
+        
+        if (IsJournalOpen())
+        {
+            UpdateJournalDisplay();
+        }
+    }
+    
+    /// <summary>
+    /// Enregistre un événement pour traitement IA ultérieur
+    /// </summary>
+    public void LogGameEvent(string eventDescription)
+    {
+        pendingEvents.Add(eventDescription);
+        Debug.Log($"[Journal] Événement enregistré: {eventDescription}");
+        
+        // Si le journal est ouvert et qu'on peut faire une mise à jour
+        if (IsJournalOpen() && Time.time - lastAIUpdateTime > aiUpdateCooldown)
+        {
+            RefreshJournalWithAI();
+        }
+    }
+    
+    /// <summary>
+    /// Met à jour l'affichage du journal
+    /// </summary>
+    void UpdateJournalDisplay()
+    {
+        if (journalContent == null) return;
+        
+        StringBuilder sb = new StringBuilder();
+        sb.AppendLine("<size=18><b>Journal de Bord</b></size>\n");
+        
+        foreach (var entry in journalEntries)
+        {
+            if (entry.isAIGenerated)
+            {
+                // Entrées IA en italique avec une couleur différente
+                sb.AppendLine($"<color=#E8DCC0><i>[{entry.timestamp}] {entry.content}</i></color>\n");
+            }
+            else
+            {
+                // Entrées système normales
+                sb.AppendLine($"<color=#CCCCCC>[{entry.timestamp}] {entry.content}</color>\n");
+            }
+        }
+        
+        journalContent.text = sb.ToString();
+    }
+    
+    /// <summary>
+    /// Rafraîchit le journal avec une narration IA
+    /// </summary>
+    public void RefreshJournalWithAI()
+    {
+        if (isUpdatingJournal || pendingEvents.Count == 0) return;
+        
+        if (!AIDialogueManager.Instance || !AIDialogueManager.Instance.IsConfigured())
+        {
+            Debug.LogError("[Journal] IA non configurée");
+            return;
+        }
+        
+        StartCoroutine(UpdateJournalWithAI());
+    }
+    
+    IEnumerator UpdateJournalWithAI()
+    {
+        isUpdatingJournal = true;
+        
+        if (loadingIndicator != null)
+            loadingIndicator.SetActive(true);
+            
+        if (refreshButton != null)
+            refreshButton.interactable = false;
+        
+        // Construire le prompt pour l'IA
+        string prompt = BuildAIPrompt();
+        
+        // Envoyer à l'API OpenAI
+        yield return StartCoroutine(GetAINarration(prompt));
+        
+        // Nettoyer
+        pendingEvents.Clear();
+        lastAIUpdateTime = Time.time;
+        isUpdatingJournal = false;
+        
+        if (loadingIndicator != null)
+            loadingIndicator.SetActive(false);
+            
+        if (refreshButton != null)
+            refreshButton.interactable = true;
+    }
+    
+    string BuildAIPrompt()
+    {
+        StringBuilder prompt = new StringBuilder();
+        
+        prompt.AppendLine("Tu es le narrateur d'un journal de bord d'aventure dans un univers de space opera.");
+        prompt.AppendLine("Le joueur explore une station spatiale mystérieuse sur une planète alien.");
+        prompt.AppendLine("Ton rôle est de transformer les événements du jeu en une narration romanesque et immersive.");
+        prompt.AppendLine("Écris à la première personne, comme si c'était le joueur qui écrivait dans son journal personnel.");
+        prompt.AppendLine("Garde un ton épique mais personnel, avec des réflexions et des émotions.");
+        prompt.AppendLine("Maximum 3-4 phrases par entrée. Sois créatif et évocateur.");
+        prompt.AppendLine("\nÉvénements récents à narrer:");
+        
+        foreach (string evt in pendingEvents)
+        {
+            prompt.AppendLine($"- {evt}");
+        }
+        
+        prompt.AppendLine("\nÉcris une entrée de journal captivante basée sur ces événements.");
+        
+        return prompt.ToString();
+    }
+    
+    IEnumerator GetAINarration(string prompt)
+    {
+        var messages = new List<OpenAIMessage>
+        {
+            new OpenAIMessage("system", "Tu es un narrateur talentueux qui écrit des entrées de journal immersives."),
+            new OpenAIMessage("user", prompt)
+        };
+        
+        OpenAIRequest request = new OpenAIRequest
+        {
+            model = "gpt-3.5-turbo",
+            messages = messages.ToArray(),
+            temperature = 0.8f,
+            max_tokens = 150
+        };
+        
+        string jsonData = JsonUtility.ToJson(request);
+        byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonData);
+        
+        using (UnityWebRequest webRequest = new UnityWebRequest("https://api.openai.com/v1/chat/completions", "POST"))
+        {
+            webRequest.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            webRequest.downloadHandler = new DownloadHandlerBuffer();
+            
+            webRequest.SetRequestHeader("Content-Type", "application/json");
+            webRequest.SetRequestHeader("Authorization", $"Bearer {APIConfig.OPENAI_API_KEY}");
+            
+            yield return webRequest.SendWebRequest();
+            
+            if (webRequest.result == UnityWebRequest.Result.Success)
+            {
+                string responseText = webRequest.downloadHandler.text;
+                ProcessAIResponse(responseText);
+            }
+            else
+            {
+                Debug.LogError($"[Journal] Erreur API: {webRequest.error}");
+                AddEntry("*Les pages du journal semblent floues, l'écriture devient illisible...*", true);
+            }
+        }
+    }
+    
+    void ProcessAIResponse(string jsonResponse)
+    {
+        try
+        {
+            OpenAIResponse response = JsonUtility.FromJson<OpenAIResponse>(jsonResponse);
+            
+            if (response.choices != null && response.choices.Length > 0)
+            {
+                string narration = response.choices[0].message.content.Trim();
+                AddEntry(narration, true);
+                UpdateJournalDisplay();
+                
+                // Auto-scroll vers le bas
+                if (scrollRect != null)
+                {
+                    Canvas.ForceUpdateCanvases();
+                    scrollRect.verticalNormalizedPosition = 0f;
+                }
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[Journal] Erreur parsing: {e.Message}");
+        }
+    }
+    
+    #region Event Logging Methods
+    
+    /// <summary>
+    /// Log quand le joueur accepte une quête
+    /// </summary>
+    public void LogQuestAccepted(string questTitle, string npcName)
+    {
+        LogGameEvent($"J'ai accepté une mission de {npcName}: {questTitle}");
+    }
+    
+    /// <summary>
+    /// Log quand le joueur complète une quête
+    /// </summary>
+    public void LogQuestCompleted(string questTitle)
+    {
+        LogGameEvent($"Mission accomplie: {questTitle}");
+    }
+    
+    /// <summary>
+    /// Log quand le joueur entre dans une nouvelle zone
+    /// </summary>
+    public void LogZoneEntered(string zoneName)
+    {
+        LogGameEvent($"J'ai découvert une nouvelle zone: {zoneName}");
+    }
+    
+    /// <summary>
+    /// Log quand le joueur trouve un objet important
+    /// </summary>
+    public void LogItemFound(string itemName, int quantity = 1)
+    {
+        if (quantity > 1)
+            LogGameEvent($"J'ai trouvé {quantity} {itemName}");
+        else
+            LogGameEvent($"J'ai trouvé un {itemName}");
+    }
+    
+    /// <summary>
+    /// Log quand le joueur parle à un NPC pour la première fois
+    /// </summary>
+    public void LogFirstMeeting(string npcName, string npcRole)
+    {
+        LogGameEvent($"J'ai rencontré {npcName}, un {npcRole}");
+    }
+    
+    /// <summary>
+    /// Log quand le joueur meurt ou échoue
+    /// </summary>
+    public void LogPlayerDeath(string cause = "")
+    {
+        if (string.IsNullOrEmpty(cause))
+            LogGameEvent("L'obscurité m'a englouti...");
+        else
+            LogGameEvent($"J'ai succombé à {cause}");
+    }
+    
+    /// <summary>
+    /// Log un événement personnalisé
+    /// </summary>
+    public void LogCustomEvent(string eventDescription)
+    {
+        LogGameEvent(eventDescription);
+    }
+    
+    #endregion
+    
+    #region Save/Load Support
+    
+    [System.Serializable]
+    public class JournalSaveData
+    {
+        public List<JournalEntry> entries;
+        public List<string> pendingEvents;
+        
+        public JournalSaveData(List<JournalEntry> entries, List<string> events)
+        {
+            this.entries = new List<JournalEntry>(entries);
+            this.pendingEvents = new List<string>(events);
+        }
+    }
+    
+    public JournalSaveData GetSaveData()
+    {
+        return new JournalSaveData(journalEntries, pendingEvents);
+    }
+    
+    public void LoadSaveData(JournalSaveData data)
+    {
+        if (data != null)
+        {
+            journalEntries = new List<JournalEntry>(data.entries);
+            pendingEvents = new List<string>(data.pendingEvents);
+            UpdateJournalDisplay();
+        }
+    }
+    
+    #endregion
+}

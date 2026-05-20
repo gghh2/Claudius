@@ -167,7 +167,7 @@ public class SaveGameManager : MonoBehaviour
         data.playTime = Time.time;
         
         // Player data
-        PlayerControllerCC player = FindObjectOfType<PlayerControllerCC>();
+        PlayerControllerCC player = FindFirstObjectByType<PlayerControllerCC>();
         if (player != null)
         {
             data.playerData = new PlayerSaveData
@@ -199,7 +199,7 @@ public class SaveGameManager : MonoBehaviour
         }
         
         // Companion data
-        CompanionController companion = FindObjectOfType<CompanionController>();
+        CompanionController companion = FindFirstObjectByType<CompanionController>();
         if (companion != null && companion.gameObject.activeSelf)
         {
             data.companionData = new CompanionSaveData
@@ -398,7 +398,7 @@ public class SaveGameManager : MonoBehaviour
         
         // NPC data
         data.npcData = new List<NPCSaveData>();
-        NPC[] allNPCs = FindObjectsOfType<NPC>();
+        NPC[] allNPCs = FindObjectsByType<NPC>(FindObjectsSortMode.None);
         foreach (NPC npc in allNPCs)
         {
             data.npcData.Add(new NPCSaveData
@@ -446,7 +446,12 @@ public class SaveGameManager : MonoBehaviour
     void ApplySaveData(SaveData data)
     {
         // Player position
-        PlayerControllerCC player = FindObjectOfType<PlayerControllerCC>();
+        // CRITICAL: Find player in current scene, not old DontDestroyOnLoad instances
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        PlayerControllerCC player = playerObj != null ? playerObj.GetComponent<PlayerControllerCC>() : null;
+        
+        Debug.Log($"[SaveGame] ApplySaveData - Found player: {(playerObj != null ? playerObj.name : "NULL")} (InstanceID: {(playerObj != null ? playerObj.GetInstanceID().ToString() : "N/A")})");
+        
         if (player != null && data.playerData != null)
         {
             Debug.Log($"[SaveGame] Loading player position: {data.playerData.position}");
@@ -470,24 +475,65 @@ public class SaveGameManager : MonoBehaviour
             // Update spawn position for respawn
             PauseMenuUI.UpdateSpawnPosition(data.playerData.position, data.playerData.rotation);
             
-            // Restore camera zoom
+            // Restore camera zoom and position
             Camera mainCamera = Camera.main;
-            if (mainCamera != null && data.playerData.cameraZoom > 0)
+            Debug.Log($"[SaveGame] Found main camera: {(mainCamera != null ? mainCamera.name : "NULL")} (InstanceID: {(mainCamera != null ? mainCamera.GetInstanceID().ToString() : "N/A")})");
+            
+            if (mainCamera != null)
             {
-                if (mainCamera.orthographic)
+                // Restore zoom if saved
+                if (data.playerData.cameraZoom > 0)
                 {
-                    mainCamera.orthographicSize = data.playerData.cameraZoom;
+                    if (mainCamera.orthographic)
+                    {
+                        mainCamera.orthographicSize = data.playerData.cameraZoom;
+                    }
+                    else
+                    {
+                        mainCamera.fieldOfView = data.playerData.cameraZoom;
+                    }
+                }
+                
+                // Force camera to follow player position immediately
+                // CRITICAL: Get CameraFollow from the main camera to avoid finding old instances
+                CameraFollow cameraFollow = mainCamera.GetComponent<CameraFollow>();
+                Debug.Log($"[SaveGame] Found CameraFollow: {(cameraFollow != null ? "YES" : "NO")}, Target: {(cameraFollow != null && cameraFollow.target != null ? cameraFollow.target.name : "NULL")} (Target InstanceID: {(cameraFollow != null && cameraFollow.target != null ? cameraFollow.target.GetInstanceID().ToString() : "N/A")})");
+                
+                // CRITICAL FIX: Reassign target if it's null (happens when returning from menu)
+                if (cameraFollow != null && cameraFollow.target == null)
+                {
+                    cameraFollow.target = player.transform;
+                    Debug.Log($"[SaveGame] CameraFollow target was NULL, reassigned to: {player.name} (InstanceID: {player.GetInstanceID()})");
+                }
+                
+                if (cameraFollow != null && cameraFollow.target != null)
+                {
+                    // Update zoom if we have saved data
+                    if (data.playerData.cameraZoom > 0)
+                    {
+                        cameraFollow.SetZoomInstant(data.playerData.cameraZoom);
+                    }
+                    
+                    // Calculate correct camera position based on CameraFollow settings
+                    Vector3 desiredCameraPosition;
+                    if (cameraFollow.maintainConstantDistance)
+                    {
+                        Vector3 direction = cameraFollow.offset.normalized;
+                        desiredCameraPosition = cameraFollow.target.position + direction * cameraFollow.fixedDistance;
+                    }
+                    else
+                    {
+                        desiredCameraPosition = cameraFollow.target.position + cameraFollow.offset;
+                    }
+                    
+                    // Force camera to this position immediately (no lerp)
+                    mainCamera.transform.position = desiredCameraPosition;
+                    
+                    Debug.Log($"[SaveGame] Camera repositioned to: {desiredCameraPosition} (CameraFollow instance: {cameraFollow.GetInstanceID()})");
                 }
                 else
                 {
-                    mainCamera.fieldOfView = data.playerData.cameraZoom;
-                }
-                
-                // Also update CameraFollow if it exists
-                CameraFollow cameraFollow = FindObjectOfType<CameraFollow>();
-                if (cameraFollow != null)
-                {
-                    cameraFollow.SetZoom(data.playerData.cameraZoom);
+                    Debug.LogWarning($"[SaveGame] CameraFollow component not found on main camera or target is null!");
                 }
             }
         }
@@ -503,7 +549,7 @@ public class SaveGameManager : MonoBehaviour
         if (data.companionData != null && data.companionData.hasCompanion)
         {
             // Find or spawn companion
-            CompanionController companion = FindObjectOfType<CompanionController>();
+            CompanionController companion = FindFirstObjectByType<CompanionController>();
             if (companion != null)
             {
                 companion.transform.position = data.companionData.position;
@@ -574,7 +620,7 @@ public class SaveGameManager : MonoBehaviour
         // NPCs
         if (data.npcData != null)
         {
-            NPC[] allNPCs = FindObjectsOfType<NPC>();
+            NPC[] allNPCs = FindObjectsByType<NPC>(FindObjectsSortMode.None);
             foreach (var npcData in data.npcData)
             {
                 NPC npc = System.Array.Find(allNPCs, n => n.npcName == npcData.npcName);
@@ -711,7 +757,7 @@ public class SaveGameManager : MonoBehaviour
                 if (!string.IsNullOrEmpty(questInfo.zoneName))
                 {
                     // First try to find the actual zone in the world
-                    QuestZone[] allZones = FindObjectsOfType<QuestZone>();
+                    QuestZone[] allZones = FindObjectsByType<QuestZone>(FindObjectsSortMode.None);
                     foreach (var zone in allZones)
                     {
                         if (zone.zoneName == questInfo.zoneName)

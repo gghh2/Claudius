@@ -18,18 +18,18 @@ UI
 √ Enlever Texte Accepter / refuser des dialogue UI
 √ Quand dans un dialogue, la touche echap doit fermer le dialogue
 √ On voit PanelMenu derrier Load/Save Game
-- Le marker UI de la quête follow ne reste pas d'un allumage du jeu à l'autre avec le system de sauvegarde
+√ Le marker UI de la quête follow ne reste pas d'un allumage du jeu à l'autre avec le system de sauvegarde
 - F5 et F9 ne font rien
 √ Les raccourcis dans PauseMenu ne fonctionnent plus 
-- Quand on sprint ça garde le zoom quand il y a des montagne
-- La barre de Stamina ne semble plus fonctionnelle
-- Remettre les SciptUi sur les Objets dont elles gèrent le comportement et voir si soucis
+X DONTDO => Fetaure par extra et qui apporte son lot de bug // Quand on sprint ça garde le zoom quand il y a des montagne
+√ La barre de Stamina ne semble plus fonctionnelle
+X DONTDO => a cause du fait des objet desactivé, les scripts ne se lancent pas. J'ai mis tou sles script UI sur le GameObject UI. // Remettre les SciptUi sur les Objets dont elles gèrent le comportement et voir si soucis
 
 
 
 In progress : 3.7.2025
 MENU
-- Supprimer MenuPrincipal de la scene de jeu
+√ Supprimer MenuPrincipal de la scene de jeu
 
 ========================================
 IA
@@ -114,10 +114,11 @@ Type de Quête :
 √ Quand on rend une quête avec le message de remerciement du NPC, le bouton Terminer doit fermer la conversation.
 
 FETCH : √
-- On a deux objet dans l'inventaire
+√ On a deux objet dans l'inventaire
 
 DELIVERY : √
 √ Le nom de la quête reste affichée sous le PNJ une fois rendue
+- Le NPS de destination doit obligatoirement avoir un nom inventé
 - Si on demande une quête, le NPC de destination créé un doublon du PNJ donneur de quête
 - 
 
@@ -141,3 +142,22 @@ ESCORT
 
 
 ========================================
+
+
+Ne génère pas de quête : 
+
+- Arcan Le Druide: Bienvenue, voyageur. Je sens que vous êtes en quête d'aventure. Peut-être pourriez-vous m'aider à protéger les anciennes ruines extraterrestres qui abritent mon humble demeure. Que dites-vous de cette mission? [QUEST:PROTECT:ruines]
+
+- Commandant Rex: En effet. Une perturbation a été signalée dans la zone de stockage. Enquêtez et rapportez vos observations.
+
+- Dr. Elena Vasquez: Ah, un autre passionné de science ! En effet, j'aurais une tâche pour vous. Seriez-vous intéressé par une mission ?
+
+
+SAVE System 
+---------------
+- History with NPC is not save.
+- Quand on LOAD une partie sauvegardée, qu'une quête était déjà en cours (lors du SAVE), qu'on reLOAD cette partie plus tard, s'il y avait des items à ramasser (et qu'ils ont déjà été ramassé pour certains d'entre eux) il ne faut pas les recreer dans le monde (car déjà ramassé...) 
+- QUID du quête EXPLORE dont on a déjà exploré la zone mais pas rendue la quête au NPC ?
+
+
+

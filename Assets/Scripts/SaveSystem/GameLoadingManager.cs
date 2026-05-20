@@ -59,6 +59,8 @@ public class GameLoadingManager : MonoBehaviour
     {
         // Disable player immediately to prevent wrong position save
         GameObject player = GameObject.FindGameObjectWithTag("Player");
+        
+        Debug.Log($"[GameLoadingManager] Found player: {(player != null ? player.name : "NULL")} (InstanceID: {(player != null ? player.GetInstanceID().ToString() : "N/A")})" );
         if (player != null)
         {
             CharacterController cc = player.GetComponent<CharacterController>();

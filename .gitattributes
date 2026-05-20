@@ -1,2 +1,130 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+#
+# Source code
+#
+*.cs                 text diff=csharp
+*.cginc              text
+*.shader             text
+*.hlsl               text
+*.compute            text
+*.json               text
+*.md                 text
+*.txt                text
+*.xml                text
+*.yml                text
+*.yaml               text
+*.uss                text
+*.uxml               text
+*.bat                text eol=crlf
+*.sh                 text eol=lf
+
+#
+# Unity YAML / serialized assets — merged with UnityYAMLMerge, kept LF
+#
+*.meta               merge=unityyamlmerge eol=lf
+*.unity              merge=unityyamlmerge eol=lf
+*.asset              merge=unityyamlmerge eol=lf
+*.prefab             merge=unityyamlmerge eol=lf
+*.mat                merge=unityyamlmerge eol=lf
+*.anim               merge=unityyamlmerge eol=lf
+*.controller         merge=unityyamlmerge eol=lf
+*.overrideController merge=unityyamlmerge eol=lf
+*.physicMaterial     merge=unityyamlmerge eol=lf
+*.physicsMaterial2D  merge=unityyamlmerge eol=lf
+*.playable           merge=unityyamlmerge eol=lf
+*.mask               merge=unityyamlmerge eol=lf
+*.brush              merge=unityyamlmerge eol=lf
+*.flare              merge=unityyamlmerge eol=lf
+*.fontsettings       merge=unityyamlmerge eol=lf
+*.guiskin            merge=unityyamlmerge eol=lf
+*.giparams           merge=unityyamlmerge eol=lf
+*.renderTexture      merge=unityyamlmerge eol=lf
+*.spriteatlas        merge=unityyamlmerge eol=lf
+*.terrainlayer       merge=unityyamlmerge eol=lf
+*.mixer              merge=unityyamlmerge eol=lf
+*.shadervariants     merge=unityyamlmerge eol=lf
+*.lighting           merge=unityyamlmerge eol=lf
+*.preset             merge=unityyamlmerge eol=lf
+*.signal             merge=unityyamlmerge eol=lf
+
+#
+# 3D models (binary)
+#
+*.fbx                binary
+*.FBX                binary
+*.obj                binary
+*.blend              binary
+*.dae                binary
+*.3ds                binary
+*.dxf                binary
+*.max                binary
+*.c4d                binary
+*.ma                 binary
+*.mb                 binary
+
+#
+# Images / textures (binary)
+#
+*.png                binary
+*.jpg                binary
+*.jpeg               binary
+*.gif                binary
+*.bmp                binary
+*.tga                binary
+*.tif                binary
+*.tiff               binary
+*.psd                binary
+*.exr                binary
+*.hdr                binary
+*.ico                binary
+*.iff                binary
+*.pict               binary
+
+#
+# Audio (binary)
+#
+*.mp3                binary
+*.ogg                binary
+*.wav                binary
+*.aiff               binary
+*.aif                binary
+*.flac               binary
+*.mod                binary
+*.it                 binary
+*.s3m                binary
+*.xm                 binary
+
+#
+# Video (binary)
+#
+*.mov                binary
+*.mp4                binary
+*.avi                binary
+*.webm               binary
+*.asf                binary
+*.mpg                binary
+*.mpeg               binary
+
+#
+# Fonts (binary)
+#
+*.ttf                binary
+*.otf                binary
+
+#
+# Compiled / packed (binary)
+#
+*.dll                binary
+*.pdb                binary
+*.so                 binary
+*.dylib              binary
+*.a                  binary
+*.aar                binary
+*.bytes              binary
+*.unitypackage       binary
+*.zip                binary
+*.7z                 binary
+*.rar                binary
+*.gz                 binary

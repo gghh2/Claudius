@@ -235,7 +235,7 @@ public class SaveSystemUI : MonoBehaviour
             // DON'T hide the panel in MainMenu - LoadingScreen will cover it
             // The panel will be automatically hidden when scene changes
             
-            MainMenuManager mainMenu = FindObjectOfType<MainMenuManager>();
+            MainMenuManager mainMenu = FindFirstObjectByType<MainMenuManager>();
             if (mainMenu != null)
             {
                 // Store save to load after scene transition
@@ -326,7 +326,7 @@ public class SaveSystemUI : MonoBehaviour
                 saveMenuPanel.SetActive(false);
                 
             // Find and show main menu panel
-            MainMenuManager mainMenu = FindObjectOfType<MainMenuManager>();
+            MainMenuManager mainMenu = FindFirstObjectByType<MainMenuManager>();
             if (mainMenu != null)
             {
                 mainMenu.ShowMainMenu();
@@ -414,7 +414,7 @@ public class SaveSystemUI : MonoBehaviour
             if (pausePanel != null)
                 pausePanel.SetActive(false);
                 
-            PauseMenuUI pauseMenu = FindObjectOfType<PauseMenuUI>();
+            PauseMenuUI pauseMenu = FindFirstObjectByType<PauseMenuUI>();
             if (pauseMenu != null)
                 pauseMenu.Resume();
         }

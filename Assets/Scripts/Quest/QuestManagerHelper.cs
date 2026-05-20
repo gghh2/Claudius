@@ -90,7 +90,7 @@ public static class QuestManagerHelper
             if (debugMode)
                 Debug.LogWarning($"[QUEST] Aucune zone de type {token.zoneType} trouvée, recherche alternative...");
             
-            var allZones = Object.FindObjectsOfType<QuestZone>();
+            var allZones = Object.FindObjectsByType<QuestZone>(FindObjectsSortMode.None);
             targetZone = allZones.FirstOrDefault(z => z.zoneType == token.zoneType.Value);
         }
         

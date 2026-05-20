@@ -159,7 +159,7 @@ public class AudioSettingsUI : MonoBehaviour
         UpdateVolumeLabels();
         
         // Apply to all AmbientSoundZones in the scene
-        AmbientSoundZone[] ambientZones = FindObjectsOfType<AmbientSoundZone>();
+        AmbientSoundZone[] ambientZones = FindObjectsByType<AmbientSoundZone>(FindObjectsSortMode.None);
         foreach (var zone in ambientZones)
         {
             zone.UpdateVolume();

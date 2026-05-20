@@ -6,9 +6,6 @@ using UnityEngine;
 /// </summary>
 public class NotificationPanel : MonoBehaviour
 {
-    [Header("Panel Info")]
-    [SerializeField] private string panelDescription = "This is the notification panel for showing temporary messages";
-    
     void Awake()
     {
         // Ensure the panel starts hidden

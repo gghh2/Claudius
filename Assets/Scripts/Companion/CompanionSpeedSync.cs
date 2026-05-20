@@ -29,7 +29,7 @@ public class CompanionSpeedSync : MonoBehaviour
         companion = GetComponent<CompanionController>();
         
         // Trouve le joueur
-        playerController = FindObjectOfType<PlayerControllerCC>();
+        playerController = FindFirstObjectByType<PlayerControllerCC>();
         
         if (playerController != null && autoSyncSpeed)
         {
@@ -69,7 +69,7 @@ public class CompanionSpeedSync : MonoBehaviour
     {
         if (playerController == null)
         {
-            playerController = FindObjectOfType<PlayerControllerCC>();
+            playerController = FindFirstObjectByType<PlayerControllerCC>();
         }
         
         if (playerController != null && companion != null)

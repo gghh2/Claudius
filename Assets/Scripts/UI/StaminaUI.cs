@@ -79,7 +79,7 @@ public class StaminaUI : MonoBehaviour
     void CreateStaminaBar()
     {
         // Trouve ou crée le Canvas
-        Canvas canvas = FindObjectOfType<Canvas>();
+        Canvas canvas = FindFirstObjectByType<Canvas>();
         if (canvas == null)
         {
             GameObject canvasGO = new GameObject("Canvas");
@@ -160,7 +160,7 @@ public class StaminaUI : MonoBehaviour
     
     void FindPlayerController()
     {
-        playerController = FindObjectOfType<PlayerControllerCC>();
+        playerController = FindFirstObjectByType<PlayerControllerCC>();
         
         if (playerController == null)
         {

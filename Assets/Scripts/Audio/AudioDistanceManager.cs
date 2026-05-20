@@ -158,7 +158,7 @@ public class AudioDistanceManager : MonoBehaviour
         // Apply to ambient sounds
         if (affectAmbientSounds)
         {
-            AmbientSoundZone[] ambientZones = FindObjectsOfType<AmbientSoundZone>();
+            AmbientSoundZone[] ambientZones = FindObjectsByType<AmbientSoundZone>(FindObjectsSortMode.None);
             foreach (var zone in ambientZones)
             {
                 zone.SetDistanceMultiplier(currentVolumeMultiplier);

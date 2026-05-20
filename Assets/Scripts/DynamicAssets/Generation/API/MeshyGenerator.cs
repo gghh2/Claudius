@@ -26,8 +26,6 @@ namespace DynamicAssets.Generation.API
         [SerializeField] private string meshyStatusUrl = "https://api.meshy.ai/v2/text-to-3d";
         
         [Header("Status")]
-        [SerializeField] private bool isConnected = false;
-        [SerializeField] private bool isTesting = false;
         [SerializeField] private int activeRequests = 0;
         
         [Header("Statistics")]

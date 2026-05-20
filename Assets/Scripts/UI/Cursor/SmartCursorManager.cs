@@ -30,12 +30,18 @@ public class SmartCursorManager : MonoBehaviour
         "StaminaUI",
         "PauseMenu"
     };
-    
+
+    // Manager de navigation UI faisant autorité (mis en cache pour éviter les recherches par frame)
+    private UnifiedUIManager uiManager;
+
     void Start()
     {
         // Cache le curseur au démarrage
         Cursor.visible = false;
-        
+
+        // Référence au gestionnaire de navigation UI
+        uiManager = FindFirstObjectByType<UnifiedUIManager>();
+
         // Auto-détection des panels si activé
         if (autoDetectPanels)
         {
@@ -79,6 +85,15 @@ public class SmartCursorManager : MonoBehaviour
     
     void Update()
     {
+        // UnifiedUIManager fait autorité : s'il affiche un panel, le curseur reste visible.
+        // Évite que la liste de panels codée en dur ci-dessous (incomplète : SaveMenu,
+        // AdventureJournal...) ne masque le curseur sur un panel non répertorié.
+        if (uiManager != null && uiManager.IsShowingPanel)
+        {
+            Cursor.visible = true;
+            return;
+        }
+
         bool shouldShowCursor = false;
         
         // Vérifie chaque panel
@@ -131,7 +146,7 @@ public class SmartCursorManager : MonoBehaviour
         // Vérifie aussi si DialogueUI est active (au cas où c'est un composant)
         if (!shouldShowCursor)
         {
-            DialogueUI dialogueUI = FindObjectOfType<DialogueUI>();
+            DialogueUI dialogueUI = FindFirstObjectByType<DialogueUI>();
             if (dialogueUI != null && dialogueUI.IsDialogueOpen())
             {
                 shouldShowCursor = true;
@@ -143,6 +158,13 @@ public class SmartCursorManager : MonoBehaviour
         Cursor.visible = shouldShowCursor;
     }
     
+    void OnDisable()
+    {
+        // Quand ce manager est désactivé (un menu prend la main, ou sortie du Play mode),
+        // on laisse le curseur visible — évite qu'il reste caché dans l'éditeur.
+        Cursor.visible = true;
+    }
+
     // Méthodes publiques pour contrôle manuel
     public void ShowCursor() => Cursor.visible = true;
     public void HideCursor() => Cursor.visible = false;

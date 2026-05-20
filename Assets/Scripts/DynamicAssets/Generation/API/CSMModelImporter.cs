@@ -571,7 +571,7 @@ Dossiers:
             {
                 Debug.LogWarning("⚠️ CSMModelImporter.Instance NULL - Recherche dans la scène...");
                 
-                Instance = FindObjectOfType<CSMModelImporter>();
+                Instance = FindFirstObjectByType<CSMModelImporter>();
                 
                 if (Instance != null)
                 {

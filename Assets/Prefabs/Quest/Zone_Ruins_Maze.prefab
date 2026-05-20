@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &41525899575576644
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 41525899575576645}
+  - component: {fileID: 41525899575576648}
+  - component: {fileID: 41525899575576651}
+  - component: {fileID: 41525899575576650}
+  m_Layer: 0
+  m_Name: Zone_Ruins_Maze
+  m_TagString: QuestZone
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &41525899575576645
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 41525899575576644}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 151.3, y: 7.84, z: -136.34}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &41525899575576648
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 41525899575576644}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 15.45
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &41525899575576651
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 41525899575576644}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e52b077ed9c5fb4ca50e43061df7ce1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  zoneName: Ruine d'un ancien labyrinthe
+  zoneType: 3
+  description: Un ancien labyrinthe  extraterresstre en pleine nature en haut d'un
+    plateau
+  supportedObjects: 0000000003000000
+  spawnRadius: 11.1
+  maxSpawnPoints: 8
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  zoneColor: {r: 0.6, g: 0.5, b: 0.4, a: 1}
+  showSpawnArea: 1
+--- !u!114 &41525899575576650
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 41525899575576644}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4271d72fe81e14a4ca86f50388c2ff42, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ambientSound: {fileID: 8300000, guid: 85a000204f209fa439316ef152e2e6e5, type: 3}
+  volume: 1
+  is3DSound: 0
+  fadeDuration: 2
+  minDistance: 11.6
+  maxDistance: 14.8
+  useDistanceInZone: 0
+  triggerTag: Player
+  playOnAwake: 0
+  destroyOnExit: 0

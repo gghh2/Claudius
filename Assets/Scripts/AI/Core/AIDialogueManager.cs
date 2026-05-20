@@ -212,7 +212,6 @@ public class AIDialogueManager : MonoBehaviour
         AIPromptConfig configToUse = GetConfigForRole(npcData.role);
         
         // Check for active quest FIRST
-        bool hasActiveQuest = false;
         string activeQuestInfo = "";
         
         if (QuestJournal.Instance != null)
@@ -222,7 +221,6 @@ public class AIDialogueManager : MonoBehaviour
             
             if (npcActiveQuest != null)
             {
-                hasActiveQuest = true;
                 Debug.Log($"🎯 QUÊTE ACTIVE DÉTECTÉE: {npcActiveQuest.description} - Progression: {npcActiveQuest.GetProgressText()}");
                 activeQuestInfo = $@"
 🔴🔴🔴 ATTENTION PRIORITAIRE 🔴🔴🔴

@@ -43,8 +43,7 @@ public class PauseMenuUI : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private Vector3 defaultSpawnPosition = Vector3.zero;
     [SerializeField] private Vector3 defaultSpawnRotation = Vector3.zero;
-    [SerializeField] private bool autoSaveSpawnPosition = true;
-    
+
     // Static variables to store game session data
     private static Vector3 lastLoadedPosition = Vector3.zero;
     private static Vector3 lastLoadedRotation = Vector3.zero;
@@ -117,10 +116,10 @@ public class PauseMenuUI : MonoBehaviour
     {
         var managers = new System.Collections.Generic.List<MonoBehaviour>();
         
-        var smartCursor = FindObjectOfType<SmartCursorManager>();
+        var smartCursor = FindFirstObjectByType<SmartCursorManager>();
         if (smartCursor != null) managers.Add(smartCursor);
         
-        foreach (var mono in FindObjectsOfType<MonoBehaviour>())
+        foreach (var mono in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
         {
             if (mono != null && mono != this && 
                 mono.GetType().Name.Contains("Cursor") && 
@@ -343,7 +342,7 @@ public class PauseMenuUI : MonoBehaviour
             Rigidbody rb = player.GetComponent<Rigidbody>();
             if (rb != null)
             {
-                rb.velocity = Vector3.zero;
+                rb.linearVelocity = Vector3.zero;
                 rb.angularVelocity = Vector3.zero;
             }
             
@@ -507,18 +506,18 @@ public class PauseMenuUI : MonoBehaviour
     
     void ApplyMusicVolume(float volume)
     {
-        MusicManager musicManager = FindObjectOfType<MusicManager>();
+        MusicManager musicManager = FindFirstObjectByType<MusicManager>();
         if (musicManager != null)
             musicManager.SetMasterVolume(volume);
     }
     
     void ApplySFXVolume(float volume)
     {
-        SoundEffectsManager sfxManager = FindObjectOfType<SoundEffectsManager>();
+        SoundEffectsManager sfxManager = FindFirstObjectByType<SoundEffectsManager>();
         if (sfxManager != null)
             sfxManager.SetMasterVolume(volume);
         
-        FootstepSystem footsteps = FindObjectOfType<FootstepSystem>();
+        FootstepSystem footsteps = FindFirstObjectByType<FootstepSystem>();
         if (footsteps != null)
             footsteps.SetFootstepVolume(volume * 0.7f);
     }
@@ -567,21 +566,21 @@ public class PauseMenuUI : MonoBehaviour
     void CleanupGameSession()
     {
         // Stop all music
-        MusicManager musicManager = FindObjectOfType<MusicManager>();
+        MusicManager musicManager = FindFirstObjectByType<MusicManager>();
         if (musicManager != null)
         {
             musicManager.StopMusic();
         }
         
         // Stop all sound effects
-        SoundEffectsManager sfxManager = FindObjectOfType<SoundEffectsManager>();
+        SoundEffectsManager sfxManager = FindFirstObjectByType<SoundEffectsManager>();
         if (sfxManager != null)
         {
             sfxManager.StopAllSounds();
         }
         
         // Stop footsteps
-        FootstepSystem footsteps = FindObjectOfType<FootstepSystem>();
+        FootstepSystem footsteps = FindFirstObjectByType<FootstepSystem>();
         if (footsteps != null)
         {
             footsteps.enabled = false;

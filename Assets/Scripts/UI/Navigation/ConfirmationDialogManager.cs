@@ -17,7 +17,7 @@ public class ConfirmationDialogManager : MonoBehaviour
         {
             if (instance == null)
             {
-                instance = FindObjectOfType<ConfirmationDialogManager>();
+                instance = FindFirstObjectByType<ConfirmationDialogManager>();
             }
             return instance;
         }

@@ -23,6 +23,13 @@ public class SceneNavigationManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+
+            // DontDestroyOnLoad only works on root GameObjects: detach if nested
+            if (transform.parent != null)
+            {
+                transform.SetParent(null);
+            }
+
             DontDestroyOnLoad(gameObject);
         }
         else

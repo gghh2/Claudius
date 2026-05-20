@@ -17,7 +17,7 @@ public class NotificationManager : MonoBehaviour
         {
             if (instance == null)
             {
-                instance = FindObjectOfType<NotificationManager>();
+                instance = FindFirstObjectByType<NotificationManager>();
                 if (instance == null)
                 {
                     Debug.LogError("[NotificationManager] No instance found in scene!");

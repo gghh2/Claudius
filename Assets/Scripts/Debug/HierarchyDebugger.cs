@@ -46,7 +46,7 @@ public class HierarchyDebugger : MonoBehaviour
         int activeObjects = 0;
         int withComponents = 0;
         
-        GameObject[] allObjects = FindObjectsOfType<GameObject>(true);
+        GameObject[] allObjects = FindObjectsByType<GameObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         
         foreach (GameObject obj in allObjects)
         {
@@ -175,7 +175,7 @@ public class HierarchyDebugger : MonoBehaviour
     
     void LogComponentCount<T>(string componentName) where T : Component
     {
-        T[] components = FindObjectsOfType<T>(true);
+        T[] components = FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         if (components.Length > 0)
         {
             Debug.Log("  " + componentName + ": " + components.Length);
@@ -189,8 +189,8 @@ public class HierarchyDebugger : MonoBehaviour
         Debug.Log("\n========== ALL SCRIPTS IN SCENE: " + currentScene.name + " ==========\n");
         
         // Get all MonoBehaviours including inactive
-        MonoBehaviour[] allScripts = FindObjectsOfType<MonoBehaviour>(true);
-        
+        MonoBehaviour[] allScripts = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
         // Group by script type
         var scriptGroups = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<MonoBehaviour>>();
         
@@ -358,7 +358,7 @@ public class HierarchyDebugger : MonoBehaviour
     
     void ExportScriptSummary(StringBuilder sb)
     {
-        MonoBehaviour[] allScripts = FindObjectsOfType<MonoBehaviour>(true);
+        MonoBehaviour[] allScripts = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         var scriptGroups = new System.Collections.Generic.Dictionary<string, int>();
         
         foreach (var script in allScripts)

@@ -82,7 +82,7 @@ public class QuestMarkerDebugger : MonoBehaviour
         
         // 3. Vérifie les objets de quête actifs
         Debug.Log("\n=== 3. TOUS LES OBJETS DE QUÊTE ===");
-        QuestObject[] allQuestObjects = FindObjectsOfType<QuestObject>();
+        QuestObject[] allQuestObjects = FindObjectsByType<QuestObject>(FindObjectsSortMode.None);
         Debug.Log($"Nombre total d'objets de quête: {allQuestObjects.Length}");
         
         int uncollected = allQuestObjects.Count(qo => !qo.isCollected);

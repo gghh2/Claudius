@@ -28,7 +28,7 @@ public class SkyboxFixer : MonoBehaviour
         Debug.Log("=== 🌌 DIAGNOSTIC SKYBOX ===");
         
         // Vérifie les caméras
-        Camera[] cameras = FindObjectsOfType<Camera>();
+        Camera[] cameras = FindObjectsByType<Camera>(FindObjectsSortMode.None);
         Debug.Log($"📷 {cameras.Length} caméra(s) trouvée(s)");
         
         foreach (Camera cam in cameras)
@@ -76,7 +76,7 @@ public class SkyboxFixer : MonoBehaviour
         Camera mainCam = Camera.main;
         if (mainCam == null)
         {
-            mainCam = FindObjectOfType<Camera>();
+            mainCam = FindFirstObjectByType<Camera>();
         }
         
         if (mainCam != null)
@@ -115,7 +115,7 @@ public class SkyboxFixer : MonoBehaviour
     [ContextMenu("Force Fix Skybox")]
     public void ForceFixSkybox()
     {
-        Camera mainCam = Camera.main ?? FindObjectOfType<Camera>();
+        Camera mainCam = Camera.main ?? FindFirstObjectByType<Camera>();
         if (mainCam != null)
         {
             mainCam.clearFlags = CameraClearFlags.SolidColor;
@@ -145,7 +145,7 @@ public class SkyboxFixer : MonoBehaviour
         Debug.Log("✅ Skybox procédurale créée et assignée !");
         
         // Met aussi à jour la caméra
-        Camera mainCam = Camera.main ?? FindObjectOfType<Camera>();
+        Camera mainCam = Camera.main ?? FindFirstObjectByType<Camera>();
         if (mainCam != null)
         {
             mainCam.clearFlags = CameraClearFlags.Skybox;

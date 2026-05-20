@@ -32,7 +32,7 @@ public class NPC : MonoBehaviour
     
     void Start()
     {
-        player = FindObjectOfType<PlayerControllerCC>().transform;
+        player = FindFirstObjectByType<PlayerControllerCC>().transform;
         npcRenderer = GetComponent<Renderer>();
         
         // Applique la couleur du PNJ

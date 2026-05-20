@@ -48,7 +48,7 @@ public class InteractionPrompt : MonoBehaviour
     void CreatePromptUI()
     {
         // Create UI Canvas if needed
-        Canvas canvas = FindObjectOfType<Canvas>();
+        Canvas canvas = FindFirstObjectByType<Canvas>();
         if (canvas == null)
         {
             GameObject canvasGO = new GameObject("InteractionCanvas");

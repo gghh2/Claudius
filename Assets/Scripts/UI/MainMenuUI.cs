@@ -342,7 +342,7 @@ public class MainMenuUI : MonoBehaviour
     
     void DisablePlayerControl()
     {
-        var player = FindObjectOfType<PlayerControllerCC>();
+        var player = FindFirstObjectByType<PlayerControllerCC>();
         if (player != null)
         {
             player.EnableControls(false);
@@ -351,7 +351,7 @@ public class MainMenuUI : MonoBehaviour
     
     void EnablePlayerControl()
     {
-        var player = FindObjectOfType<PlayerControllerCC>();
+        var player = FindFirstObjectByType<PlayerControllerCC>();
         if (player != null)
         {
             player.EnableControls(true);

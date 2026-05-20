@@ -285,17 +285,17 @@ public class QuestObject : MonoBehaviour
         switch (objectType)
         {
             case QuestObjectType.Item:
-                return $"📦 {formattedName}";
+                return $"[ITEM] {formattedName}";
             case QuestObjectType.NPC:
                 // Pour les NPCs de livraison, affiche "Livrer à [nom]"
                 if (isDeliveryTarget)
-                    return $"📦 Livrer à {formattedName}";
+                    return $"[DELIVER TO] {formattedName}";
                 else
-                    return $"👤 {formattedName}";
+                    return $"[NPC] {formattedName}";
             case QuestObjectType.InteractableObject:
-                return $"🔧 {formattedName}";
+                return $"[INTERACT] {formattedName}";
             case QuestObjectType.Marker:
-                return $"📍 Explorer: {formattedName}";
+                return $"[EXPLORE] {formattedName}";
             default:
                 return formattedName;
         }
@@ -359,7 +359,7 @@ public class QuestObject : MonoBehaviour
             {
                 float progress = Mathf.Clamp01(explorationTimer / explorationTimeRequired);
                 string formattedName = TextFormatter.FormatName(objectName);
-                nameText.text = $"📍 {formattedName}\nExploration: {Mathf.RoundToInt(progress * 100)}%";
+                nameText.text = $"[EXPLORE] {formattedName}\nProgress: {Mathf.RoundToInt(progress * 100)}%";
                 
                 // Change la couleur selon la progression
                 nameText.color = Color.Lerp(Color.yellow, Color.green, progress);
@@ -469,7 +469,7 @@ public class QuestObject : MonoBehaviour
         
         if (nameText != null)
         {
-            nameText.text = "✅ Activé";
+            nameText.text = "[ACTIVE]";
             nameText.color = Color.green;
         }
         
@@ -526,7 +526,7 @@ public class QuestObject : MonoBehaviour
             // Effet visuel de succès
             if (nameText != null)
             {
-                nameText.text = $"✅ {packageName} livré !";
+                nameText.text = $"[DELIVERED] {packageName}";
                 nameText.color = Color.green;
                 nameText.fontSize = fontSize * 1.5f;
             }
@@ -540,7 +540,7 @@ public class QuestObject : MonoBehaviour
             
             if (nameText != null)
             {
-                nameText.text = $"❌ Il me faut: {packageName}";
+                nameText.text = $"[NEED] {packageName}";
                 nameText.color = Color.red;
             }
         }
@@ -652,13 +652,13 @@ public class QuestObject : MonoBehaviour
         // Effet visuel de validation
         if (nameText != null)
         {
-            nameText.text = "✅ Zone Explorée !";
+            nameText.text = "[EXPLORED]";
             nameText.color = Color.green;
             nameText.fontSize = fontSize * 1.5f;
         }
         
         // Effet de particules
-        var footstepSystem = FindObjectOfType<FootstepSystem>();
+        var footstepSystem = FindFirstObjectByType<FootstepSystem>();
         if (footstepSystem != null)
         {
             for (int i = 0; i < 3; i++)

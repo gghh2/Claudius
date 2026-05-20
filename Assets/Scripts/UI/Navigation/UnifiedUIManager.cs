@@ -18,7 +18,7 @@ public class UnifiedUIManager : MonoBehaviour
         {
             if (instance == null)
             {
-                instance = FindObjectOfType<UnifiedUIManager>();
+                instance = FindFirstObjectByType<UnifiedUIManager>();
                 // DO NOT create a new empty instance!
                 // The UnifiedUIManager must exist in the scene with proper references
                 if (instance == null)
@@ -43,6 +43,9 @@ public class UnifiedUIManager : MonoBehaviour
     [SerializeField] private GameObject questJournalPanel;
     [SerializeField] private GameObject confirmDialog;
     [SerializeField] private GameObject notificationPanel;
+    
+    [Header("New Panels")]
+    [SerializeField] private GameObject adventureJournalPanel;
     #endregion
 
     #region Layer Management
@@ -64,7 +67,10 @@ public class UnifiedUIManager : MonoBehaviour
     
     // Currently active panel
     private string currentPanel = GAME_STATE;
-    
+
+    /// <summary>True when a UI panel is open (i.e. not plain gameplay). Used by SmartCursorManager.</summary>
+    public bool IsShowingPanel => currentPanel != GAME_STATE;
+
     // Panel configurations
     private Dictionary<string, PanelConfig> panelConfigs = new Dictionary<string, PanelConfig>();
     
@@ -136,6 +142,10 @@ public class UnifiedUIManager : MonoBehaviour
             new[] { GAME_STATE });
             
         ConfigurePanel(UnifiedUIPanelNames.Inventory, inventoryPanel, pauseMenuLayer, true, true,
+            new[] { GAME_STATE });
+            
+        // NEW: Adventure Journal configuration
+        ConfigurePanel(UnifiedUIPanelNames.AdventureJournal, adventureJournalPanel, pauseMenuLayer, true, true,
             new[] { GAME_STATE });
             
         // Confirmation dialog special configuration
@@ -252,6 +262,11 @@ public class UnifiedUIManager : MonoBehaviour
             else if (Input.GetKeyDown(KeyCode.I))
             {
                 NavigateTo(UnifiedUIPanelNames.Inventory);
+            }
+            // NEW: L for Adventure Journal
+            else if (Input.GetKeyDown(KeyCode.L))
+            {
+                NavigateTo(UnifiedUIPanelNames.AdventureJournal);
             }
         }
     }
@@ -497,7 +512,7 @@ public class UnifiedUIManager : MonoBehaviour
 
     void DisablePlayerControl()
     {
-        var player = FindObjectOfType<PlayerControllerCC>();
+        var player = FindFirstObjectByType<PlayerControllerCC>();
         if (player != null)
         {
             player.EnableControls(false);
@@ -506,7 +521,7 @@ public class UnifiedUIManager : MonoBehaviour
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
         
-        var cursorManager = FindObjectOfType<SmartCursorManager>();
+        var cursorManager = FindFirstObjectByType<SmartCursorManager>();
         if (cursorManager != null)
         {
             cursorManager.enabled = false;
@@ -515,7 +530,7 @@ public class UnifiedUIManager : MonoBehaviour
 
     void EnablePlayerControl()
     {
-        var player = FindObjectOfType<PlayerControllerCC>();
+        var player = FindFirstObjectByType<PlayerControllerCC>();
         if (player != null)
         {
             player.enabled = true;
@@ -526,7 +541,7 @@ public class UnifiedUIManager : MonoBehaviour
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
         
-        var cursorManager = FindObjectOfType<SmartCursorManager>();
+        var cursorManager = FindFirstObjectByType<SmartCursorManager>();
         if (cursorManager != null)
         {
             cursorManager.enabled = true;
@@ -537,7 +552,7 @@ public class UnifiedUIManager : MonoBehaviour
     {
         yield return null;
         
-        var cursorManager = FindObjectOfType<SmartCursorManager>();
+        var cursorManager = FindFirstObjectByType<SmartCursorManager>();
         if (cursorManager != null)
         {
             cursorManager.enabled = true;
@@ -705,6 +720,7 @@ public static class UnifiedUIPanelNames
     public const string MainMenu = "MainMenu";
     public const string Inventory = "Inventory";
     public const string QuestJournal = "QuestJournal";
+    public const string AdventureJournal = "AdventureJournal";
     public const string Dialogue = "Dialogue";
     public const string DialogueHistory = "DialogueHistory";
     public const string PauseMenu = "PauseMenu";

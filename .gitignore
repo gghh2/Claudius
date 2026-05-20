@@ -17,6 +17,10 @@
 # Recordings can get excessive in size
 /[Rr]ecordings/
 
+# Unity scene auto-recovery folder
+/[Aa]ssets/_[Rr]ecovery/
+/[Aa]ssets/_[Rr]ecovery.meta
+
 
 #APIKey
 /[Aa]ssets/Scripts/APIConfig
@@ -85,3 +89,11 @@ Compile/*
 Compile/
 Assets/Scripts/Config/APIConfig.cs
 Assets/Scripts/Config/APIConfig.cs.meta
+
+# Claude code-indexing tool (regenerable, not source)
+Assets/Scripts/unity-bridge/
+Assets/Scripts/unity-bridge.meta
+
+# Local backup of original building assets (kept out of Git)
+Assets/Prefabs/Buildings/ORIGINAL/
+Assets/Prefabs/Buildings/ORIGINAL.meta

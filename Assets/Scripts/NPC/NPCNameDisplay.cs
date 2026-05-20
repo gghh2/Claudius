@@ -27,7 +27,7 @@ public class NPCNameDisplay : MonoBehaviour
         mainCamera = Camera.main;
         
         // Trouve le joueur
-        PlayerControllerCC player = FindObjectOfType<PlayerControllerCC>();
+        PlayerControllerCC player = FindFirstObjectByType<PlayerControllerCC>();
         if (player != null)
         {
             playerTransform = player.transform;

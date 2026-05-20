@@ -254,7 +254,7 @@ public class DialogueUI : MonoBehaviour
         }
         
         // Désactive les contrôles du joueur
-        FindObjectOfType<PlayerControllerCC>()?.EnableControls(false);
+        FindFirstObjectByType<PlayerControllerCC>()?.EnableControls(false);
         
         // Démarre la conversation IA
         AIDialogueManager.Instance.StartAIConversation(npcData);
@@ -548,7 +548,7 @@ public class DialogueUI : MonoBehaviour
     
     Color GetNPCColor(string npcName)
     {
-        NPC[] allNPCs = FindObjectsOfType<NPC>();
+        NPC[] allNPCs = FindObjectsByType<NPC>(FindObjectsSortMode.None);
         
         foreach (NPC npc in allNPCs)
         {
@@ -604,7 +604,7 @@ public class DialogueUI : MonoBehaviour
         {
             Debug.Log($"🚚 Livraison du colis via UI: {pendingDeliveryPackage}");
             
-            QuestObject[] allQuestObjects = FindObjectsOfType<QuestObject>();
+            QuestObject[] allQuestObjects = FindObjectsByType<QuestObject>(FindObjectsSortMode.None);
             foreach (QuestObject qo in allQuestObjects)
             {
                 if (qo.questId == pendingDeliveryQuestId && qo.isDeliveryTarget)
@@ -775,12 +775,12 @@ public class DialogueUI : MonoBehaviour
         else
         {
             dialoguePanel.SetActive(false);
-            FindObjectOfType<PlayerControllerCC>()?.EnableControls(true);
+            FindFirstObjectByType<PlayerControllerCC>()?.EnableControls(true);
         }
         
         // REPREND le mouvement et réaffiche les noms
-        NPCMovement[] allNPCMovements = FindObjectsOfType<NPCMovement>();
-        NPCNameDisplay[] allNameDisplays = FindObjectsOfType<NPCNameDisplay>();
+        NPCMovement[] allNPCMovements = FindObjectsByType<NPCMovement>(FindObjectsSortMode.None);
+        NPCNameDisplay[] allNameDisplays = FindObjectsByType<NPCNameDisplay>(FindObjectsSortMode.None);
 
         foreach (NPCMovement movement in allNPCMovements)
         {

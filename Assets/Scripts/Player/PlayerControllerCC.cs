@@ -136,7 +136,7 @@ public class PlayerControllerCC : MonoBehaviour
         // Get camera
         if (cameraFollow == null)
         {
-            cameraFollow = FindObjectOfType<CameraFollow>();
+            cameraFollow = FindFirstObjectByType<CameraFollow>();
         }
         
         Debug.Log("🎮 PlayerControllerCC (Character Controller) initialisé");

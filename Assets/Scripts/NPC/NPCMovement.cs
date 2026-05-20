@@ -37,7 +37,7 @@ public class NPCMovement : MonoBehaviour
         
         // Configure le Rigidbody pour éviter les problèmes physiques
         rb.freezeRotation = true;
-        rb.drag = 5f; // Arrêt plus naturel
+        rb.linearDamping = 5f; // Arrêt plus naturel
         rb.constraints = RigidbodyConstraints.FreezeRotation; // Empêche la rotation
         rb.useGravity = true; // Important pour rester au sol
         
@@ -55,7 +55,7 @@ public class NPCMovement : MonoBehaviour
         // Ne bouge pas si en dialogue
         if (isStopped)
         {
-            rb.velocity = Vector3.zero;
+            rb.linearVelocity = Vector3.zero;
             return;
         }
         
@@ -112,7 +112,7 @@ public class NPCMovement : MonoBehaviour
             rb.MovePosition(newPosition);
             
             // Optionnel : garde velocity pour compatibilité
-            rb.velocity = direction * moveSpeed;
+            rb.linearVelocity = direction * moveSpeed;
             
             // Fait tourner le NPC vers sa direction
             if (direction != Vector3.zero)
@@ -123,7 +123,7 @@ public class NPCMovement : MonoBehaviour
         else
         {
             // Arrivé à destination
-            rb.velocity = Vector3.zero;
+            rb.linearVelocity = Vector3.zero;
             isMoving = false;
             waitTimer = Random.Range(waitTimeMin, waitTimeMax);
             
@@ -146,7 +146,7 @@ public class NPCMovement : MonoBehaviour
     public void StopMovement()
     {
         isStopped = true;
-        rb.velocity = Vector3.zero;
+        rb.linearVelocity = Vector3.zero;
         
         if (GlobalDebugManager.IsDebugEnabled(DebugSystem.NPC))
             Debug.Log($"{gameObject.name} - Mouvement arrêté (dialogue)");

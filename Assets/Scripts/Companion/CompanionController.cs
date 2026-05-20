@@ -165,8 +165,8 @@ public class CompanionController : MonoBehaviour
             rb = gameObject.AddComponent<Rigidbody>();
         }
         rb.mass = 1f;
-        rb.drag = 5f;
-        rb.angularDrag = 10f;
+        rb.linearDamping = 5f;
+        rb.angularDamping = 10f;
         rb.freezeRotation = true;
         
         // Configure Audio
@@ -185,7 +185,7 @@ public class CompanionController : MonoBehaviour
         // Trouve le joueur
         if (player == null)
         {
-            playerController = FindObjectOfType<PlayerControllerCC>();
+            playerController = FindFirstObjectByType<PlayerControllerCC>();
             if (playerController != null)
             {
                 player = playerController.transform;

@@ -58,9 +58,6 @@ public class PauseMenuUI : MonoBehaviour
     private bool isPaused = false;
     private GameObject player;
     private PlayerControllerCC playerController;
-    private bool cursorWasLocked = false;
-    private MonoBehaviour[] cursorManagers;
-    private bool isQuitting = false;
     
     // Constants
     private const float DEFAULT_JUMP_HEIGHT = 2f;
@@ -87,7 +84,6 @@ public class PauseMenuUI : MonoBehaviour
             }
         }
         
-        CacheCursorManagers();
         SetupUI();
         
         // Hide panels at start
@@ -111,26 +107,6 @@ public class PauseMenuUI : MonoBehaviour
             ApplyMusicVolume(savedMusicVolume);
             ApplySFXVolume(savedSFXVolume);
         }
-    }
-    
-    void CacheCursorManagers()
-    {
-        var managers = new System.Collections.Generic.List<MonoBehaviour>();
-        
-        var smartCursor = FindFirstObjectByType<SmartCursorManager>();
-        if (smartCursor != null) managers.Add(smartCursor);
-        
-        foreach (var mono in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
-        {
-            if (mono != null && mono != this && 
-                mono.GetType().Name.Contains("Cursor") && 
-                !managers.Contains(mono))
-            {
-                managers.Add(mono);
-            }
-        }
-        
-        cursorManagers = managers.ToArray();
     }
     
     void SetupUI()
@@ -235,48 +211,25 @@ public class PauseMenuUI : MonoBehaviour
     void OnDisable()
     {
         // Called when the panel becomes inactive.
-        // Skip the cursor restore during application shutdown — otherwise the
-        // editor/system cursor stays locked & hidden after clicking Quit.
-        if (isPaused && !isQuitting)
+        if (isPaused)
         {
             OnPauseMenuClosed();
         }
     }
 
-    void OnApplicationQuit()
-    {
-        isQuitting = true;
-    }
-    
     void OnPauseMenuOpened()
     {
         isPaused = true;
-        
-        cursorWasLocked = Cursor.lockState == CursorLockMode.Locked;
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
-        
-        SetCursorManagersEnabled(false);
-        
+
         if (playerController != null)
             playerController.enabled = false;
-            
-        // Start coroutine to force cursor visible
-        StartCoroutine(ForceCursorVisible());
+        // Le curseur est géré par SmartCursorManager (autorité unique).
     }
     
     void OnPauseMenuClosed()
     {
         isPaused = false;
-        
-        SetCursorManagersEnabled(true);
-        
-        if (cursorWasLocked)
-        {
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
-        }
-        
+
         if (playerController != null)
             playerController.enabled = true;
     }
@@ -365,18 +318,6 @@ public class PauseMenuUI : MonoBehaviour
         }
     }
     
-    void SetCursorManagersEnabled(bool enabled)
-    {
-        if (cursorManagers != null)
-        {
-            foreach (var manager in cursorManagers)
-            {
-                if (manager != null)
-                    manager.enabled = enabled;
-            }
-        }
-    }
-    
     IEnumerator ApplyAudioVolumesDelayed()
     {
         yield return new WaitForSeconds(0.5f);
@@ -388,15 +329,7 @@ public class PauseMenuUI : MonoBehaviour
         ApplySFXVolume(savedSFXVolume);
     }
     
-    IEnumerator ForceCursorVisible()
-    {
-        for (int i = 0; i < 5; i++)
-        {
-            yield return new WaitForEndOfFrame();
-            Cursor.visible = true;
-            Cursor.lockState = CursorLockMode.None;
-        }
-    }
+    // (la gestion du curseur est entièrement déléguée à SmartCursorManager)
     
     void OnJumpHeightChanged(float value)
     {
@@ -624,13 +557,6 @@ public class PauseMenuUI : MonoBehaviour
 
     void PerformQuit()
     {
-        // Mark shutdown so OnDisable doesn't re-lock the cursor during teardown.
-        isQuitting = true;
-
-        // Free the cursor so it isn't left locked/hidden in the editor or desktop.
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-
         #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
         #else

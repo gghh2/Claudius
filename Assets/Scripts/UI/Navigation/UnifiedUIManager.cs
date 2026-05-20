@@ -369,13 +369,7 @@ public class UnifiedUIManager : MonoBehaviour
                 // Returning to game - ensure everything is restored
                 Time.timeScale = 1f;
                 EnablePlayerControl();
-                
-                // Force cursor state update
-                Cursor.visible = false;
-                Cursor.lockState = CursorLockMode.Locked;
-                
-                // Let SmartCursorManager take over after a frame
-                StartCoroutine(RestoreCursorStateDelayed());
+                // Le curseur est géré par SmartCursorManager (autorité unique).
             }
         }
     }
@@ -517,15 +511,7 @@ public class UnifiedUIManager : MonoBehaviour
         {
             player.EnableControls(false);
         }
-        
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
-        
-        var cursorManager = FindFirstObjectByType<SmartCursorManager>();
-        if (cursorManager != null)
-        {
-            cursorManager.enabled = false;
-        }
+        // Le curseur est géré par SmartCursorManager (autorité unique).
     }
 
     void EnablePlayerControl()
@@ -537,26 +523,7 @@ public class UnifiedUIManager : MonoBehaviour
             player.EnableControls(true);
             Time.timeScale = 1f;
         }
-        
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
-        
-        var cursorManager = FindFirstObjectByType<SmartCursorManager>();
-        if (cursorManager != null)
-        {
-            cursorManager.enabled = true;
-        }
-    }
-    
-    IEnumerator RestoreCursorStateDelayed()
-    {
-        yield return null;
-        
-        var cursorManager = FindFirstObjectByType<SmartCursorManager>();
-        if (cursorManager != null)
-        {
-            cursorManager.enabled = true;
-        }
+        // Le curseur est géré par SmartCursorManager (autorité unique).
     }
 
     void ShowModalDialog(string dialogName)

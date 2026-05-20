@@ -1,171 +1,43 @@
 using UnityEngine;
-using UnityEngine.UI;
 
 /// <summary>
-/// Gère le curseur en vérifiant les panels UI enfants d'un Canvas
+/// Contrôleur de curseur — responsabilité unique : maintenir l'état du curseur
+/// cohérent avec l'état de l'UI.
+///
+/// Règle unique : un panel UI est ouvert → curseur visible et libre ;
+/// sinon (en jeu) → curseur caché et verrouillé.
+///
+/// Source de vérité : <see cref="UnifiedUIManager.IsShowingPanel"/>.
+/// AUCUNE autre classe ne doit toucher Cursor.visible / Cursor.lockState.
 /// </summary>
 public class SmartCursorManager : MonoBehaviour
 {
-    [Header("Configuration")]
-    [SerializeField] private bool debugMode = false;
-    
-    [Header("Panels UI à surveiller")]
-    [SerializeField] private GameObject[] uiPanels;
-    
-    [Header("Panels à ignorer (toujours actifs)")]
-    [SerializeField] private string[] ignoredPanelNames = {
-        "StaminaUI",
-        "HistoryPanel",
-        "HealthBar",
-        "MiniMap",
-        "HUD"
-    };
-    
-    [Header("Auto-détection")]
-    [SerializeField] private bool autoDetectPanels = true;
-    [SerializeField] private string[] panelNamesToDetect = {
-        "DialoguePanel",
-        "InventoryPanel", 
-        "QuestJournalPanel",
-        "StaminaUI",
-        "PauseMenu"
-    };
-
-    // Manager de navigation UI faisant autorité (mis en cache pour éviter les recherches par frame)
     private UnifiedUIManager uiManager;
 
     void Start()
     {
-        // Cache le curseur au démarrage
-        Cursor.visible = false;
-
-        // Référence au gestionnaire de navigation UI
         uiManager = FindFirstObjectByType<UnifiedUIManager>();
+        Apply();
+    }
 
-        // Auto-détection des panels si activé
-        if (autoDetectPanels)
-        {
-            AutoDetectPanels();
-        }
-    }
-    
-    void AutoDetectPanels()
-    {
-        var panels = new System.Collections.Generic.List<GameObject>();
-        
-        // Cherche le Canvas principal
-        Canvas mainCanvas = GameObject.Find("Canvas")?.GetComponent<Canvas>();
-        if (mainCanvas != null)
-        {
-            // Cherche les panels enfants par nom
-            foreach (string panelName in panelNamesToDetect)
-            {
-                Transform panel = mainCanvas.transform.Find(panelName);
-                if (panel != null)
-                {
-                    panels.Add(panel.gameObject);
-                    if (debugMode) Debug.Log($"[SmartCursor] Panel auto-détecté: {panelName}");
-                }
-            }
-        }
-        
-        // Cherche aussi dans toute la scène
-        foreach (string panelName in panelNamesToDetect)
-        {
-            GameObject panel = GameObject.Find(panelName);
-            if (panel != null && !panels.Contains(panel))
-            {
-                panels.Add(panel);
-                if (debugMode) Debug.Log($"[SmartCursor] Panel trouvé dans la scène: {panelName}");
-            }
-        }
-        
-        uiPanels = panels.ToArray();
-    }
-    
     void Update()
     {
-        // UnifiedUIManager fait autorité : s'il affiche un panel, le curseur reste visible.
-        // Évite que la liste de panels codée en dur ci-dessous (incomplète : SaveMenu,
-        // AdventureJournal...) ne masque le curseur sur un panel non répertorié.
-        if (uiManager != null && uiManager.IsShowingPanel)
-        {
-            Cursor.visible = true;
-            return;
-        }
-
-        bool shouldShowCursor = false;
-        
-        // Vérifie chaque panel
-        foreach (GameObject panel in uiPanels)
-        {
-            if (panel != null && panel.activeInHierarchy)
-            {
-                // Vérifie si ce panel doit être ignoré
-                bool shouldIgnore = false;
-                foreach (string ignoredName in ignoredPanelNames)
-                {
-                    if (panel.name.Contains(ignoredName))
-                    {
-                        shouldIgnore = true;
-                        break;
-                    }
-                }
-                
-                if (shouldIgnore)
-                {
-                    if (debugMode) Debug.Log($"[SmartCursor] Panel ignoré: {panel.name}");
-                    continue;
-                }
-                
-                // Vérification spéciale pour PauseMenu
-                if (panel.name.Contains("PauseMenu") || panel.name.Contains("Pause"))
-                {
-                    // Vérifie si le menu est vraiment visible
-                    CanvasGroup canvasGroup = panel.GetComponent<CanvasGroup>();
-                    if (canvasGroup != null && canvasGroup.alpha <= 0)
-                    {
-                        if (debugMode) Debug.Log("[SmartCursor] PauseMenu actif mais invisible (alpha=0)");
-                        continue;
-                    }
-                    
-                    // Vérifie aussi la scale (certains menus utilisent scale 0 pour cacher)
-                    if (panel.transform.localScale == Vector3.zero)
-                    {
-                        if (debugMode) Debug.Log("[SmartCursor] PauseMenu actif mais invisible (scale=0)");
-                        continue;
-                    }
-                }
-                
-                shouldShowCursor = true;
-                if (debugMode) Debug.Log($"[SmartCursor] Panel actif: {panel.name}");
-                break;
-            }
-        }
-        
-        // Vérifie aussi si DialogueUI est active (au cas où c'est un composant)
-        if (!shouldShowCursor)
-        {
-            DialogueUI dialogueUI = FindFirstObjectByType<DialogueUI>();
-            if (dialogueUI != null && dialogueUI.IsDialogueOpen())
-            {
-                shouldShowCursor = true;
-                if (debugMode) Debug.Log("[SmartCursor] DialogueUI active");
-            }
-        }
-        
-        // Applique l'état du curseur
-        Cursor.visible = shouldShowCursor;
+        // Appliqué chaque frame : auto-correctif si l'état dérive.
+        Apply();
     }
-    
+
+    void Apply()
+    {
+        bool uiOpen = uiManager != null && uiManager.IsShowingPanel;
+        Cursor.visible = uiOpen;
+        Cursor.lockState = uiOpen ? CursorLockMode.None : CursorLockMode.Locked;
+    }
+
     void OnDisable()
     {
-        // Quand ce manager est désactivé (un menu prend la main, ou sortie du Play mode),
-        // on laisse le curseur visible — évite qu'il reste caché dans l'éditeur.
+        // Composant désactivé ou sortie du Play mode : on libère le curseur
+        // pour qu'il ne reste pas caché/verrouillé dans l'éditeur.
         Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
     }
-
-    // Méthodes publiques pour contrôle manuel
-    public void ShowCursor() => Cursor.visible = true;
-    public void HideCursor() => Cursor.visible = false;
 }

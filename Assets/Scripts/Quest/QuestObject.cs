@@ -429,6 +429,9 @@ public class QuestObject : MonoBehaviour
         {
             Debug.LogWarning("❌ PlayerInventory.Instance est NULL !");
         }
+
+        // Log la collecte de l'objet dans le Journal d'Aventure
+        AdventureJournalExtensions.LogItemCollected(objectName);
         
         // Met à jour la quête
         if (QuestManager.Instance != null)

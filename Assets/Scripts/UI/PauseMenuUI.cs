@@ -60,6 +60,7 @@ public class PauseMenuUI : MonoBehaviour
     private PlayerControllerCC playerController;
     private bool cursorWasLocked = false;
     private MonoBehaviour[] cursorManagers;
+    private bool isQuitting = false;
     
     // Constants
     private const float DEFAULT_JUMP_HEIGHT = 2f;
@@ -233,11 +234,18 @@ public class PauseMenuUI : MonoBehaviour
     
     void OnDisable()
     {
-        // Called when the panel becomes inactive
-        if (isPaused)
+        // Called when the panel becomes inactive.
+        // Skip the cursor restore during application shutdown — otherwise the
+        // editor/system cursor stays locked & hidden after clicking Quit.
+        if (isPaused && !isQuitting)
         {
             OnPauseMenuClosed();
         }
+    }
+
+    void OnApplicationQuit()
+    {
+        isQuitting = true;
     }
     
     void OnPauseMenuOpened()
@@ -546,20 +554,22 @@ public class PauseMenuUI : MonoBehaviour
         // Show confirmation dialog
         if (ConfirmationDialogManager.Instance != null)
         {
-            ConfirmationDialogManager.Instance.ShowYesNoDialog(
-                "Retourner au menu principal ? Les progrès non sauvegardés seront perdus.",
-                onYes: () => {
+            ConfirmationDialogManager.Instance.ShowDialog(
+                "Retourner au menu principal ? Toute progression non sauvegardée sera perdue.",
+                () => {
                     // Close pause menu
                     Resume();
-                    
+
                     // Clean up the game session
                     CleanupGameSession();
-                    
+
                     // Return to main menu
                     SceneNavigationManager.ReturnToMainMenu();
                 },
-                onNo: null
-            );
+                null,
+                "Menu principal",
+                "Menu principal",
+                "Annuler");
         }
     }
     
@@ -594,6 +604,33 @@ public class PauseMenuUI : MonoBehaviour
     
     void QuitGame()
     {
+        // Demande confirmation — toute progression non sauvegardée sera perdue.
+        if (ConfirmationDialogManager.Instance != null)
+        {
+            ConfirmationDialogManager.Instance.ShowDialog(
+                "Quitter le jeu ? Toute progression non sauvegardée sera perdue.",
+                PerformQuit,
+                null,
+                "Quitter le jeu",
+                "Quitter",
+                "Annuler");
+        }
+        else
+        {
+            // Pas de dialogue disponible : quitte directement.
+            PerformQuit();
+        }
+    }
+
+    void PerformQuit()
+    {
+        // Mark shutdown so OnDisable doesn't re-lock the cursor during teardown.
+        isQuitting = true;
+
+        // Free the cursor so it isn't left locked/hidden in the editor or desktop.
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
         #else

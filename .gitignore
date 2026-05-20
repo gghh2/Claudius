@@ -97,3 +97,6 @@ Assets/Scripts/unity-bridge.meta
 # Local backup of original building assets (kept out of Git)
 Assets/Prefabs/Buildings/ORIGINAL/
 Assets/Prefabs/Buildings/ORIGINAL.meta
+
+# Unity reference e-books (public PDFs, kept out of Git)
+UnityBestPractice/

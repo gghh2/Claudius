@@ -215,12 +215,19 @@ public class DialogueUI : MonoBehaviour
     public void StartDialogue(NPCData npcData)
     {
         currentNPC = npcData;
-        
+
         // Vérifie que l'IA est configurée
         if (AIDialogueManager.Instance == null || !AIDialogueManager.Instance.IsConfigured())
         {
             ShowAPIError();
             return;
+        }
+
+        // Log la première rencontre avec ce NPC dans le Journal d'Aventure
+        if (npcData != null && AdventureJournalIntegration.IsFirstTime("npc_" + npcData.name))
+        {
+            AdventureJournalExtensions.LogFirstMeeting(npcData);
+            AdventureJournalIntegration.MarkAsDone("npc_" + npcData.name);
         }
         
         if (UnifiedUIManager.Instance != null)
@@ -496,6 +503,9 @@ public class DialogueUI : MonoBehaviour
                 if (success)
                 {
                     Debug.Log($"✅ Quête créée: {quest.description}");
+
+                    // Log l'acceptation de la quête dans le Journal d'Aventure
+                    AdventureJournalExtensions.LogQuestAccepted(quest.description, questGiverName);
                 }
             }
         }

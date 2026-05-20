@@ -52,11 +52,22 @@ public class QuestZone : MonoBehaviour
     // Private
     private List<Vector3> spawnPoints = new List<Vector3>();
     private List<GameObject> spawnedObjects = new List<GameObject>();
-    
+    private bool zoneDiscovered = false;
+
     void Start()
     {
         GenerateSpawnPoints();
         QuestZoneManager.Instance?.RegisterZone(this);
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        // Détecte l'entrée du joueur dans la zone et l'enregistre une seule fois
+        if (!zoneDiscovered && other.CompareTag("Player"))
+        {
+            zoneDiscovered = true;
+            AdventureJournalExtensions.LogZoneDiscovered(zoneName);
+        }
     }
     
     void GenerateSpawnPoints()

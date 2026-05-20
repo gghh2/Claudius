@@ -436,7 +436,13 @@ public class SaveGameManager : MonoBehaviour
             musicVolume = PlayerPrefs.GetFloat("MusicVolume", 1f),
             sfxVolume = PlayerPrefs.GetFloat("SFXVolume", 1f)
         };
-        
+
+        // Adventure Journal data
+        if (AdventureJournalUI.Instance != null)
+        {
+            data.journalData = AdventureJournalUI.Instance.GetSaveData();
+        }
+
         return data;
     }
     
@@ -650,6 +656,12 @@ public class SaveGameManager : MonoBehaviour
             AudioListener.volume = data.gameSettings.masterVolume;
             PlayerPrefs.SetFloat("MusicVolume", data.gameSettings.musicVolume);
             PlayerPrefs.SetFloat("SFXVolume", data.gameSettings.sfxVolume);
+        }
+
+        // Adventure Journal
+        if (AdventureJournalUI.Instance != null && data.journalData != null)
+        {
+            AdventureJournalUI.Instance.LoadSaveData(data.journalData);
         }
     }
     
@@ -931,6 +943,7 @@ public class SaveData
     public List<NPCSaveData> npcData;
     public InventorySaveData inventoryData;
     public GameSettingsSaveData gameSettings;
+    public AdventureJournalUI.JournalSaveData journalData;
 }
 
 [System.Serializable]

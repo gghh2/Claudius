@@ -56,7 +56,10 @@ public class AdventureJournalUI : MonoBehaviour
         public string timestamp;
         public string content;
         public bool isAIGenerated;
-        
+
+        // Constructeur sans argument requis par JsonUtility (chargement de sauvegarde).
+        public JournalEntry() { }
+
         public JournalEntry(string content, bool isAI = false)
         {
             this.timestamp = System.DateTime.Now.ToString("HH:mm");
@@ -67,15 +70,10 @@ public class AdventureJournalUI : MonoBehaviour
     
     void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        // Contrôleur UI vivant sur le GameObject "UI" (toujours actif), comme les
+        // autres scripts UI du projet. Pas de DontDestroyOnLoad : le journal
+        // n'existe que dans la scène Game.
+        Instance = this;
     }
     
     void Start()
@@ -96,18 +94,9 @@ public class AdventureJournalUI : MonoBehaviour
         SubscribeToGameEvents();
     }
     
-    void Update()
-    {
-        // Touche L pour ouvrir/fermer le journal
-        if (Input.GetKeyDown(KeyCode.L))
-        {
-            if (IsJournalOpen())
-                CloseJournal();
-            else
-                OpenJournal();
-        }
-    }
-    
+    // NB : l'ouverture/fermeture par la touche L est gérée par UnifiedUIManager
+    // (raccourci unique pour toute la navigation UI).
+
     void SubscribeToGameEvents()
     {
         // Ici on pourrait s'abonner à différents événements du jeu
@@ -115,29 +104,33 @@ public class AdventureJournalUI : MonoBehaviour
     }
     
     /// <summary>
-    /// Ouvre le journal
+    /// Ouvre le journal (via UnifiedUIManager).
     /// </summary>
     public void OpenJournal()
     {
         if (UnifiedUIManager.Instance != null)
-        {
             UnifiedUIManager.Instance.NavigateTo("AdventureJournal");
-        }
-        else
-        {
+        else if (journalPanel != null)
             journalPanel.SetActive(true);
-        }
-        
+    }
+
+    /// <summary>
+    /// Appelé par AdventureJournalPanelHelper quand le panneau devient visible.
+    /// Le contrôleur vit sur le GameObject "UI" : il ne reçoit pas OnEnable
+    /// lui-même quand le panneau s'affiche.
+    /// </summary>
+    public void OnPanelShown()
+    {
         UpdateJournalDisplay();
-        
+
         // Scroll en bas pour voir les dernières entrées
         if (scrollRect != null)
         {
             Canvas.ForceUpdateCanvases();
             scrollRect.verticalNormalizedPosition = 0f;
         }
-        
-        // Vérifier si on peut faire une mise à jour IA
+
+        // Tente une mise à jour IA si des événements sont en attente
         if (Time.time - lastAIUpdateTime > aiUpdateCooldown && pendingEvents.Count > 0)
         {
             RefreshJournalWithAI();
@@ -214,6 +207,7 @@ public class AdventureJournalUI : MonoBehaviour
         
         foreach (var entry in journalEntries)
         {
+            if (entry == null) continue;
             if (entry.isAIGenerated)
             {
                 // Entrées IA en italique avec une couleur différente
@@ -225,7 +219,7 @@ public class AdventureJournalUI : MonoBehaviour
                 sb.AppendLine($"<color=#CCCCCC>[{entry.timestamp}] {entry.content}</color>\n");
             }
         }
-        
+
         journalContent.text = sb.ToString();
     }
     
@@ -278,7 +272,7 @@ public class AdventureJournalUI : MonoBehaviour
         StringBuilder prompt = new StringBuilder();
         
         prompt.AppendLine("Tu es le narrateur d'un journal de bord d'aventure dans un univers de space opera.");
-        prompt.AppendLine("Le joueur explore une station spatiale mystérieuse sur une planète alien.");
+        prompt.AppendLine("Le joueur explore une mystérieuse planète alien, parsemée de ruines anciennes.");
         prompt.AppendLine("Ton rôle est de transformer les événements du jeu en une narration romanesque et immersive.");
         prompt.AppendLine("Écris à la première personne, comme si c'était le joueur qui écrivait dans son journal personnel.");
         prompt.AppendLine("Garde un ton épique mais personnel, avec des réflexions et des émotions.");
@@ -302,64 +296,31 @@ public class AdventureJournalUI : MonoBehaviour
             new OpenAIMessage("system", "Tu es un narrateur talentueux qui écrit des entrées de journal immersives."),
             new OpenAIMessage("user", prompt)
         };
-        
-        OpenAIRequest request = new OpenAIRequest
-        {
-            model = "gpt-3.5-turbo",
-            messages = messages.ToArray(),
-            temperature = 0.8f,
-            max_tokens = 150
-        };
-        
-        string jsonData = JsonUtility.ToJson(request);
-        byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonData);
-        
-        using (UnityWebRequest webRequest = new UnityWebRequest("https://api.openai.com/v1/chat/completions", "POST"))
-        {
-            webRequest.uploadHandler = new UploadHandlerRaw(bodyRaw);
-            webRequest.downloadHandler = new DownloadHandlerBuffer();
-            
-            webRequest.SetRequestHeader("Content-Type", "application/json");
-            webRequest.SetRequestHeader("Authorization", $"Bearer {APIConfig.OPENAI_API_KEY}");
-            
-            yield return webRequest.SendWebRequest();
-            
-            if (webRequest.result == UnityWebRequest.Result.Success)
-            {
-                string responseText = webRequest.downloadHandler.text;
-                ProcessAIResponse(responseText);
-            }
-            else
-            {
-                Debug.LogError($"[Journal] Erreur API: {webRequest.error}");
-                AddEntry("*Les pages du journal semblent floues, l'écriture devient illisible...*", true);
-            }
-        }
+
+        // Passe par l'abstraction IA (AIService) au lieu d'appeler OpenAI en dur.
+        var request = new AIRequest(messages, "gpt-3.5-turbo", 0.8f, 400);
+        yield return StartCoroutine(AIService.Provider.Complete(request, OnNarrationReceived));
     }
-    
-    void ProcessAIResponse(string jsonResponse)
+
+    void OnNarrationReceived(AIResponse response)
     {
-        try
+        if (response.success)
         {
-            OpenAIResponse response = JsonUtility.FromJson<OpenAIResponse>(jsonResponse);
-            
-            if (response.choices != null && response.choices.Length > 0)
+            string narration = response.text.Trim();
+            AddEntry(narration, true);
+            UpdateJournalDisplay();
+
+            // Auto-scroll vers le bas
+            if (scrollRect != null)
             {
-                string narration = response.choices[0].message.content.Trim();
-                AddEntry(narration, true);
-                UpdateJournalDisplay();
-                
-                // Auto-scroll vers le bas
-                if (scrollRect != null)
-                {
-                    Canvas.ForceUpdateCanvases();
-                    scrollRect.verticalNormalizedPosition = 0f;
-                }
+                Canvas.ForceUpdateCanvases();
+                scrollRect.verticalNormalizedPosition = 0f;
             }
         }
-        catch (System.Exception e)
+        else
         {
-            Debug.LogError($"[Journal] Erreur parsing: {e.Message}");
+            Debug.LogError($"[Journal] Erreur IA : {response.error}");
+            AddEntry("*Les pages du journal semblent floues, l'écriture devient illisible...*", true);
         }
     }
     
@@ -436,7 +397,10 @@ public class AdventureJournalUI : MonoBehaviour
     {
         public List<JournalEntry> entries;
         public List<string> pendingEvents;
-        
+
+        // Constructeur sans argument requis par JsonUtility (chargement de sauvegarde).
+        public JournalSaveData() { }
+
         public JournalSaveData(List<JournalEntry> entries, List<string> events)
         {
             this.entries = new List<JournalEntry>(entries);
@@ -451,12 +415,16 @@ public class AdventureJournalUI : MonoBehaviour
     
     public void LoadSaveData(JournalSaveData data)
     {
-        if (data != null)
-        {
-            journalEntries = new List<JournalEntry>(data.entries);
-            pendingEvents = new List<string>(data.pendingEvents);
-            UpdateJournalDisplay();
-        }
+        if (data == null) return;
+
+        journalEntries = data.entries != null
+            ? new List<JournalEntry>(data.entries)
+            : new List<JournalEntry>();
+        pendingEvents = data.pendingEvents != null
+            ? new List<string>(data.pendingEvents)
+            : new List<string>();
+
+        UpdateJournalDisplay();
     }
     
     #endregion

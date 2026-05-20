@@ -169,9 +169,12 @@ public class QuestJournal : MonoBehaviour
         {
             quest.status = QuestStatus.Completed;
             quest.currentProgress = quest.maxProgress;
-            
+
             if (debugMode)
                 Debug.Log($"✅ Quête terminée: {quest.questTitle}");
+
+            // Log la complétion de la quête dans le Journal d'Aventure
+            AdventureJournalExtensions.LogQuestCompleted(quest.description);
         }
     }
     

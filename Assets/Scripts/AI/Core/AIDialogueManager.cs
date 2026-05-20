@@ -29,8 +29,7 @@ public class AIDialogueManager : MonoBehaviour
     // Private variables
     private Dictionary<string, ConversationHistory> conversationHistories = new Dictionary<string, ConversationHistory>();
     private List<OpenAIMessage> currentConversation;
-    private string apiUrl = "https://api.openai.com/v1/chat/completions";
-    
+
     public static AIDialogueManager Instance { get; private set; }
     
     void Awake()
@@ -487,126 +486,96 @@ AUTRES EXEMPLES:
         {
             DialogueUI.Instance.ShowLoadingState(true);
         }
-        
-        OpenAIRequest request = new OpenAIRequest
+
+        // Passe par l'abstraction IA (AIService) au lieu d'appeler OpenAI en dur.
+        var request = new AIRequest(
+            new List<OpenAIMessage>(currentConversation),
+            aiConfig.model, aiConfig.temperature, aiConfig.maxTokens);
+
+        Debug.Log($"Envoi requête IA pour {npcData.name}");
+
+        yield return StartCoroutine(AIService.Provider.Complete(request, response =>
         {
-            model = aiConfig.model,
-            messages = currentConversation.ToArray(),
-            temperature = aiConfig.temperature,
-            max_tokens = aiConfig.maxTokens
-        };
-        
-        string jsonData = JsonUtility.ToJson(request);
-        Debug.Log($"Envoi requête OpenAI pour {npcData.name}");
-        
-        yield return StartCoroutine(CallOpenAI(jsonData, npcData, isWelcome));
-    }
-    
-    IEnumerator CallOpenAI(string jsonData, NPCData npcData, bool isWelcome)
-    {
-        byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonData);
-        
-        using (UnityWebRequest request = new UnityWebRequest(apiUrl, "POST"))
-        {
-            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-            request.downloadHandler = new DownloadHandlerBuffer();
-            
-            request.SetRequestHeader("Content-Type", "application/json");
-            request.SetRequestHeader("Authorization", $"Bearer {aiConfig.apiKey}");
-            
-            yield return request.SendWebRequest();
-            
             if (DialogueUI.Instance != null)
             {
                 DialogueUI.Instance.ShowLoadingState(false);
             }
-            
-            if (request.result == UnityWebRequest.Result.Success)
+
+            if (response.success)
             {
-                string responseText = System.Text.Encoding.UTF8.GetString(request.downloadHandler.data);
-                ProcessAIResponse(responseText, npcData, isWelcome);
+                ProcessAIResponse(response.text, npcData, isWelcome);
             }
             else
             {
-                Debug.LogError($"Erreur API OpenAI: {request.error}");
-                Debug.LogError($"Code: {request.responseCode}");
-                if (request.downloadHandler.data != null)
-                {
-                    string errorText = System.Text.Encoding.UTF8.GetString(request.downloadHandler.data);
-                    Debug.LogError($"Réponse: {errorText}");
-                }
-                
+                Debug.LogError($"Erreur IA : {response.error}");
                 UseFallback(npcData, isWelcome, "");
             }
-        }
+        }));
     }
-    
-    void ProcessAIResponse(string jsonResponse, NPCData npcData, bool isWelcome)
+
+    void ProcessAIResponse(string aiContent, NPCData npcData, bool isWelcome)
     {
+        if (string.IsNullOrEmpty(aiContent))
+        {
+            Debug.LogError("Réponse IA vide");
+            UseFallback(npcData, isWelcome, "");
+            return;
+        }
+
         try
         {
-            OpenAIResponse response = JsonUtility.FromJson<OpenAIResponse>(jsonResponse);
-            
-            if (response.choices != null && response.choices.Length > 0)
+            string aiResponse = aiContent.Trim();
+
+            Debug.Log($"🤖 Réponse IA brute:");
+            Debug.Log(aiResponse);
+
+            // Détection des quêtes
+            List<QuestToken> detectedQuests = null;
+            if (QuestTokenDetector.Instance != null)
             {
-                string aiResponse = response.choices[0].message.content.Trim();
-                
-                Debug.Log($"🤖 Réponse IA brute:");
-                Debug.Log(aiResponse);
-                
-                // Détection des quêtes
-                List<QuestToken> detectedQuests = null;
-                if (QuestTokenDetector.Instance != null)
+                detectedQuests = QuestTokenDetector.Instance.DetectQuestTokens(aiResponse);
+
+                if (detectedQuests != null && detectedQuests.Count > 0)
                 {
-                    detectedQuests = QuestTokenDetector.Instance.DetectQuestTokens(aiResponse);
-                    
-                    if (detectedQuests != null && detectedQuests.Count > 0)
+                    Debug.Log($"🎯 {detectedQuests.Count} quête(s) détectée(s)");
+                    foreach (var quest in detectedQuests)
                     {
-                        Debug.Log($"🎯 {detectedQuests.Count} quête(s) détectée(s)");
-                        foreach (var quest in detectedQuests)
-                        {
-                            Debug.Log($"  - Type: {quest.questType}, Zone: {quest.zoneName}, Description: {quest.description}");
-                        }
-                        aiResponse = QuestTokenDetector.Instance.CleanMessageFromTokens(aiResponse);
+                        Debug.Log($"  - Type: {quest.questType}, Zone: {quest.zoneName}, Description: {quest.description}");
                     }
-                    else
-                    {
-                        Debug.LogWarning("⚠️ Aucune quête détectée dans la réponse de l'IA");
-                        Debug.Log($"Réponse complète: {aiResponse}");
-                    }
-                }
-                
-                currentConversation.Add(new OpenAIMessage("assistant", aiResponse));
-                
-                Debug.Log($"IA ({npcData.name}): {aiResponse}");
-                
-                string formattedResponse = $"{npcData.name}: {aiResponse}";
-                SaveMessageToHistory(npcData.name, formattedResponse, false);
-                
-                if (isWelcome)
-                {
-                    DialogueUI.Instance.StartAIDialogue(npcData, formattedResponse);
+                    aiResponse = QuestTokenDetector.Instance.CleanMessageFromTokens(aiResponse);
                 }
                 else
                 {
-                    DialogueUI.Instance.ShowText(formattedResponse);
+                    Debug.LogWarning("⚠️ Aucune quête détectée dans la réponse de l'IA");
+                    Debug.Log($"Réponse complète: {aiResponse}");
                 }
-                
-                if (detectedQuests != null && detectedQuests.Count > 0)
-                {
-                    Debug.Log($"📋 Envoi de {detectedQuests.Count} quête(s) à DialogueUI");
-                    DialogueUI.Instance.SetPendingQuests(detectedQuests, npcData.name);
-                }
+            }
+
+            currentConversation.Add(new OpenAIMessage("assistant", aiResponse));
+
+            Debug.Log($"IA ({npcData.name}): {aiResponse}");
+
+            string formattedResponse = $"{npcData.name}: {aiResponse}";
+            SaveMessageToHistory(npcData.name, formattedResponse, false);
+
+            if (isWelcome)
+            {
+                DialogueUI.Instance.StartAIDialogue(npcData, formattedResponse);
             }
             else
             {
-                Debug.LogError("Réponse OpenAI vide");
-                UseFallback(npcData, isWelcome, "");
+                DialogueUI.Instance.ShowText(formattedResponse);
+            }
+
+            if (detectedQuests != null && detectedQuests.Count > 0)
+            {
+                Debug.Log($"📋 Envoi de {detectedQuests.Count} quête(s) à DialogueUI");
+                DialogueUI.Instance.SetPendingQuests(detectedQuests, npcData.name);
             }
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"Erreur parsing OpenAI: {e.Message}");
+            Debug.LogError($"Erreur traitement réponse IA : {e.Message}");
             UseFallback(npcData, isWelcome, "");
         }
     }

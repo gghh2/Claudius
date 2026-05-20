@@ -55,8 +55,10 @@
 - Nettoyer les `Debug.Log` restants : CSM*, DynamicAsset*, *Tester, NPCQuestTurnIn,
   QuestJournal, PlayerController, StaminaUI, CompanionSpeedSync, DialogueUI,
   AIDialogueManager.
-- Passe « bonnes pratiques Unity » : auditer le code à l'aune des e-books de
-  `UnityBestPractice/` (C# style guide, architecture ScriptableObjects).
+- Audit « bonnes pratiques » **fait** → `.claude-docs/AUDIT_CODE.md` (C# style
+  guide + architecture ScriptableObjects). Action concrète qui en ressort :
+  remplacer les `FindObjectsByType` répétés (NPC, QuestZone, QuestObject) par
+  des **SO Runtime Set** (enregistrement en `OnEnable`/`OnDisable`).
 
 ### 🔧 Code mort — supprimables (vérifier en scène avant ; dumps datés 2025-07)
 - `NotificationTester`, `InventoryDebugger` — scaffolding de debug, non attachés.

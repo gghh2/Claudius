@@ -552,6 +552,11 @@ AUTRES EXEMPLES:
                 }
             }
 
+            // Debug : journalise sur disque chaque mission proposée par le PNJ
+            // — réponse brute + tokens détectés ou non (cf. Phase 5, mesure de
+            // la fiabilité du LLM à produire des tokens [QUEST:...] valides).
+            MissionProposalLogger.Log(npcData.name, npcData.role, aiContent.Trim(), detectedQuests);
+
             currentConversation.Add(new OpenAIMessage("assistant", aiResponse));
 
             Debug.Log($"IA ({npcData.name}): {aiResponse}");

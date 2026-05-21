@@ -247,7 +247,7 @@ INSTRUCTIONS :
 - Incarnez ce personnage de manière cohérente, sans jamais sortir de votre rôle.
 - Soyez naturel et engageant ; adaptez votre ton à votre rôle.
 - Vous pouvez évoquer naturellement vos soucis, vos besoins ou vos problèmes au fil de la conversation.
-- Vous n'attribuez JAMAIS de mission formelle et vous n'écrivez JAMAIS de code entre crochets. Contentez-vous de jouer votre personnage et de discuter.";
+- Vous n'attribuez JAMAIS de mission formelle et vous n'écrivez JAMAIS rien entre crochets (ni code, ni didascalie comme « [je souris] »). Contentez-vous de jouer votre personnage et de discuter.";
         }
         
         // Utilise la config appropriée — prompt de roleplay PUR (aucune quête).
@@ -264,8 +264,9 @@ VOTRE PERSONNAGE :
 
 Vous discutez librement avec le voyageur. Vous pouvez évoquer naturellement vos
 soucis, vos besoins ou vos problèmes au fil de la conversation — mais vous
-n'attribuez JAMAIS de mission formelle et vous n'écrivez JAMAIS de code entre
-crochets. Contentez-vous de jouer votre personnage et de discuter.";
+n'attribuez JAMAIS de mission formelle et vous n'écrivez JAMAIS rien entre
+crochets (ni code, ni didascalie comme « [je souris] »). Contentez-vous de
+jouer votre personnage et de discuter.";
     }
     
     string GetQuestInstructionsForNPC(string npcName)

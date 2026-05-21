@@ -271,20 +271,25 @@ public class AdventureJournalUI : MonoBehaviour
     {
         StringBuilder prompt = new StringBuilder();
         
-        prompt.AppendLine("Tu es le narrateur d'un journal de bord d'aventure dans un univers de space opera.");
-        prompt.AppendLine("Le joueur explore une mystérieuse planète alien, parsemée de ruines anciennes.");
-        prompt.AppendLine("Ton rôle est de transformer les événements du jeu en une narration romanesque et immersive.");
-        prompt.AppendLine("Écris à la première personne, comme si c'était le joueur qui écrivait dans son journal personnel.");
-        prompt.AppendLine("Garde un ton épique mais personnel, avec des réflexions et des émotions.");
-        prompt.AppendLine("Maximum 3-4 phrases par entrée. Sois créatif et évocateur.");
-        prompt.AppendLine("\nÉvénements récents à narrer:");
-        
+        prompt.AppendLine("Tu rédiges le journal de bord intime du JOUEUR, dans un univers de space opera.");
+        prompt.AppendLine("Le joueur explore une planète alien parsemée de ruines anciennes.");
+        prompt.AppendLine();
+        prompt.AppendLine("RÈGLES IMPÉRATIVES :");
+        prompt.AppendLine("- Écris à la première personne (« je »). Le narrateur est le JOUEUR lui-même.");
+        prompt.AppendLine("- Le joueur n'est AUCUN des personnages cités dans les événements. Les PNJ rencontrés sont d'AUTRES personnes — ne deviens jamais l'un d'eux.");
+        prompt.AppendLine("- Un objet reste un objet : ne transforme jamais un objet (outil, cristal...) en personnage.");
+        prompt.AppendLine("- N'invente RIEN : aucun nouveau personnage, lieu, technologie ni événement absent de la liste ci-dessous. Tu enjolives le style, jamais les faits.");
+        prompt.AppendLine("- Ton immersif et personnel, mais fidèle aux faits. Maximum 3 à 4 phrases.");
+        prompt.AppendLine();
+        prompt.AppendLine("Événements à raconter — et RIEN d'autre :");
+
         foreach (string evt in pendingEvents)
         {
             prompt.AppendLine($"- {evt}");
         }
-        
-        prompt.AppendLine("\nÉcris une entrée de journal captivante basée sur ces événements.");
+
+        prompt.AppendLine();
+        prompt.AppendLine("Rédige une courte entrée de journal à la première personne, fidèle à ces événements.");
         
         return prompt.ToString();
     }

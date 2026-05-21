@@ -431,9 +431,39 @@ public class QuestTokenDetector : MonoBehaviour
                     Debug.LogWarning($"[QuestTokenDetector] Token rejeté — le destinataire '{token.targetName}' est un lieu, pas un personnage ({token.questType})");
                 return false;
             }
+
+            // 3. Un destinataire qui porte le nom d'un PNJ déjà présent dans la
+            //    scène ferait spawner un doublon fantôme : on rejette.
+            if (MatchesExistingNPC(target))
+            {
+                if (debugMode)
+                    Debug.LogWarning($"[QuestTokenDetector] Token rejeté — '{token.targetName}' est déjà un PNJ existant, un doublon serait créé ({token.questType})");
+                return false;
+            }
         }
 
         return true;
+    }
+
+    // Vrai si un PNJ portant ce nom existe déjà dans la scène. Empêche les
+    // quêtes TALK/DELIVERY de spawner un doublon d'un PNJ déjà présent.
+    static bool MatchesExistingNPC(string name)
+    {
+        string normalized = NormalizeName(name);
+        if (string.IsNullOrEmpty(normalized))
+            return false;
+
+        foreach (NPC npc in FindObjectsByType<NPC>(FindObjectsSortMode.None))
+        {
+            if (NormalizeName(npc.npcName) == normalized)
+                return true;
+        }
+        return false;
+    }
+
+    static string NormalizeName(string s)
+    {
+        return (s ?? string.Empty).Trim().ToLowerInvariant().Replace('_', ' ');
     }
     
     // Nettoie le message en retirant les tokens (pour l'affichage au joueur)

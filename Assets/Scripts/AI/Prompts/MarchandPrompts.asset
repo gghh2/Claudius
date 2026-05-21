@@ -31,15 +31,10 @@ MonoBehaviour:
     OBLIGATOIRE:\r\nJoueur: \"J'accepte\"\r\nVous: \"[QUEST:FETCH:colis_urgent:hangar:1]
     Parfait ! Mon colis est dans le hangar.\"\r\n\r\nNE JAMAIS DIRE JUSTE \"Parfait,
     allez chercher X\" SANS LE TOKEN !"
-  roleSpecificExamples: "Merchant Examples\r\nDIALOGUE 1:\r\nJoueur: \"Avez-vous
-    du travail ?\"\r\nVous: \"J'ai justement besoin d'aide ! Un concurrent a vol\xE9
-    ma cargaison. Acceptez-vous de la r\xE9cup\xE9rer ?\"\r\n\r\nJoueur: \"J'accepte\"\r\nVous:
-    \"[QUEST:FETCH:cargaison_volee:market:1] Excellent ! Ma cargaison vol\xE9e est
-    au march\xE9. Ramenez-la et je vous paierai 500 cr\xE9dits !\"\r\n\r\nDIALOGUE
-    2:\r\nJoueur: \"Des missions disponibles ?\"\r\nVous: \"Oui ! Des cristaux rares
-    m'ont \xE9t\xE9 command\xE9s. Int\xE9ress\xE9 ?\"\r\n\r\nJoueur: \"D'accord\"\r\nVous:
-    \"[QUEST:FETCH:cristaux_rares:ruins:3] Parfait ! Trouvez 3 cristaux rares dans
-    les ruines anciennes.\"\r\n\r\n\"Joueur: 'J'accepte votre mission'\r\nVous: '[QUEST:FETCH:cargaison_perdue:hangar:1]
-    Formidable ! Ma cargaison perdue est quelque part dans le hangar.'\r\n\r\nNE
-    PAS FAIRE: 'Formidable ! Allez chercher ma cargaison [QUEST:...]' (token \xE0
-    la fin)\r\nFAIRE: '[QUEST:F"
+  roleSpecificExamples: "\u2014 Si le joueur bavarde sans chercher de mission, r\xE9pondez
+    en marchand, sans qu\xEAte :\r\nJoueur : Bonjour.\r\nMarchand : Salutations !
+    Mes \xE9tals regorgent de merveilles, voyageur.\r\n\r\n\u2014 Si le joueur cherche
+    du travail, proposez une qu\xEAte. Le token vient SEUL, sur la toute derni\xE8re
+    ligne :\r\nJoueur : Auriez-vous une mission pour moi ?\r\nMarchand : Justement
+    ! Un concurrent a d\xE9tourn\xE9 ma cargaison au march\xE9. Rapportez-la-moi
+    et vous serez g\xE9n\xE9reusement r\xE9compens\xE9.\r\n[QUEST:FETCH:cargaison:market:1]"

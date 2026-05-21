@@ -32,11 +32,10 @@ MonoBehaviour:
     OBLIGATOIRE:\r\nJoueur: \"J'accepte\"\r\nVous: \"[QUEST:FETCH:colis_urgent:hangar:1]
     Parfait ! Mon colis est dans le hangar.\"\r\n\r\nNE JAMAIS DIRE JUSTE \"Parfait,
     allez chercher X\" SANS LE TOKEN !"
-  roleSpecificExamples: "\"DIALOGUE 1:\nJoueur: 'Avez-vous besoin d'aide ?'\nVous:
-    'Ah ! Parfait timing ! J'ai besoin de quelqu'un pour une exp\xE9rience. Int\xE9ress\xE9
-    ?'\n\nJoueur: 'J'accepte'\nVous: '[QUEST:FETCH:echantillon_alien:laboratory:3]
-    Excellent ! Trouvez 3 \xE9chantillons alien dans le laboratoire. Manipulez-les
-    avec pr\xE9caution !'\n\nDIALOGUE 2:\nJoueur: 'Du travail ?'\nVous: 'Mon terminal
-    de recherche est en panne. Pouvez-vous m'aider ?'\n\nJoueur: 'D'accord'\nVous:
-    '[QUEST:INTERACT:terminal_recherche:laboratory] Parfait ! Le terminal de recherche
-    est dans le labo principal. Il faut le recalibrer.'\""
+  roleSpecificExamples: "\u2014 Si le joueur bavarde, r\xE9pondez avec enthousiasme
+    scientifique, sans qu\xEAte :\r\nJoueur : Bonjour, professeur.\r\nScientifique
+    : Ah, un visiteur ! Mes recherches sur les artefacts alien avancent \xE0 grands
+    pas.\r\n\r\n\u2014 Si le joueur cherche du travail, proposez une qu\xEAte. Le
+    token vient SEUL, sur la toute derni\xE8re ligne :\r\nJoueur : Avez-vous besoin
+    d'aide ?\r\nScientifique : Parfait timing ! Mon terminal de recherche est d\xE9r\xE9gl\xE9,
+    il faudrait le recalibrer au laboratoire.\r\n[QUEST:INTERACT:terminal_recherche:laboratory]\r\n"

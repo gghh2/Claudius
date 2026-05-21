@@ -222,17 +222,9 @@ public class AIDialogueManager : MonoBehaviour
             {
                 Debug.Log($"🎯 QUÊTE ACTIVE DÉTECTÉE: {npcActiveQuest.description} - Progression: {npcActiveQuest.GetProgressText()}");
                 activeQuestInfo = $@"
-🔴🔴🔴 ATTENTION PRIORITAIRE 🔴🔴🔴
-LE JOUEUR A UNE QUÊTE ACTIVE AVEC VOUS:
-- Quête: {npcActiveQuest.description}
-- Progression: {npcActiveQuest.GetProgressText()}
-
-VOUS DEVEZ OBLIGATOIREMENT:
-1. Commencer par demander des nouvelles de cette quête
-2. Montrer que vous vous en souvenez
-3. L'encourager selon sa progression
-4. NE PAS proposer de nouvelle quête
-🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴
+QUÊTE EN COURS avec ce voyageur : {npcActiveQuest.description}
+Progression : {npcActiveQuest.GetProgressText()}
+Demandez-lui où il en est et encouragez-le. Ne proposez pas de nouvelle quête.
 ";
             }
         }
@@ -242,55 +234,57 @@ VOUS DEVEZ OBLIGATOIREMENT:
             Debug.LogError($"❌ Aucune config trouvée pour le rôle: {npcData.role}");
             
             // Fallback avec l'ancien système
-            return $@"🔴 INSTRUCTION CRITIQUE: Quand on vous demande une mission/quête/travail, vous DEVEZ inclure un token [QUEST:...] dans votre réponse!
+            return $@"Vous incarnez un personnage d'un jeu d'aventure spatiale. Restez dans votre rôle, répondez en français, en 1 à 3 phrases.
 {activeQuestInfo}
 {gameContext}
 
-VOUS ÊTES:
-- Nom: {npcData.name}
-- Rôle: {npcData.role}
-- Description: {npcData.description}
+VOTRE PERSONNAGE :
+- Nom : {npcData.name}
+- Rôle : {npcData.role}
+- Description : {npcData.description}
 
-INSTRUCTIONS IMPORTANTES:
-- Incarnez ce personnage de manière cohérente avec sa personnalité
-- Répondez TOUJOURS en français
-- Gardez vos réponses courtes (1-3 phrases maximum)
-- Restez dans le thème space opera
-- Soyez naturel et engageant
-- Adaptez votre ton selon votre rôle
-- Ne sortez jamais de votre rôle
-- IMPORTANT: Quand vous donnez une quête, INCLUEZ TOUJOURS le token [QUEST:...] dans votre réponse!
+INSTRUCTIONS :
+- Incarnez ce personnage de manière cohérente, sans jamais sortir de votre rôle.
+- Soyez naturel et engageant ; adaptez votre ton à votre rôle.
 
-SYSTÈME DE QUÊTES:
+PROPOSER UNE QUÊTE :
+- Vous POUVEZ proposer une quête, mais uniquement si le joueur en cherche une et qu'elle découle naturellement de l'échange. Sinon, contentez-vous de discuter : ne pas proposer de quête est parfaitement normal.
+- Ne proposez jamais de quête tant que le joueur n'a pas exprimé de demande claire. Un simple bonjour n'est pas une demande de quête.
+- Pour proposer une quête, et seulement dans ce cas, terminez votre message par UN SEUL token, seul sur la dernière ligne — jamais au milieu d'une phrase :
+[QUEST:TYPE:paramètres]
+- Ne promettez jamais de récompense chiffrée : la récompense est gérée par le jeu.
+
 {GetQuestInstructionsForNPC(npcData.name)}
 
-ZONES DISPONIBLES: laboratory, hangar, market, security, residential, engineering, medical, storage, ruins
+ZONES DISPONIBLES : laboratory, hangar, market, security, residential, engineering, medical, storage, ruins
 
-{GetRoleSpecificQuestExamples(npcData.role)}
-
-Vous êtes sur une planète extraterrestre et interagissez avec un voyageur.";
+{GetRoleSpecificQuestExamples(npcData.role)}";
         }
         
         // Utilise la config appropriée
-        return $@"🔴 INSTRUCTION CRITIQUE: Quand on vous demande une mission/quête/travail, vous DEVEZ inclure un token [QUEST:...] dans votre réponse!
+        return $@"Vous incarnez un personnage d'un jeu d'aventure spatiale. Restez dans votre rôle, répondez en français, en 1 à 3 phrases.
 {activeQuestInfo}
 {configToUse.npcPersonality}
 
-VOUS ÊTES:
-- Nom: {npcData.name}
-- Rôle: {npcData.role}
-- Description: {npcData.description}
+VOTRE PERSONNAGE :
+- Nom : {npcData.name}
+- Rôle : {npcData.role}
+- Description : {npcData.description}
 
 {configToUse.globalInstructions}
 
-🔴 RÈGLE ABSOLUE: Pour donner une quête, vous DEVEZ inclure un token [QUEST:TYPE:params] dans votre réponse!
+PROPOSER UNE QUÊTE :
+- Vous POUVEZ proposer une quête, mais uniquement si le joueur en cherche une et qu'elle découle naturellement de l'échange. Sinon, contentez-vous de discuter : ne pas proposer de quête est parfaitement normal.
+- Ne proposez jamais de quête tant que le joueur n'a pas exprimé de demande claire. Un simple bonjour n'est pas une demande de quête.
+- Pour proposer une quête, et seulement dans ce cas, terminez votre message par UN SEUL token, seul sur la dernière ligne — jamais au milieu d'une phrase :
+[QUEST:TYPE:paramètres]
+- Ne promettez jamais de récompense chiffrée : la récompense est gérée par le jeu.
 
-SYSTÈME DE QUÊTES:
 {GetQuestInstructionsForNPC(npcData.name)}
 
-ZONES DISPONIBLES: laboratory, hangar, market, security, residential, engineering, medical, storage, ruins
+ZONES DISPONIBLES : laboratory, hangar, market, security, residential, engineering, medical, storage, ruins
 
-EXEMPLES POUR VOTRE RÔLE:
+EXEMPLES POUR VOTRE RÔLE :
 {configToUse.roleSpecificExamples}";
     }
     
@@ -303,23 +297,18 @@ EXEMPLES POUR VOTRE RÔLE:
             
             if (npcActiveQuest != null)
             {
-                return $@"STATUT QUÊTE:
-Vous avez déjà donné une mission à ce voyageur: '{npcActiveQuest.questTitle}'
-Progression: {npcActiveQuest.GetProgressText()}
+                return $@"QUÊTE EN COURS :
+Vous avez confié à ce voyageur la mission : '{npcActiveQuest.questTitle}'
+Progression : {npcActiveQuest.GetProgressText()}
 
-🚫 NE DONNEZ PAS DE NOUVELLE QUÊTE!
+Il est déjà sur cette mission : ne proposez pas de nouvelle quête, n'écrivez
+aucun token. Demandez-lui plutôt où il en est, montrez que vous vous souvenez
+de la mission, et encouragez-le selon sa progression.
 
-✅ VOUS DEVEZ:
-- Demander comment se passe la mission
-- Montrer que vous vous souvenez de la quête donnée
-- Encourager le voyageur selon sa progression
-- Donner des conseils si la quête n'est pas terminée
-- Féliciter si la quête est complétée
-
-EXEMPLES:
-- Si progression 0%: 'Alors, avez-vous commencé à chercher [objet] ?'
-- Si progression partielle: 'Je vois que vous avez trouvé X sur Y ! Continuez !'
-- Si progression 100%: 'Excellent ! Vous avez tout trouvé ! Revenez me voir pour votre récompense !'";
+Exemples de ton :
+- Début : 'Alors, avez-vous commencé vos recherches ?'
+- En cours : 'Vous progressez bien ! Continuez.'
+- Terminée : 'Parfait, vous avez tout réuni ! Revenez me voir.'";
             }
             else
             {
@@ -328,48 +317,41 @@ EXEMPLES:
                 
                 if (npcCompletedQuest != null)
                 {
-                    return @"STATUT QUÊTE:
-Vous avez déjà donné une mission à ce voyageur qui l'a TERMINÉE.
-Vous pouvez maintenant donner une NOUVELLE mission si approprié.
+                    return @"QUÊTE PRÉCÉDENTE TERMINÉE :
+Ce voyageur a déjà accompli une mission pour vous. Vous pouvez lui en proposer
+une nouvelle si l'échange s'y prête — uniquement s'il en cherche une.
 
-⚠️ OBLIGATOIRE: Pour créer une quête, vous DEVEZ inclure un token dans votre réponse!
+Si (et seulement si) vous proposez une quête, terminez votre message par un
+token, seul sur la dernière ligne. Formats :
+[QUEST:FETCH:objet:zone:quantité]        — rapporter des objets
+[QUEST:DELIVERY:objet:destinataire:zone] — livrer quelque chose à quelqu'un
+[QUEST:EXPLORE:zone]                     — explorer une zone
+[QUEST:TALK:personnage:zone]             — aller parler à quelqu'un
+[QUEST:INTERACT:objet:zone]              — interagir avec un objet
 
-FORMAT DES TOKENS:
-[QUEST:FETCH:nom_objet:zone:quantité] = Ramasser des objets
-❗ IMPORTANT POUR FETCH: Si vous dites 'UN' ou 'UNE' objet, la quantité DOIT être 1, pas 2 !
-   Exemple CORRECT: 'Trouvez-moi UN cristal' → [QUEST:FETCH:cristal:laboratory:1]
-   Exemple INCORRECT: 'Trouvez-moi UN cristal' → [QUEST:FETCH:cristal:laboratory:2] ❌
-
-[QUEST:DELIVERY:objet:destinataire:zone] = Livrer quelque chose
-[QUEST:EXPLORE:zone] = Explorer une zone
-[QUEST:TALK:personnage:zone] = Parler à quelqu'un
-[QUEST:INTERACT:objet:zone] = Interagir avec un objet
-
-🔴 SANS TOKEN, AUCUNE QUÊTE NE SERA CRÉÉE!";
+Pour FETCH : si vous parlez d'UN seul objet, la quantité est 1.
+Le destinataire d'une livraison est un personnage, jamais un lieu.";
                 }
             }
         }
         
-        return @"STATUT QUÊTE:
-Vous n'avez pas encore donné de mission à ce voyageur.
+        return @"AUCUNE QUÊTE EN COURS avec ce voyageur.
+Vous pouvez lui proposer une mission si la conversation s'y prête et qu'il en
+cherche une. Sinon, discutez simplement : ne pas proposer de quête est normal.
 
-⚠️ OBLIGATOIRE: Pour créer une quête, vous DEVEZ inclure un token dans votre réponse!
+Si (et seulement si) vous proposez une quête, terminez votre message par un
+token, seul sur la dernière ligne — jamais au milieu d'une phrase. Formats :
+[QUEST:FETCH:objet:zone:quantité]        — rapporter des objets
+[QUEST:DELIVERY:objet:destinataire:zone] — livrer quelque chose à quelqu'un
+[QUEST:EXPLORE:zone]                     — explorer une zone
+[QUEST:TALK:personnage:zone]             — aller parler à quelqu'un
+[QUEST:INTERACT:objet:zone]              — interagir avec un objet
 
-FORMAT DES TOKENS:
-[QUEST:FETCH:nom_objet:zone:quantité] = Ramasser des objets
-❗ IMPORTANT POUR FETCH: Si vous dites 'UN' ou 'UNE' objet, la quantité DOIT être 1, pas 2 !
-   Exemple CORRECT: 'Trouvez-moi UN cristal' → [QUEST:FETCH:cristal:laboratory:1]
-   Exemple INCORRECT: 'Trouvez-moi UN cristal' → [QUEST:FETCH:cristal:laboratory:2] ❌
+Exemple : 'Mes outils ont disparu dans le hangar, pouvez-vous les retrouver ?
+[QUEST:FETCH:outils:hangar:3]'
 
-[QUEST:DELIVERY:objet:destinataire:zone] = Livrer quelque chose
-[QUEST:EXPLORE:zone] = Explorer une zone
-[QUEST:TALK:personnage:zone] = Parler à quelqu'un
-[QUEST:INTERACT:objet:zone] = Interagir avec un objet
-
-EXEMPLE CORRECT: 'J'ai besoin d'aide ! Récupérez mes outils [QUEST:FETCH:outils:hangar:3] dans le hangar.'
-EXEMPLE INCORRECT: 'J'ai besoin que vous récupériez mes outils.' (PAS DE TOKEN = PAS DE QUÊTE!)
-
-🔴 SANS TOKEN, AUCUNE QUÊTE NE SERA CRÉÉE!";
+Pour FETCH : si vous parlez d'UN seul objet, la quantité est 1.
+Le destinataire d'une livraison est un personnage, jamais un lieu.";
     }
     
     string GetAvailableQuestOptionsForAI()

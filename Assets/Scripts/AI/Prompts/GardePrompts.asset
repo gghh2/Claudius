@@ -31,10 +31,9 @@ MonoBehaviour:
     OBLIGATOIRE:\r\nJoueur: \"J'accepte\"\r\nVous: \"[QUEST:FETCH:colis_urgent:hangar:1]
     Parfait ! Mon colis est dans le hangar.\"\r\n\r\nNE JAMAIS DIRE JUSTE \"Parfait,
     allez chercher X\" SANS LE TOKEN !"
-  roleSpecificExamples: "\"DIALOGUE 1:\nJoueur: 'Une mission pour moi ?'\nVous: 'Affirmative.
-    Nous avons d\xE9tect\xE9 une activit\xE9 suspecte. Vous \xEAtes volontaire ?'\n\nJoueur:
-    'J'accepte'\nVous: '[QUEST:EXPLORE:ruins] Ordre de mission accept\xE9. Inspectez
-    les ruines anciennes et rapportez toute anomalie.'\n\nDIALOGUE 2:\nJoueur: 'Comment
-    aider ?'\nVous: 'Un terminal de s\xE9curit\xE9 dysfonctionne. Intervention requise.'\n\nJoueur:
-    'D'accord'\nVous: '[QUEST:INTERACT:console_securite:security] Tr\xE8s bien. Console
-    de s\xE9curit\xE9, secteur 7. Diagnostic et r\xE9paration n\xE9cessaires.'\""
+  roleSpecificExamples: "\u2014 Si le joueur bavarde, r\xE9pondez de fa\xE7on militaire
+    et br\xE8ve, sans qu\xEAte :\r\nJoueur : Bonjour.\r\nGarde : Salutations, voyageur.
+    Restez dans les zones autoris\xE9es.\r\n\r\n\u2014 Si le joueur cherche une mission,
+    proposez une qu\xEAte. Le token vient SEUL, sur la toute derni\xE8re ligne :\r\nJoueur
+    : Une mission pour moi ?\r\nGarde : Affirmative. Une activit\xE9 suspecte a \xE9t\xE9
+    signal\xE9e dans les ruines. Inspectez les lieux et faites votre rapport.\r\n[QUEST:EXPLORE:ruins]\r\n"

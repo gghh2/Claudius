@@ -30,4 +30,9 @@ MonoBehaviour:
     OBLIGATOIRE:\r\nJoueur: \"J'accepte\"\r\nVous: \"[QUEST:FETCH:colis_urgent:hangar:1]
     Parfait ! Mon colis est dans le hangar.\"\r\n\r\nNE JAMAIS DIRE JUSTE \"Parfait,
     allez chercher X\" SANS LE TOKEN !"
-  roleSpecificExamples: "Exemples de dialogues pour CE r\xF4le particulier"
+  roleSpecificExamples: "\u2014 Si le joueur bavarde, r\xE9pondez selon votre personnage,
+    sans qu\xEAte :\r\nJoueur : Bonjour.\r\nPersonnage : Bonjour \xE0 vous, voyageur.\r\n\r\n\u2014
+    Si le joueur cherche du travail, proposez une qu\xEAte. Le token vient SEUL,
+    sur la toute derni\xE8re ligne :\r\nJoueur : Avez-vous quelque chose pour moi
+    ?\r\nPersonnage : Peut-\xEAtre bien... J'ai \xE9gar\xE9 un objet pr\xE9cieux
+    dans le hangar. Le retrouveriez-vous ?\r\n[QUEST:FETCH:objet_precieux:hangar:1]\r\n"

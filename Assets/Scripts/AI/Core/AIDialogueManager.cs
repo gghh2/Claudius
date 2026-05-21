@@ -246,22 +246,11 @@ VOTRE PERSONNAGE :
 INSTRUCTIONS :
 - Incarnez ce personnage de manière cohérente, sans jamais sortir de votre rôle.
 - Soyez naturel et engageant ; adaptez votre ton à votre rôle.
-
-PROPOSER UNE QUÊTE :
-- Vous POUVEZ proposer une quête, mais uniquement si le joueur en cherche une et qu'elle découle naturellement de l'échange. Sinon, contentez-vous de discuter : ne pas proposer de quête est parfaitement normal.
-- Ne proposez jamais de quête tant que le joueur n'a pas exprimé de demande claire. Un simple bonjour n'est pas une demande de quête.
-- Pour proposer une quête, et seulement dans ce cas, terminez votre message par UN SEUL token, seul sur la dernière ligne — jamais au milieu d'une phrase :
-[QUEST:TYPE:paramètres]
-- Ne promettez jamais de récompense chiffrée : la récompense est gérée par le jeu.
-
-{GetQuestInstructionsForNPC(npcData.name)}
-
-ZONES DISPONIBLES : laboratory, hangar, market, security, residential, engineering, medical, storage, ruins
-
-{GetRoleSpecificQuestExamples(npcData.role)}";
+- Vous pouvez évoquer naturellement vos soucis, vos besoins ou vos problèmes au fil de la conversation.
+- Vous n'attribuez JAMAIS de mission formelle et vous n'écrivez JAMAIS de code entre crochets. Contentez-vous de jouer votre personnage et de discuter.";
         }
         
-        // Utilise la config appropriée
+        // Utilise la config appropriée — prompt de roleplay PUR (aucune quête).
         return $@"Vous incarnez un personnage d'un jeu d'aventure spatiale. Restez dans votre rôle, répondez en français, en 1 à 3 phrases.
 {activeQuestInfo}
 {configToUse.npcPersonality}
@@ -273,19 +262,10 @@ VOTRE PERSONNAGE :
 
 {configToUse.globalInstructions}
 
-PROPOSER UNE QUÊTE :
-- Vous POUVEZ proposer une quête, mais uniquement si le joueur en cherche une et qu'elle découle naturellement de l'échange. Sinon, contentez-vous de discuter : ne pas proposer de quête est parfaitement normal.
-- Ne proposez jamais de quête tant que le joueur n'a pas exprimé de demande claire. Un simple bonjour n'est pas une demande de quête.
-- Pour proposer une quête, et seulement dans ce cas, terminez votre message par UN SEUL token, seul sur la dernière ligne — jamais au milieu d'une phrase :
-[QUEST:TYPE:paramètres]
-- Ne promettez jamais de récompense chiffrée : la récompense est gérée par le jeu.
-
-{GetQuestInstructionsForNPC(npcData.name)}
-
-ZONES DISPONIBLES : laboratory, hangar, market, security, residential, engineering, medical, storage, ruins
-
-EXEMPLES POUR VOTRE RÔLE :
-{configToUse.roleSpecificExamples}";
+Vous discutez librement avec le voyageur. Vous pouvez évoquer naturellement vos
+soucis, vos besoins ou vos problèmes au fil de la conversation — mais vous
+n'attribuez JAMAIS de mission formelle et vous n'écrivez JAMAIS de code entre
+crochets. Contentez-vous de jouer votre personnage et de discuter.";
     }
     
     string GetQuestInstructionsForNPC(string npcName)
@@ -330,7 +310,7 @@ token, seul sur la dernière ligne. Formats :
 [QUEST:INTERACT:objet:zone]              — interagir avec un objet
 
 Pour FETCH : si vous parlez d'UN seul objet, la quantité est 1.
-Le destinataire d'une livraison est un personnage, jamais un lieu.";
+Le destinataire d'une DELIVERY et la cible d'un TALK sont des personnages : donnez-leur un nom propre inventé (par exemple « Maître Orin », « Dame Sevra »), jamais un mot générique (« le chercheur », « un guérisseur »), jamais un lieu.";
                 }
             }
         }
@@ -351,7 +331,7 @@ Exemple : 'Mes outils ont disparu dans le hangar, pouvez-vous les retrouver ?
 [QUEST:FETCH:outils:hangar:3]'
 
 Pour FETCH : si vous parlez d'UN seul objet, la quantité est 1.
-Le destinataire d'une livraison est un personnage, jamais un lieu.";
+Le destinataire d'une DELIVERY et la cible d'un TALK sont des personnages : donnez-leur un nom propre inventé (par exemple « Maître Orin », « Dame Sevra »), jamais un mot générique (« le chercheur », « un guérisseur »), jamais un lieu.";
     }
     
     string GetAvailableQuestOptionsForAI()
@@ -501,6 +481,8 @@ AUTRES EXEMPLES:
         }));
     }
 
+    // Appel 1 — traite la réponse de CHAT (roleplay pur). Ne détecte aucune
+    // quête : la détection se fait dans l'appel d'analyse séparé (AnalyzeForQuest).
     void ProcessAIResponse(string aiContent, NPCData npcData, bool isWelcome, double responseSeconds)
     {
         if (string.IsNullOrEmpty(aiContent))
@@ -514,68 +496,139 @@ AUTRES EXEMPLES:
         {
             string aiResponse = aiContent.Trim();
 
-            Debug.Log($"🤖 Réponse IA brute:");
-            Debug.Log(aiResponse);
-
-            // Détection des quêtes
-            List<QuestToken> detectedQuests = null;
+            // Sécurité : le chat ne doit pas produire de token. Si le modèle en
+            // glisse un malgré tout, on le retire de l'affichage — il ne crée
+            // aucune quête (la détection est faite par l'appel d'analyse séparé).
             if (QuestTokenDetector.Instance != null)
-            {
-                detectedQuests = QuestTokenDetector.Instance.DetectQuestTokens(aiResponse);
+                aiResponse = QuestTokenDetector.Instance.CleanMessageFromTokens(aiResponse);
 
-                if (detectedQuests != null && detectedQuests.Count > 0)
-                {
-                    Debug.Log($"🎯 {detectedQuests.Count} quête(s) détectée(s)");
-                    foreach (var quest in detectedQuests)
-                    {
-                        Debug.Log($"  - Type: {quest.questType}, Zone: {quest.zoneName}, Description: {quest.description}");
-                    }
-                    aiResponse = QuestTokenDetector.Instance.CleanMessageFromTokens(aiResponse);
-                }
-                else
-                {
-                    Debug.LogWarning("⚠️ Aucune quête détectée dans la réponse de l'IA");
-                    Debug.Log($"Réponse complète: {aiResponse}");
-                }
-            }
-
-            // Debug : journalise sur disque chaque mission proposée par le PNJ
-            // — message du joueur + réponse brute + tokens + latence (cf. Phase 5).
-            string playerMessage = isWelcome
-                ? "(première approche du PNJ)"
-                : currentConversation.LastOrDefault(m => m.role == "user")?.content ?? "(inconnu)";
-            MissionProposalLogger.Log(npcData.name, npcData.role, playerMessage,
-                                      aiContent.Trim(), detectedQuests, responseSeconds);
+            Debug.Log($"🤖 Réponse de chat ({npcData.name}) en {responseSeconds:N1} s : {aiResponse}");
 
             currentConversation.Add(new OpenAIMessage("assistant", aiResponse));
-
-            Debug.Log($"IA ({npcData.name}): {aiResponse}");
 
             string formattedResponse = $"{npcData.name}: {aiResponse}";
             SaveMessageToHistory(npcData.name, formattedResponse, false);
 
             if (isWelcome)
-            {
                 DialogueUI.Instance.StartAIDialogue(npcData, formattedResponse);
-            }
             else
-            {
                 DialogueUI.Instance.ShowText(formattedResponse);
-            }
 
-            if (detectedQuests != null && detectedQuests.Count > 0)
+            // Appel 2 — analyse de quête séparée. Jamais sur le simple accueil :
+            // le joueur n'a encore rien demandé.
+            if (!isWelcome)
             {
-                Debug.Log($"📋 Envoi de {detectedQuests.Count} quête(s) à DialogueUI");
-                DialogueUI.Instance.SetPendingQuests(detectedQuests, npcData.name);
+                string playerMessage = currentConversation.LastOrDefault(m => m.role == "user")?.content ?? "(inconnu)";
+                StartCoroutine(AnalyzeForQuest(npcData, playerMessage, aiResponse));
             }
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"Erreur traitement réponse IA : {e.Message}");
+            Debug.LogError($"Erreur traitement réponse de chat : {e.Message}");
             UseFallback(npcData, isWelcome, "");
         }
     }
     
+    // Prompt de l'appel 2 : analyse de quête. Mono-tâche — décider si le joueur
+    // cherche une mission et, le cas échéant, produire UN token. Aucun roleplay.
+    string BuildQuestAnalysisPrompt(NPCData npcData)
+    {
+        return $@"Tu es un analyseur de quêtes pour un jeu d'aventure spatiale. On te donne la conversation entre un voyageur (le joueur) et un PNJ.
+
+LE PNJ :
+- Nom : {npcData.name}
+- Rôle : {npcData.role}
+
+TA TÂCHE : déterminer si, dans son DERNIER message, le joueur cherche une mission — soit en demandant explicitement du travail, soit en acceptant de s'occuper d'un problème que le PNJ vient d'évoquer.
+
+- Si OUI : génère UNE quête cohérente avec la conversation, sous la forme d'UN SEUL token.
+- Si NON : réponds exactement NONE.
+- Dans le doute : NONE. Un simple bavardage, une question, une politesse, une remarque ne sont PAS une demande de mission.
+- Ta réponse entière doit être SOIT un token, SOIT le mot NONE. Aucun autre texte.
+
+FORMATS DE TOKEN :
+[QUEST:FETCH:objet:zone:quantité]        — rapporter des objets
+[QUEST:DELIVERY:objet:destinataire:zone] — livrer quelque chose à quelqu'un
+[QUEST:EXPLORE:zone]                     — explorer une zone
+[QUEST:TALK:personnage:zone]             — aller parler à quelqu'un
+[QUEST:INTERACT:objet:zone]              — interagir avec un objet
+
+ZONES VALIDES (utilise UNIQUEMENT celles-ci) : laboratory, hangar, market, security, residential, engineering, medical, storage, ruins
+
+RÈGLES :
+- La quête doit découler de ce qui a été dit dans la conversation.
+- FETCH : si le joueur parle d'UN seul objet, la quantité est 1.
+- Le destinataire d'une DELIVERY et la cible d'un TALK sont des personnages avec un nom propre inventé (« Maître Orin »), jamais un mot générique, jamais un lieu.";
+    }
+
+    // Appel 2 — lancé après la réponse de chat. Analyse la conversation et
+    // décide si une quête doit être proposée. Le chat lui-même n'émet aucun token.
+    IEnumerator AnalyzeForQuest(NPCData npcData, string playerMessage, string chatReply)
+    {
+        // Pas de seconde quête tant qu'une quête est déjà active avec ce PNJ.
+        if (QuestJournal.Instance != null)
+        {
+            var active = QuestJournal.Instance.GetActiveQuests()
+                                     .FirstOrDefault(q => q.giverNPCName == npcData.name);
+            if (active != null)
+                yield break;
+        }
+
+        // Transcript de la conversation, fourni comme un seul bloc à analyser.
+        var sb = new StringBuilder();
+        foreach (var m in currentConversation)
+        {
+            if (m.role == "user")
+                sb.AppendLine($"Joueur : {m.content}");
+            else if (m.role == "assistant")
+                sb.AppendLine($"{npcData.name} : {m.content}");
+        }
+
+        var messages = new List<OpenAIMessage>
+        {
+            new OpenAIMessage("system", BuildQuestAnalysisPrompt(npcData)),
+            new OpenAIMessage("user",
+                $"Voici la conversation :\n\n{sb}\n" +
+                "D'après le DERNIER message du joueur, cherche-t-il une mission ? " +
+                "Réponds uniquement par un token [QUEST:...] ou par NONE.")
+        };
+
+        // Température basse : l'analyse doit être stable, pas créative.
+        var request = new AIRequest(messages, 0.3f, 60);
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        yield return StartCoroutine(AIService.Provider.Complete(request, response =>
+        {
+            stopwatch.Stop();
+            if (response.success)
+                ProcessQuestAnalysis(response.text, npcData, playerMessage, chatReply, stopwatch.Elapsed.TotalSeconds);
+            else
+                Debug.LogWarning($"[QuestAnalysis] Échec de l'appel : {response.error}");
+        }));
+    }
+
+    // Traite la sortie de l'appel 2 : extrait un éventuel token (validé par
+    // QuestTokenDetector), le journalise, et le transmet à l'UI si une quête en sort.
+    void ProcessQuestAnalysis(string analysisOutput, NPCData npcData, string playerMessage, string chatReply, double seconds)
+    {
+        string raw = (analysisOutput ?? string.Empty).Trim();
+        Debug.Log($"[QuestAnalysis] Sortie ({seconds:N1} s) : {raw}");
+
+        List<QuestToken> detectedQuests = null;
+        if (QuestTokenDetector.Instance != null)
+            detectedQuests = QuestTokenDetector.Instance.DetectQuestTokens(raw);
+
+        MissionProposalLogger.Log(npcData.name, npcData.role, playerMessage,
+                                  chatReply, raw, detectedQuests, seconds);
+
+        if (detectedQuests != null && detectedQuests.Count > 0)
+        {
+            Debug.Log($"🎯 {detectedQuests.Count} quête(s) issue(s) de l'analyse");
+            if (DialogueUI.Instance != null)
+                DialogueUI.Instance.SetPendingQuests(detectedQuests, npcData.name);
+        }
+    }
+
     void UseFallback(NPCData npcData, bool isWelcome, string playerMessage)
     {
         Debug.Log("Utilisation du mode fallback");

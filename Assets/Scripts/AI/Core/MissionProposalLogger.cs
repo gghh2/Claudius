@@ -27,12 +27,14 @@ public static class MissionProposalLogger
     /// </summary>
     /// <param name="npcName">Nom du PNJ.</param>
     /// <param name="npcRole">Rôle du PNJ.</param>
-    /// <param name="playerMessage">Message du joueur qui a déclenché la réponse.</param>
-    /// <param name="rawResponse">Réponse brute de l'IA, avant nettoyage des tokens.</param>
+    /// <param name="playerMessage">Message du joueur qui a déclenché l'échange.</param>
+    /// <param name="chatReply">Réponse de chat (roleplay) du PNJ.</param>
+    /// <param name="analysisOutput">Sortie brute de l'appel d'analyse de quête (token ou NONE).</param>
     /// <param name="detectedQuests">Quêtes détectées (peut être null ou vide).</param>
-    /// <param name="responseSeconds">Durée réelle de l'appel IA, en secondes.</param>
+    /// <param name="analysisSeconds">Durée de l'appel d'analyse, en secondes.</param>
     public static void Log(string npcName, string npcRole, string playerMessage,
-                           string rawResponse, List<QuestToken> detectedQuests, double responseSeconds)
+                           string chatReply, string analysisOutput,
+                           List<QuestToken> detectedQuests, double analysisSeconds)
     {
         if (!Debug.isDebugBuild)
             return;
@@ -53,11 +55,13 @@ public static class MissionProposalLogger
             int count = detectedQuests != null ? detectedQuests.Count : 0;
 
             sb.AppendLine("----------------------------------------------------------------");
-            sb.AppendLine($"[{DateTime.Now:HH:mm:ss}] PNJ : {npcName}  (rôle : {npcRole})  —  réponse IA en {responseSeconds:N1} s");
+            sb.AppendLine($"[{DateTime.Now:HH:mm:ss}] PNJ : {npcName}  (rôle : {npcRole})");
             sb.AppendLine("--- Message du joueur ---");
             sb.AppendLine(string.IsNullOrEmpty(playerMessage) ? "(vide)" : playerMessage);
-            sb.AppendLine("--- Réponse brute de l'IA ---");
-            sb.AppendLine(string.IsNullOrEmpty(rawResponse) ? "(vide)" : rawResponse);
+            sb.AppendLine("--- Réponse du PNJ (chat) ---");
+            sb.AppendLine(string.IsNullOrEmpty(chatReply) ? "(vide)" : chatReply);
+            sb.AppendLine($"--- Analyse de quête (en {analysisSeconds:N1} s) ---");
+            sb.AppendLine(string.IsNullOrEmpty(analysisOutput) ? "(vide)" : analysisOutput);
             sb.AppendLine(count > 0
                 ? $"--- Tokens détectés : {count} ---"
                 : "--- Tokens détectés : 0  (AUCUNE QUÊTE PARSÉE) ---");

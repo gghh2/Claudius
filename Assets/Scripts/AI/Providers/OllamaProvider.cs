@@ -12,7 +12,7 @@
 public class OllamaProvider : OpenAICompatibleProvider
 {
     public const string DefaultEndpoint = "http://localhost:11434/v1/chat/completions";
-    public const string DefaultOllamaModel = "qwen2.5:3b";
+    public const string DefaultOllamaModel = "qwen2.5:7b";
 
     public OllamaProvider(string model = DefaultOllamaModel, string endpoint = DefaultEndpoint)
         : base("LLM local (Ollama)",

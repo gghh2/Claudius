@@ -521,6 +521,15 @@ AUTRES EXEMPLES:
                 string playerMessage = currentConversation.LastOrDefault(m => m.role == "user")?.content ?? "(inconnu)";
                 StartCoroutine(AnalyzeForQuest(npcData, playerMessage, aiResponse));
             }
+            else
+            {
+                // L'accueil ne déclenche pas d'analyse de quête, mais on le
+                // journalise quand même : c'est ici qu'on voit si un PNJ se
+                // souvient du joueur (sa façon de le resaluer).
+                MissionProposalLogger.Log(npcData.name, npcData.role, "(accueil du PNJ)",
+                                          aiResponse, "(accueil — pas d'analyse de quête)",
+                                          null, responseSeconds);
+            }
         }
         catch (System.Exception e)
         {

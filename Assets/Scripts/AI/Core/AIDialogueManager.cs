@@ -556,9 +556,10 @@ FORMATS DE TOKEN :
 ZONES VALIDES (utilise UNIQUEMENT celles-ci) : laboratory, hangar, market, security, residential, engineering, medical, storage, ruins
 
 RÈGLES :
-- La quête doit découler de ce qui a été dit dans la conversation.
+- La quête doit découler d'un sujet CONCRET de la conversation : un objet, un lieu, un problème ou un besoin réellement évoqué. Si le joueur exprime de l'intérêt mais qu'aucun sujet concret n'a été abordé, réponds NONE.
 - FETCH : si le joueur parle d'UN seul objet, la quantité est 1.
-- Le destinataire d'une DELIVERY et la cible d'un TALK sont des personnages avec un nom propre inventé (« Maître Orin »), jamais un mot générique, jamais un lieu.";
+- Le destinataire d'une DELIVERY et la cible d'un TALK sont des personnages avec un nom propre inventé (« Maître Orin », « Dame Sevra »), jamais un mot générique, jamais un lieu.
+- INTERDIT : une quête TALK ou DELIVERY ne doit JAMAIS cibler {npcData.name} (le PNJ courant). On n'envoie pas le joueur parler à la personne avec qui il discute déjà — la cible est forcément un AUTRE personnage.";
     }
 
     // Appel 2 — lancé après la réponse de chat. Analyse la conversation et

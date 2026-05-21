@@ -52,6 +52,18 @@ public class QuestTokenDetector : MonoBehaviour
         { QuestType.INTERACT, @"\[QUEST:INTERACT:([^:]+):([^:]+):?([^\]]*)\]" },
         { QuestType.ESCORT, @"\[QUEST:ESCORT:([^:]+):([^:]+):([^:]+):?([^\]]*)\]" }
     };
+
+    // Identifiants de zone canoniques (cf. AIDialogueManager / CLAUDE.md).
+    // Sert à la validation sémantique : une zone hors de cette liste, ou un
+    // destinataire de quête égal à l'un de ces identifiants, est rejeté.
+    private static readonly HashSet<string> KnownZoneIds = new HashSet<string>
+    {
+        "laboratory", "hangar", "market", "security",
+        "residential", "engineering", "medical", "storage", "ruins"
+    };
+
+    // Quantité maximale plausible pour une quête FETCH (garde-fou anti-absurde).
+    private const int MaxFetchQuantity = 10;
     
     void Awake()
     {
@@ -191,6 +203,7 @@ public class QuestTokenDetector : MonoBehaviour
                     
                     token.zoneType = ParseZoneType(token.zoneName);
                     token.objectType = QuestObjectType.Item;
+                    token.quantity = Mathf.Clamp(token.quantity, 1, MaxFetchQuantity);
                     token.description = $"Trouvez {token.quantity} {token.objectName} dans {token.zoneName}";
                     break;
                 
@@ -379,41 +392,48 @@ public class QuestTokenDetector : MonoBehaviour
 	    return null;
 	}
     
-    // Validate that a quest token can actually be created
+    // Validation sémantique d'un token de quête. Empêche un token bien formé
+    // mais absurde de devenir une vraie quête : le parsing contraint la FORME,
+    // cette validation contraint le SENS. Filet de sécurité déterministe,
+    // indépendant du modèle d'IA (cf. SPEC_LLM_local.md).
     bool IsQuestTokenValid(QuestToken token)
     {
-        // Pour l'instant, on accepte tous les tokens détectés
-        // La validation se fera lors de la création de la quête dans QuestManager
-        return true;
-        
-        /* Code de validation désactivé temporairement
-        if (QuestZoneManager.Instance == null)
+        // 1. La zone doit être reconnue. ParseZoneType est volontairement
+        //    généreux : un résultat null signale une zone réellement inconnue.
+        if (token.zoneType == null)
         {
-            Debug.LogWarning("QuestZoneManager.Instance is null - cannot validate quest");
+            if (debugMode)
+                Debug.LogWarning($"[QuestTokenDetector] Token rejeté — zone inconnue : '{token.zoneName}' ({token.questType})");
             return false;
         }
-        
-        // Check if zone type exists and supports the required object type
-        if (token.zoneType.HasValue && token.objectType.HasValue)
+
+        // 2. Le destinataire d'une DELIVERY / TALK / ESCORT doit être un
+        //    personnage, pas un lieu. On rejette si le nom de cible est
+        //    exactement un identifiant de zone : c'est le cas du token foireux
+        //    [QUEST:DELIVERY:baleines:hangar:market], où « hangar » atterrit en
+        //    destinataire et fait spawner un PNJ nommé « hangar ».
+        if (token.questType == QuestType.DELIVERY
+            || token.questType == QuestType.TALK
+            || token.questType == QuestType.ESCORT)
         {
-            var supportingZones = QuestZoneManager.Instance.GetZonesSupportingObjectType(token.objectType.Value);
-            
-            // Check if any of the supporting zones match the requested zone type
-            bool zoneSupportsQuest = supportingZones.Any(z => z.zoneType == token.zoneType.Value);
-            
-            if (!zoneSupportsQuest)
+            string target = (token.targetName ?? string.Empty).Trim();
+
+            if (string.IsNullOrEmpty(target))
             {
-                Debug.LogWarning($"Zone type {token.zoneType.Value} does not support object type {token.objectType.Value}");
+                if (debugMode)
+                    Debug.LogWarning($"[QuestTokenDetector] Token rejeté — destinataire vide ({token.questType})");
                 return false;
             }
-            
-            return true;
+
+            if (KnownZoneIds.Contains(target.ToLowerInvariant()))
+            {
+                if (debugMode)
+                    Debug.LogWarning($"[QuestTokenDetector] Token rejeté — le destinataire '{token.targetName}' est un lieu, pas un personnage ({token.questType})");
+                return false;
+            }
         }
-        
-        // If we can't determine zone or object type, consider it invalid
-        Debug.LogWarning($"Quest token missing zone type or object type information");
-        return false;
-        */
+
+        return true;
     }
     
     // Nettoie le message en retirant les tokens (pour l'affichage au joueur)

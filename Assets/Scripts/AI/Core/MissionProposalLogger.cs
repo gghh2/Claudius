@@ -27,10 +27,12 @@ public static class MissionProposalLogger
     /// </summary>
     /// <param name="npcName">Nom du PNJ.</param>
     /// <param name="npcRole">Rôle du PNJ.</param>
+    /// <param name="playerMessage">Message du joueur qui a déclenché la réponse.</param>
     /// <param name="rawResponse">Réponse brute de l'IA, avant nettoyage des tokens.</param>
     /// <param name="detectedQuests">Quêtes détectées (peut être null ou vide).</param>
-    public static void Log(string npcName, string npcRole, string rawResponse,
-                           List<QuestToken> detectedQuests)
+    /// <param name="responseSeconds">Durée réelle de l'appel IA, en secondes.</param>
+    public static void Log(string npcName, string npcRole, string playerMessage,
+                           string rawResponse, List<QuestToken> detectedQuests, double responseSeconds)
     {
         if (!Debug.isDebugBuild)
             return;
@@ -51,7 +53,9 @@ public static class MissionProposalLogger
             int count = detectedQuests != null ? detectedQuests.Count : 0;
 
             sb.AppendLine("----------------------------------------------------------------");
-            sb.AppendLine($"[{DateTime.Now:HH:mm:ss}] PNJ : {npcName}  (rôle : {npcRole})");
+            sb.AppendLine($"[{DateTime.Now:HH:mm:ss}] PNJ : {npcName}  (rôle : {npcRole})  —  réponse IA en {responseSeconds:N1} s");
+            sb.AppendLine("--- Message du joueur ---");
+            sb.AppendLine(string.IsNullOrEmpty(playerMessage) ? "(vide)" : playerMessage);
             sb.AppendLine("--- Réponse brute de l'IA ---");
             sb.AppendLine(string.IsNullOrEmpty(rawResponse) ? "(vide)" : rawResponse);
             sb.AppendLine(count > 0

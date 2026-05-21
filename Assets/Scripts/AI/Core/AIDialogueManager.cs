@@ -495,8 +495,13 @@ AUTRES EXEMPLES:
 
         Debug.Log($"Envoi requête IA pour {npcData.name}");
 
+        // Chronomètre la latence réelle de l'appel IA (diagnostic des délais).
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
         yield return StartCoroutine(AIService.Provider.Complete(request, response =>
         {
+            stopwatch.Stop();
+
             if (DialogueUI.Instance != null)
             {
                 DialogueUI.Instance.ShowLoadingState(false);
@@ -504,7 +509,7 @@ AUTRES EXEMPLES:
 
             if (response.success)
             {
-                ProcessAIResponse(response.text, npcData, isWelcome);
+                ProcessAIResponse(response.text, npcData, isWelcome, stopwatch.Elapsed.TotalSeconds);
             }
             else
             {
@@ -514,7 +519,7 @@ AUTRES EXEMPLES:
         }));
     }
 
-    void ProcessAIResponse(string aiContent, NPCData npcData, bool isWelcome)
+    void ProcessAIResponse(string aiContent, NPCData npcData, bool isWelcome, double responseSeconds)
     {
         if (string.IsNullOrEmpty(aiContent))
         {
@@ -553,9 +558,12 @@ AUTRES EXEMPLES:
             }
 
             // Debug : journalise sur disque chaque mission proposée par le PNJ
-            // — réponse brute + tokens détectés ou non (cf. Phase 5, mesure de
-            // la fiabilité du LLM à produire des tokens [QUEST:...] valides).
-            MissionProposalLogger.Log(npcData.name, npcData.role, aiContent.Trim(), detectedQuests);
+            // — message du joueur + réponse brute + tokens + latence (cf. Phase 5).
+            string playerMessage = isWelcome
+                ? "(première approche du PNJ)"
+                : currentConversation.LastOrDefault(m => m.role == "user")?.content ?? "(inconnu)";
+            MissionProposalLogger.Log(npcData.name, npcData.role, playerMessage,
+                                      aiContent.Trim(), detectedQuests, responseSeconds);
 
             currentConversation.Add(new OpenAIMessage("assistant", aiResponse));
 

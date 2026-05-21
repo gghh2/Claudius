@@ -30,6 +30,10 @@ public class AIDialogueManager : MonoBehaviour
     private Dictionary<string, ConversationHistory> conversationHistories = new Dictionary<string, ConversationHistory>();
     private List<OpenAIMessage> currentConversation;
 
+    // Une conversation persistante (messages IA) par PNJ : ré-aborder un PNJ
+    // reprend sa conversation au lieu de la réinitialiser → il se souvient.
+    private Dictionary<string, List<OpenAIMessage>> conversationsByNpc = new Dictionary<string, List<OpenAIMessage>>();
+
     public static AIDialogueManager Instance { get; private set; }
     
     void Awake()
@@ -87,39 +91,35 @@ public class AIDialogueManager : MonoBehaviour
     
     public void StartAIConversation(NPCData npcData)
     {
-        currentConversation = new List<OpenAIMessage>();
-        
-        string systemPrompt = BuildSystemPrompt(npcData);
-        currentConversation.Add(new OpenAIMessage("system", systemPrompt));
-        
-        // Check if there's an active quest with this NPC
-        string initialUserMessage = "Le joueur s'approche de vous. ";
-        
-        if (QuestJournal.Instance != null)
+        // Reprise : si une conversation existe déjà avec ce PNJ, on la continue
+        // au lieu de la réinitialiser — le PNJ se souvient des échanges passés.
+        if (conversationsByNpc.TryGetValue(npcData.name, out var existing) && existing.Count > 0)
         {
-            var activeQuests = QuestJournal.Instance.GetActiveQuests();
-            var npcActiveQuest = activeQuests.FirstOrDefault(q => q.giverNPCName == npcData.name);
-            
-            if (npcActiveQuest != null)
-            {
-                // Force the AI to talk about the active quest
-                string questDetails = $"quête '{npcActiveQuest.description}' (Progression: {npcActiveQuest.GetProgressText()})";
-                initialUserMessage = $"Le joueur qui a votre {questDetails} s'approche de vous. VOUS DEVEZ ABSOLUMENT lui demander comment se passe cette mission et l'encourager selon sa progression. NE proposez PAS de nouvelle quête.";
-                
-                // Add a system message to reinforce this
-                currentConversation.Add(new OpenAIMessage("system", $"RAPPEL IMPORTANT: Le joueur a une quête active avec vous: {questDetails}. Vous DEVEZ en parler en premier!"));
-            }
-            else
-            {
-                initialUserMessage = "Le joueur s'approche de vous. Saluez-le de manière naturelle selon votre personnalité.";
-            }
+            currentConversation = existing;
+            currentConversation.Add(new OpenAIMessage("user",
+                "Le joueur revient vous parler. Accueillez-le comme une connaissance, en vous souvenant de vos échanges précédents."));
         }
         else
         {
-            initialUserMessage = "Le joueur s'approche de vous. Saluez-le de manière naturelle selon votre personnalité.";
+            currentConversation = new List<OpenAIMessage>();
+            conversationsByNpc[npcData.name] = currentConversation;
+
+            currentConversation.Add(new OpenAIMessage("system", BuildSystemPrompt(npcData)));
+
+            string initialUserMessage = "Le joueur s'approche de vous. Saluez-le de manière naturelle selon votre personnalité.";
+            if (QuestJournal.Instance != null)
+            {
+                var npcActiveQuest = QuestJournal.Instance.GetActiveQuests()
+                                                .FirstOrDefault(q => q.giverNPCName == npcData.name);
+                if (npcActiveQuest != null)
+                {
+                    string questDetails = $"quête '{npcActiveQuest.description}' (Progression : {npcActiveQuest.GetProgressText()})";
+                    initialUserMessage = $"Le joueur, qui a votre {questDetails}, s'approche de vous. Demandez-lui où il en est et encouragez-le selon sa progression.";
+                    currentConversation.Add(new OpenAIMessage("system", $"RAPPEL : le joueur a une quête active avec vous : {questDetails}. Parlez-en en premier."));
+                }
+            }
+            currentConversation.Add(new OpenAIMessage("user", initialUserMessage));
         }
-        
-        currentConversation.Add(new OpenAIMessage("user", initialUserMessage));
         
         if (IsConfigured())
         {
@@ -736,6 +736,7 @@ RÈGLES :
     public void ClearAllHistory()
     {
         conversationHistories.Clear();
+        conversationsByNpc.Clear();
         Debug.Log("Historique des conversations effacé");
     }
     

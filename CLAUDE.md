@@ -64,9 +64,12 @@ Documentation détaillée dans `Assets/Scripts/_Documentation/README_*.md`. Vue 
   → `README_QUEST_SYSTEM.md`, `README_MARKER_SYSTEM.md`
 - **Sauvegarde** — `SaveGameManager` (JSON dans `persistentDataPath/saves/`),
   `GameLoadingManager` (chargement depuis le menu). → `README_SAVE_SYSTEM_GUIDE.md`
-- **Dialogue IA** — `AIDialogueManager` + intégration OpenAI (`Assets/Scripts/AI/`).
-  100 % IA, aucun dialogue pré-écrit. Personnalités via `AIPromptConfig`
-  (ScriptableObject par type de PNJ). → `README_AI_DIALOGUE_REFACTORING.md`
+- **Dialogue IA** — `AIDialogueManager` (`Assets/Scripts/AI/`). 100 % IA, aucun
+  dialogue pré-écrit. Personnalités via `AIPromptConfig` (ScriptableObject par
+  type de PNJ). Backend abstrait derrière `IAIProvider` (OpenAI / Ollama local).
+  **Architecture « B2 »** : deux appels IA séparés — un appel de *chat* (roleplay
+  pur, ne produit jamais de quête) et un appel d'*analyse* qui décide seul si une
+  quête `[QUEST:...]` doit être proposée. → `README_AI_DIALOGUE_REFACTORING.md`
 - **Navigation UI** — `UnifiedUIManager` : pile de panels, gestion de la touche ESC,
   layers, contrôle de `Time.timeScale` et de l'input joueur. Chaque panel a son
   propre sous-Canvas. → `README_UI_SYSTEM_COMPLETE.md`

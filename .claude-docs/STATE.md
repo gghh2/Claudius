@@ -8,32 +8,39 @@
 ## Statut global
 
 - Le projet **compile proprement** sous Unity 6.2.
-- Migration Unity 2021.3 → 6.2 terminée et poussée.
-- **AdventureJournal livré** — journal de bord narratif IA : câblé, save/load OK.
-- **Abstraction IA en place** (`IAIProvider`) — OpenAI / local / mock interchangeables.
-- **Gestion du curseur consolidée** — une seule classe (`SmartCursorManager`) fait
-  autorité, pilotée par `UnifiedUIManager.IsShowingPanel`.
-- **Audit « bonnes pratiques »** (C# style guide + ScriptableObjects) fait →
-  `AUDIT_CODE.md`. Verdict : projet sain, pas de réécriture de masse.
-- Tout le travail de la session du 2026-05-20 est **commité et poussé**.
+- **Dialogue IA refondu — architecture « B2 »** : le chat (roleplay) et la
+  génération de quête sont **deux appels séparés**. Le chat ne peut plus produire
+  de quête ; un appel d'analyse dédié décide seul. La **sur-proposition de
+  quêtes** — problème majeur — est **éradiquée** (validé en jeu).
+- **Abstraction IA multi-backend** : OpenAI (`gpt-4o-mini`) / Ollama (local) /
+  mock, interchangeables. Menu éditeur `Tools > Claudius > IA`.
+- **Mémoire de conversation par PNJ** dans la session de jeu : les PNJ se
+  souviennent du joueur.
+- **Validation sémantique des tokens de quête** : tokens absurdes rejetés
+  (zone inconnue, destinataire = lieu, destinataire = PNJ déjà existant).
+- AdventureJournal, consolidation curseur, migration Unity 6.2 : OK (sessions
+  précédentes).
 
 ## En cours / non terminé
 
-- **DynamicAssets / génération 3D** *(WIP en pause)* — pipeline CSM/Meshy présent
-  et instancié en scène, Phase 2 non faite. **Décision à prendre : reprendre ou geler.**
-- **LLM local** *(en cours)* — Phases 0-1 faites et validées en jeu : modèle
-  porté par le provider (cloud → `gpt-4o-mini`), `OpenAICompatibleProvider`,
-  moteur Ollama, bascule Cloud/Local via menu éditeur. Reste : repli d'erreur,
-  sélecteur Options, intégration LLMUnity embarquée, éval des modèles.
-  Voir `SPEC_LLM_local.md`.
+- **LLM embarqué** *(prochaine grande étape)* — l'abstraction, le moteur local
+  (Ollama, en dev) et toute l'architecture de dialogue sont prêts. Reste le
+  **vrai** embarqué : intégrer **LLMUnity** + un modèle GGUF dans le build, et
+  le sélecteur Cloud/Local dans les Options. Voir `SPEC_LLM_local.md`.
+- **DynamicAssets / génération 3D** *(WIP en pause)* — décision à prendre :
+  reprendre ou geler.
 
 ## Points d'attention connus
 
-- Génération de quête IA : l'IA ne produit pas toujours un token `[QUEST:...]`
-  valide. Piste retenue : génération contrainte (grammaire GBNF / schéma JSON) —
-  voir `SPEC_LLM_local.md`.
+- Modèle de dev : `qwen2.5:7b` via Ollama. Le modèle réellement *embarquable*
+  (PC modeste) reste à choisir et mesurer.
+- Tics de petit modèle persistants (charabia occasionnel, mots étrangers) —
+  limite du 3-7B, à remesurer avec le modèle embarqué final.
+- Code mort dans `AIDialogueManager` (3 méthodes de prompt rendues inutiles par
+  B2) — nettoyage prévu.
 
 ## Prochaine étape
 
-- LLM local — Phase 2 : repli propre quand le moteur local est injoignable.
-  Puis Phase 3 : sélecteur Cloud/Local dans le menu Options.
+- Au choix : **LLMUnity embarqué** (le cœur du « LLM local »), le **système de
+  récompense / crédits**, ou la **mémoire cross-session** (save/load).
+- Plus petit : nettoyage du code mort de `AIDialogueManager`.

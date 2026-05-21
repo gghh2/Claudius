@@ -13,12 +13,13 @@
 
 ## Quêtes
 
-- 🔴 L'IA ne génère pas toujours de token `[QUEST:...]` quand le PNJ propose
-  pourtant une mission (3 cas observés). Elle a aussi émis `[QUEST:PROTECT:ruines]`
-  — type non supporté. → fiabiliser le prompt et/ou le parsing.
-- 🔴 Empêcher la création d'un **doublon de PNJ**.
-- 🔴 DELIVERY : demander une quête crée un doublon du PNJ donneur ailleurs.
-- 🟡 DELIVERY : le PNJ de destination doit obligatoirement avoir un nom inventé.
+- ✅ *(2026-05-21 — refonte B2)* La génération de quête ne dépend plus du
+  dialogue libre : un appel d'analyse séparé décide. Sur-proposition éradiquée,
+  tokens absurdes rejetés par validation sémantique.
+- 🟡 Doublon de PNJ : un token TALK/DELIVERY ciblant un PNJ déjà existant est
+  désormais **rejeté** (mitigation). Mieux à terme : **réutiliser** ce PNJ comme
+  cible de la quête plutôt que de rejeter le token.
+- 🟡 DELIVERY : le PNJ de destination doit avoir un nom propre inventé.
 - 🟡 EXPLORE : après une exploration demandée par un PNJ, fournir une explication /
   des « données » d'exploration au retour.
 - 🟡 EXPLORE : zones à explorer de longueurs variables.
@@ -31,7 +32,8 @@
 
 ## Système de sauvegarde
 
-- 🟡 L'historique de conversation avec les PNJ n'est pas sauvegardé.
+- 🟡 Mémoire de conversation des PNJ : persistante dans la session de jeu
+  (fait), mais **pas dans un save/load** (`conversationsByNpc` est en RAM).
 - 🟡 Au reload : les items de quête déjà ramassés ne doivent pas être recréés
   dans le monde.
 - 🟡 Quête EXPLORE déjà explorée mais non rendue : comportement au reload à définir.
@@ -49,7 +51,10 @@
 - Consolider la gestion du curseur (3 contrôleurs : `SmartCursorManager`,
   `UnifiedUIManager`, `PauseMenuUI`) derrière `UnifiedUIManager`.
 - Retirer les blocs de code commentés : auto-save (`SaveGameManager`),
-  quick-save (`SaveMenuIntegration`), validation (`QuestTokenDetector`).
+  quick-save (`SaveMenuIntegration`).
+- Supprimer le code mort de `AIDialogueManager` rendu inutile par la refonte B2 :
+  `GetQuestInstructionsForNPC`, `GetAvailableQuestOptionsForAI`,
+  `GetRoleSpecificQuestExamples` (~175 lignes).
 - `PauseMenuUI.Pause()` marquée *deprecated* — vérifier le câblage Inspector puis retirer.
 - `UnifiedUIManager.OpenPanel` / `ClosePanel` — passe-plats *legacy*, à fusionner.
 - Nettoyer les `Debug.Log` restants : CSM*, DynamicAsset*, *Tester, NPCQuestTurnIn,
@@ -69,12 +74,16 @@
 
 ## Évolutions
 
-- 🟡 **LLM local** — option Cloud (OpenAI) / Local dans les Options, pour
-  jouer sans coût d'API. Spec détaillée : `.claude-docs/SPEC_LLM_local.md`.
-  ✅ Faits (Phases 0-1) : abstraction `IAIProvider`, `gpt-3.5-turbo` →
-  `gpt-4o-mini`, `OpenAICompatibleProvider`, provider Ollama, bascule
-  Cloud/Local. Reste : repli d'erreur, sélecteur Options, intégration
-  LLMUnity embarquée, éval des modèles.
+- 🟡 **LLM embarqué** — un LLM dans le build pour jouer sans coût d'API.
+  Spec : `.claude-docs/SPEC_LLM_local.md`. ✅ Faits : abstraction `IAIProvider`,
+  multi-backend (OpenAI / Ollama), `gpt-4o-mini`, refonte B2 du dialogue,
+  validation des tokens, mémoire de conversation. **Reste le cœur** : intégrer
+  **LLMUnity** + un modèle GGUF dans le build, sélecteur Cloud/Local dans les
+  Options, et choisir/mesurer le modèle embarquable sur PC modeste.
+- 🟡 **Système de récompense / crédits** — quand le joueur termine une quête,
+  une vraie récompense (crédits). Décision actée : le **jeu** fixe le montant
+  (barème), pas l'IA — l'IA reste vague, ne cite aucun chiffre. À construire :
+  porte-monnaie joueur, barème, attribution au turn-in, UI, save/load.
 
 ## Polish / assets
 

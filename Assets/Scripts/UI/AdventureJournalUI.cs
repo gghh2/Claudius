@@ -297,8 +297,8 @@ public class AdventureJournalUI : MonoBehaviour
             new OpenAIMessage("user", prompt)
         };
 
-        // Passe par l'abstraction IA (AIService) au lieu d'appeler OpenAI en dur.
-        var request = new AIRequest(messages, "gpt-3.5-turbo", 0.8f, 400);
+        // Passe par l'abstraction IA (AIService) ; le modèle est celui du provider actif.
+        var request = new AIRequest(messages, 0.8f, 400);
         yield return StartCoroutine(AIService.Provider.Complete(request, OnNarrationReceived));
     }
 

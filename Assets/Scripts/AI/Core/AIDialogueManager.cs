@@ -488,9 +488,10 @@ AUTRES EXEMPLES:
         }
 
         // Passe par l'abstraction IA (AIService) au lieu d'appeler OpenAI en dur.
+        // Le modèle n'est pas imposé : le provider actif applique le sien.
         var request = new AIRequest(
             new List<OpenAIMessage>(currentConversation),
-            aiConfig.model, aiConfig.temperature, aiConfig.maxTokens);
+            aiConfig.temperature, aiConfig.maxTokens);
 
         Debug.Log($"Envoi requête IA pour {npcData.name}");
 

@@ -30,7 +30,8 @@ se lisent à la demande, selon le tableau.
 - **URP 17.3.0** comme pipeline de rendu (des ressources HDRP existent mais URP est actif)
 - **Input** : ancien Input Manager (`Input.GetKeyDown`, `KeyCode`) — **pas** le nouveau Input System
 - Caméra **orthographique** avec suivi du joueur + zoom
-- Dialogue IA : **API OpenAI** (`gpt-3.5-turbo`)
+- Dialogue IA : **API OpenAI** (`gpt-4o-mini`) — abstraite derrière `IAIProvider`
+  (un moteur local via Ollama est sélectionnable, voir `SPEC_LLM_local.md`)
 - Génération d'assets 3D : **Meshy / CSM**
 - Dépôt : `github.com/gghh2/Claudius`, branche `main`, commits directs (pas de PR)
 

@@ -69,10 +69,12 @@
 
 ## Évolutions
 
-- 🟡 **LLM embarqué** — option Cloud (OpenAI) / Local dans les Options, pour
+- 🟡 **LLM local** — option Cloud (OpenAI) / Local dans les Options, pour
   jouer sans coût d'API. Spec détaillée : `.claude-docs/SPEC_LLM_local.md`.
-  Prérequis : abstraction `IAIProvider` — ✅ **fait**. Reste : runtime local +
-  toggle Options. Gain rapide possible : passer `gpt-3.5-turbo` → `gpt-4o-mini`.
+  ✅ Faits (Phases 0-1) : abstraction `IAIProvider`, `gpt-3.5-turbo` →
+  `gpt-4o-mini`, `OpenAICompatibleProvider`, provider Ollama, bascule
+  Cloud/Local. Reste : repli d'erreur, sélecteur Options, intégration
+  LLMUnity embarquée, éval des modèles.
 
 ## Polish / assets
 

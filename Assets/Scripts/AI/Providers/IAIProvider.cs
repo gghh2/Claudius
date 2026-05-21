@@ -9,16 +9,23 @@ using System.Collections.Generic;
 public class AIRequest
 {
     public List<OpenAIMessage> messages;
+
+    /// <summary>
+    /// Modèle à utiliser. Laisser null/vide pour que le provider applique son
+    /// modèle par défaut — c'est le cas normal. Ne le renseigner que pour
+    /// forcer ponctuellement un modèle précis.
+    /// </summary>
     public string model;
+
     public float temperature = 0.8f;
     public int maxTokens = 150;
 
-    public AIRequest(List<OpenAIMessage> messages, string model, float temperature, int maxTokens)
+    public AIRequest(List<OpenAIMessage> messages, float temperature, int maxTokens, string model = null)
     {
         this.messages = messages;
-        this.model = model;
         this.temperature = temperature;
         this.maxTokens = maxTokens;
+        this.model = model;
     }
 }
 

@@ -3,7 +3,7 @@
 > Où en est le projet **maintenant**. Ce fichier est importé automatiquement par
 > `CLAUDE.md`. À relire en début de session, à mettre à jour en fin de session.
 
-**Dernière mise à jour :** 2026-05-20
+**Dernière mise à jour :** 2026-05-21
 
 ## Statut global
 
@@ -21,8 +21,11 @@
 
 - **DynamicAssets / génération 3D** *(WIP en pause)* — pipeline CSM/Meshy présent
   et instancié en scène, Phase 2 non faite. **Décision à prendre : reprendre ou geler.**
-- **LLM embarqué** *(planifié)* — l'abstraction IA (prérequis) est faite ; reste
-  le runtime local + le toggle Options. Voir `SPEC_LLM_local.md`.
+- **LLM local** *(en cours)* — Phases 0-1 faites et validées en jeu : modèle
+  porté par le provider (cloud → `gpt-4o-mini`), `OpenAICompatibleProvider`,
+  moteur Ollama, bascule Cloud/Local via menu éditeur. Reste : repli d'erreur,
+  sélecteur Options, intégration LLMUnity embarquée, éval des modèles.
+  Voir `SPEC_LLM_local.md`.
 
 ## Points d'attention connus
 
@@ -32,6 +35,5 @@
 
 ## Prochaine étape
 
-- Au choix : avancer le LLM local (`SPEC_LLM_local.md`) ou attaquer le `BACKLOG.md`
-  — bugs quêtes prioritaires, **Runtime Set** (remplacer les `FindObjectsByType`),
-  notifications écran.
+- LLM local — Phase 2 : repli propre quand le moteur local est injoignable.
+  Puis Phase 3 : sélecteur Cloud/Local dans le menu Options.

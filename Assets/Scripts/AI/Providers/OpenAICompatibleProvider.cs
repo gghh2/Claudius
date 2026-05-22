@@ -44,7 +44,7 @@ public class OpenAICompatibleProvider : IAIProvider
             model = string.IsNullOrEmpty(request.model) ? defaultModel : request.model,
             messages = request.messages.ToArray(),
             temperature = request.temperature,
-            max_tokens = request.maxTokens
+            max_completion_tokens = request.maxTokens
         };
         byte[] body = Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload));
 

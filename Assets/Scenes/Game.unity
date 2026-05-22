@@ -23,7 +23,7 @@ RenderSettings:
   m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
-  m_AmbientIntensity: 1
+  m_AmbientIntensity: 1.5
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
   m_SkyboxMaterial: {fileID: 67398273}
@@ -93,7 +93,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: 05082a5c7ea3490429954f4fa4d01e8f, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: 668be58b77d9edb4f8cf38cf4d716f0d, type: 2}
   m_LightingSettings: {fileID: 4890085278179872738, guid: 527e62f05f73d9d488d553171b819fbc, type: 2}
 --- !u!196 &4
 NavMeshSettings:
@@ -15716,8 +15716,8 @@ Light:
   m_Enabled: 1
   serializedVersion: 12
   m_Type: 1
-  m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
-  m_Intensity: 0.8
+  m_Color: {r: 0.99215686, g: 1, b: 0.9019608, a: 1}
+  m_Intensity: 3
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -15726,7 +15726,7 @@ Light:
     m_Type: 2
     m_Resolution: 3
     m_CustomResolution: -1
-    m_Strength: 0.384
+    m_Strength: 0.78
     m_Bias: 0.05
     m_NormalBias: 0.4
     m_NearPlane: 0.2
@@ -15759,7 +15759,7 @@ Light:
   m_Lightmapping: 1
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
-  m_BounceIntensity: 3.16
+  m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
   m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
@@ -15803,7 +15803,7 @@ MonoBehaviour:
   m_CustomShadowLayers: 0
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
-  m_SoftShadowQuality: 1
+  m_SoftShadowQuality: 3
   m_RenderingLayersMask:
     serializedVersion: 0
     m_Bits: 1
@@ -17185,7 +17185,7 @@ Transform:
   m_GameObject: {fileID: 763364905}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 141.64, y: 13.28, z: -208.71}
+  m_LocalPosition: {x: 146.7, y: 13.28, z: -206.9}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -17988,10 +17988,10 @@ RectTransform:
   - {fileID: 752472627}
   m_Father: {fileID: 1420765261}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 800, y: 600}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &797873537 stripped
 GameObject:
@@ -21764,13 +21764,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.23911765, y: -0.3696438, z: 0.09904577, w: 0.89239913}
+  m_LocalRotation: {x: 0.3310888, y: -0.35726574, z: 0.13714148, w: 0.86251587}
   m_LocalPosition: {x: 10, y: 9, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 30, y: -45, z: 0}
+  m_LocalEulerAnglesHint: {x: 42, y: -45, z: 0}
 --- !u!114 &963194229
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -34036,17 +34036,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac9a0a057fbdfa74b8ccb7b2d88ca7d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  debugMode: 1
-  uiPanels: []
-  ignoredPanelNames:
-  - StaminaUI
-  autoDetectPanels: 1
-  panelNamesToDetect:
-  - DialoguePanel
-  - InventoryPanel
-  - QuestJournalPanel
-  - PauseMenuPanel
-  - MainMenuPanel
 --- !u!1001 &1417455763
 PrefabInstance:
   m_ObjectHideFlags: 0

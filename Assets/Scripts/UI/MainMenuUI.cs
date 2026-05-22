@@ -208,16 +208,29 @@ public class MainMenuUI : MonoBehaviour
         if (isTransitioning) return;
         isTransitioning = true;
         
-        // Load the most recent save
+        // Charger la save la plus récente
         if (SaveGameManager.Instance != null)
         {
             string[] saves = SaveGameManager.Instance.GetAllSaves();
             if (saves != null && saves.Length > 0)
             {
-                // Load the first save (assuming it's the most recent)
-                SaveGameManager.Instance.LoadGame(saves[0]);
+                // Ne PAS appliquer la save ici : on est encore sur la scène
+                // MainMenu, le joueur n'existe pas → ApplySaveData échouerait
+                // (joueur NULL). On diffère via le flag LoadOnStart, que
+                // GameLoadingManager lira dans la scène Game pour charger la
+                // save une fois la scène et le joueur prêts.
+                PlayerPrefs.SetString("LoadOnStart", saves[0]);
+                PlayerPrefs.Save();
                 StartCoroutine(TransitionToGame());
             }
+            else
+            {
+                isTransitioning = false;
+            }
+        }
+        else
+        {
+            isTransitioning = false;
         }
     }
     

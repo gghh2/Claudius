@@ -12,7 +12,7 @@
   génération de quête sont **deux appels séparés**. Le chat ne peut plus produire
   de quête ; un appel d'analyse dédié décide seul. La **sur-proposition de
   quêtes** — problème majeur — est **éradiquée** (validé en jeu).
-- **Abstraction IA multi-backend** : OpenAI (`gpt-4o-mini`) / Ollama (local) /
+- **Abstraction IA multi-backend** : OpenAI (`gpt-5.4-mini`) / Ollama (local) /
   mock, interchangeables. Menu éditeur `Tools > Claudius > IA`.
 - **Mémoire de conversation par PNJ** dans la session de jeu : les PNJ se
   souviennent du joueur.
@@ -25,6 +25,14 @@
   éradiquée, grade ACES en mode HDR), éclairage retravaillé vers un rendu
   contrasté et atmosphérique type Path of Exile — SSAO, soleil franc, ombres
   lisibles, lightmap re-baké. Validé en jeu.
+- **Build Windows fonctionnel (2026-05-22)** : passage à Render Graph (mode
+  compatibilité déprécié retiré), budget de samplers du shader Lit rétabli
+  (Light Cookies + ombres additionnelles désactivées). Le jeu se build et tourne.
+- **IA cloud réparée (2026-05-22)** : `gpt-4o-mini` retiré par OpenAI →
+  `gpt-5.4-mini` ; paramètre `max_completion_tokens` (exigé par GPT-5.x) ;
+  accès au modèle ouvert côté projet OpenAI. Dialogue PNJ fonctionnel en build.
+- **Bugs corrigés (2026-05-22)** : curseur absent sur MainMenu, chargement de
+  save « Continue » (joueur introuvable), crash de build via `AssetManagerTester`.
 
 ## En cours / non terminé
 
@@ -47,6 +55,10 @@
   non-URP à reskinner), matériaux de feuillage trop saturés à la base,
   `OrthographicFogAdapter` mal calibré (réglé pour des tailles caméra 19-30
   alors que le zoom réel est 2-15), lightmap unique 1024² → AO/GI bakés grossiers.
+- **Sécurité — clé API en dur** : `APIConfig.OPENAI_API_KEY` est compilée dans
+  le build → extractible. Bloquant avant toute distribution (cf. BACKLOG).
+- **Composants de test en scène** : `AssetManagerTester` / `APITester` tournent
+  dans le build pour rien — à retirer (cf. BACKLOG).
 
 ## Prochaine étape
 

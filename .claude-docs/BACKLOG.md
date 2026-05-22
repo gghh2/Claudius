@@ -28,6 +28,8 @@
 - 🟡 EXPLORE : zones à explorer de longueurs variables.
 - 🟡 TALK : chaîne de quête — un PNJ A envoie voir B ; trouver B doit déclencher
   une mission de B (« TODO à rallonge »).
+- 🟡 Nouveau type de quête **« Déterrer un trésor »** : place un marqueur à un
+  endroit aléatoire de la carte ; le joueur s'y rend et déterre le trésor sur place.
 - 🟡 Écran des quêtes : redesign en cours (chevauchement des entrées).
 - 🟡 Quand il y a beaucoup de quêtes, le scroll masque une partie de la liste.
 - 🟡 Notification écran (toast) à : nouvelle quête, quête terminée, nouvelle

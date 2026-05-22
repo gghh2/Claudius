@@ -71,7 +71,12 @@ public class OpenAICompatibleProvider : IAIProvider
             }
             else
             {
-                onComplete?.Invoke(AIResponse.Fail($"{http.error} (code {http.responseCode})"));
+                // Le corps de la réponse contient l'explication de l'API
+                // (message d'erreur JSON d'OpenAI, etc.) — indispensable pour
+                // diagnostiquer un 4xx (clé invalide, quota, région...).
+                string errorBody = http.downloadHandler?.text;
+                string detail = string.IsNullOrEmpty(errorBody) ? "" : $" — {errorBody.Trim()}";
+                onComplete?.Invoke(AIResponse.Fail($"{http.error} (code {http.responseCode}){detail}"));
             }
         }
     }

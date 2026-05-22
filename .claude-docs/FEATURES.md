@@ -46,3 +46,14 @@
 - **Abstraction IA** — `IAIProvider` : le moteur d'IA (OpenAI cloud, mock de
   test, futur LLM local) est interchangeable via `AIService.Provider`, sans
   toucher au code de jeu.
+
+## Rendu
+
+- **Pipeline** — URP 17.3, espace colorimétrique linéaire, caméra orthographique.
+  Le Render Pipeline Asset du projet (`Assets/Settings/`) est l'actif — pas
+  celui d'un pack tiers.
+- **Post-traitement** — Volume par défaut : Tonemapping **ACES** en mode de
+  grading **HDR**, contraste léger, Split Toning (ombres froides / hautes
+  lumières chaudes), vignette. **SSAO** actif (Renderer Feature).
+- **Éclairage** — soleil directionnel franc, ombres douces lisibles, ambiant
+  skybox, lightmap baké (Mixed / Shadowmask). Rendu contrasté et atmosphérique.

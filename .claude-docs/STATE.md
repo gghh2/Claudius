@@ -3,7 +3,7 @@
 > Où en est le projet **maintenant**. Ce fichier est importé automatiquement par
 > `CLAUDE.md`. À relire en début de session, à mettre à jour en fin de session.
 
-**Dernière mise à jour :** 2026-05-21
+**Dernière mise à jour :** 2026-05-22
 
 ## Statut global
 
@@ -20,6 +20,11 @@
   (zone inconnue, destinataire = lieu, destinataire = PNJ déjà existant).
 - AdventureJournal, consolidation curseur, migration Unity 6.2 : OK (sessions
   précédentes).
+- **Refonte de l'éclairage (2026-05-22)** : le bon URP Asset est désormais actif
+  (avant : celui d'un pack tiers), post-process recalibré (sursaturation
+  éradiquée, grade ACES en mode HDR), éclairage retravaillé vers un rendu
+  contrasté et atmosphérique type Path of Exile — SSAO, soleil franc, ombres
+  lisibles, lightmap re-baké. Validé en jeu.
 
 ## En cours / non terminé
 
@@ -38,6 +43,10 @@
   limite du 3-7B, à remesurer avec le modèle embarqué final.
 - Code mort dans `AIDialogueManager` (3 méthodes de prompt rendues inutiles par
   B2) — nettoyage prévu.
+- **Polish graphismes restant** : quelques matériaux en magenta (shaders
+  non-URP à reskinner), matériaux de feuillage trop saturés à la base,
+  `OrthographicFogAdapter` mal calibré (réglé pour des tailles caméra 19-30
+  alors que le zoom réel est 2-15), lightmap unique 1024² → AO/GI bakés grossiers.
 
 ## Prochaine étape
 

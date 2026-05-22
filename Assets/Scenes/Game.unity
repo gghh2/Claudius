@@ -21784,7 +21784,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 763364911}
-  offset: {x: 10, y: 10, z: -10}
+  offset: {x: 10, y: 15, z: -10}
   smoothSpeed: 0.125
   maintainConstantDistance: 1
   fixedDistance: 14.14

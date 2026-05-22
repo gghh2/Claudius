@@ -10,6 +10,9 @@
 - 🔴 La zone de fall-back n'a pas de vrai nom de zone (affiche « Laboratory »).
 - 🟡 `F5` et `F9` ne font rien (raccourcis save/load rapide attendus ?).
 - 🟡 Build&Run : le compagnon est très lent.
+- 🟡 Script manquant sur le prefab `NPC_Quest` (`Assets/Prefabs/Quest/NPC_Quest.prefab`)
+  — composant dont le script est cassé/supprimé (signalé au build).
+- 🟡 Script manquant sur `Assets/Resources/QuestMarkerConfig.asset`.
 
 ## Quêtes
 
@@ -28,7 +31,9 @@
 - 🟡 Écran des quêtes : redesign en cours (chevauchement des entrées).
 - 🟡 Quand il y a beaucoup de quêtes, le scroll masque une partie de la liste.
 - 🟡 Notification écran (toast) à : nouvelle quête, quête terminée, nouvelle
-  entrée de journal. Le `NotificationManager` existe déjà — à câbler.
+  entrée de journal, **entrée dans une zone / un lieu** — aussi bien un nouveau
+  lieu que le retour dans un lieu déjà connu. Le `NotificationManager` existe
+  déjà — à câbler.
 
 ## Système de sauvegarde
 
@@ -37,6 +42,22 @@
 - 🟡 Au reload : les items de quête déjà ramassés ne doivent pas être recréés
   dans le monde.
 - 🟡 Quête EXPLORE déjà explorée mais non rendue : comportement au reload à définir.
+
+## Rendu / graphismes
+
+> Issus de la session graphismes du 2026-05-22 (passage à un look type PoE).
+
+- 🟡 Matériaux **magenta** : shaders cassés (non-URP / HDRP) → à reskinner en URP.
+- 🟢 Feuillage **trop saturé** : matériaux de végétation d'un vert lime trop vif
+  (ACES l'amplifie). Désaturer les matériaux, ou courbe Hue vs Sat ciblée sur le
+  vert dans le Volume.
+- 🟡 `OrthographicFogAdapter` mal calibré : réglé pour des tailles de caméra
+  19-30 alors que le zoom réel est 2-15 → le brouillard ne s'affiche jamais.
+  À recalibrer (profondeur atmosphérique type PoE).
+- 🟢 Lightmap baké unique en 1024² : basse résolution, AO/GI bakés grossiers.
+  Monter la résolution / le nombre de lightmaps pour un baké net.
+- 🔧 **Shader stripping** désactivé (`GraphicsSettings`) → Unity compile toutes
+  les variantes. L'activer réduirait fortement le temps **et** la taille du build.
 
 ## Dette technique — code mort / non câblé (audit 2026-05-20)
 
@@ -80,6 +101,10 @@
   validation des tokens, mémoire de conversation. **Reste le cœur** : intégrer
   **LLMUnity** + un modèle GGUF dans le build, sélecteur Cloud/Local dans les
   Options, et choisir/mesurer le modèle embarquable sur PC modeste.
+- 🔴 **Sécurité — clé API dans le build** : `APIConfig.OPENAI_API_KEY` est en
+  dur, donc compilée dans le build → extractible par décompilation. Acceptable
+  en dev, **interdit pour une distribution** (zip/Steam) : la clé se ferait
+  pomper. À résoudre avec le LLM embarqué, ou un schéma « bring-your-own-key ».
 - 🟡 **Système de récompense / crédits** — quand le joueur termine une quête,
   une vraie récompense (crédits). Décision actée : le **jeu** fixe le montant
   (barème), pas l'IA — l'IA reste vague, ne cite aucun chiffre. À construire :

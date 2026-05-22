@@ -13,6 +13,12 @@
 - 🟡 Script manquant sur le prefab `NPC_Quest` (`Assets/Prefabs/Quest/NPC_Quest.prefab`)
   — composant dont le script est cassé/supprimé (signalé au build).
 - 🟡 Script manquant sur `Assets/Resources/QuestMarkerConfig.asset`.
+- 🟡 Transparence caméra (`URPCameraObstacleHandler`) : un objet sur lequel le
+  joueur **se tient** (ex. une Tombe) devient transparent. Le fade d'obstacle
+  ne distingue pas « objet entre la caméra et le joueur » de « surface sous le
+  joueur » — avec la caméra ortho inclinée, l'objet porteur est sur la ligne
+  caméra→joueur. Derrière un objet (colonne) le comportement est correct.
+  Piste : exclure du raycast l'objet sur lequel le joueur repose (sol courant).
 
 ## Quêtes
 
@@ -71,6 +77,10 @@
 - Garder `QuestMarkerDebugger` / `QuestDebugger` comme outils de debug, ou retirer ?
 
 ### 🔧 À nettoyer
+- Package `com.unity.ai.toolkit` : appelle en boucle une API beta Unity retirée
+  (`generators-beta.ai.unity.com` → `ApiNoLongerSupported`) → **pollue le log
+  éditeur** même au repos. Le projet ne s'en sert pas → retirer ce package (et
+  vérifier les autres `com.unity.ai.*` inutilisés).
 - Consolider la gestion du curseur (3 contrôleurs : `SmartCursorManager`,
   `UnifiedUIManager`, `PauseMenuUI`) derrière `UnifiedUIManager`.
 - Retirer les blocs de code commentés : auto-save (`SaveGameManager`),

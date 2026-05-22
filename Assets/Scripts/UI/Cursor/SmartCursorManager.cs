@@ -4,8 +4,10 @@ using UnityEngine;
 /// Contrôleur de curseur — responsabilité unique : maintenir l'état du curseur
 /// cohérent avec l'état de l'UI.
 ///
-/// Règle unique : un panel UI est ouvert → curseur visible et libre ;
+/// Règle : un panel UI est ouvert → curseur visible et libre ;
 /// sinon (en jeu) → curseur caché et verrouillé.
+/// Scène sans UnifiedUIManager (ex. MainMenu) → on n'est pas en jeu :
+/// curseur visible et libre.
 ///
 /// Source de vérité : <see cref="UnifiedUIManager.IsShowingPanel"/>.
 /// AUCUNE autre classe ne doit toucher Cursor.visible / Cursor.lockState.
@@ -28,9 +30,11 @@ public class SmartCursorManager : MonoBehaviour
 
     void Apply()
     {
-        bool uiOpen = uiManager != null && uiManager.IsShowingPanel;
-        Cursor.visible = uiOpen;
-        Cursor.lockState = uiOpen ? CursorLockMode.None : CursorLockMode.Locked;
+        // Pas de UnifiedUIManager dans la scène (ex. MainMenu) → on n'est pas
+        // en jeu : curseur libre. En jeu, l'état suit l'ouverture des panels.
+        bool cursorFree = uiManager == null || uiManager.IsShowingPanel;
+        Cursor.visible = cursorFree;
+        Cursor.lockState = cursorFree ? CursorLockMode.None : CursorLockMode.Locked;
     }
 
     void OnDisable()

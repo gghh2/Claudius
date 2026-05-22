@@ -37,11 +37,15 @@ public class AssetManagerTester : MonoBehaviour
         // Test 1: Chargement asset basique
         StartCoroutine(TestBasicAssetLoadCoroutine());
         await Task.Delay(1000);
-        
-        // Test 2: Test fallback  
+        // L'objet a pu être détruit pendant l'attente (sortie de Play,
+        // rechargement de domaine pendant un build) → ne plus y toucher.
+        if (this == null) return;
+
+        // Test 2: Test fallback
         StartCoroutine(TestFallbackSystemCoroutine());
         await Task.Delay(1000);
-        
+        if (this == null) return;
+
         // Test 3: Test cache stats
         TestCacheStats();
         

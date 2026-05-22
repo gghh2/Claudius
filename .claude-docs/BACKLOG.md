@@ -92,6 +92,10 @@
 - `AudioSettingsUI` — remplacé par `PauseMenuUI` (constante `AudioSettings` inutilisée).
 - `MusicZoneTrigger` — jamais placé en scène (ou WIP à assumer ?).
 - `APITester` — attaché à la scène `Game` mais inutilisé → retirer le composant.
+- `AssetManagerTester` — scaffolding de test du `DynamicAssetManager` (tests
+  auto au `Start`), attaché à la scène `Game` → retirer le composant (comme
+  `APITester`). Le code a été rendu robuste, mais ça n'a rien à faire dans un
+  build livré.
 
 ## Évolutions
 

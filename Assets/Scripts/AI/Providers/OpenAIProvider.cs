@@ -8,10 +8,13 @@
 public class OpenAIProvider : OpenAICompatibleProvider
 {
     /// <summary>
-    /// Modèle cloud par défaut. gpt-4o-mini : moins cher ET de meilleure qualité
-    /// que l'ancien gpt-3.5-turbo (cf. SPEC_LLM_local.md, « Gain rapide »).
+    /// Modèle cloud par défaut. gpt-5.4-mini : palier rapide et économique de la
+    /// génération GPT-5.4, adapté au dialogue PNJ (nombreux appels) tout en
+    /// gardant une bonne qualité d'écriture. Alias glissant (toujours un id
+    /// valide) ; on pourra épingler un snapshot daté plus tard. L'ancien
+    /// gpt-4o-mini a été retiré côté OpenAI.
     /// </summary>
-    public const string DefaultOpenAIModel = "gpt-4o-mini";
+    public const string DefaultOpenAIModel = "gpt-5.4-mini";
 
     public OpenAIProvider(string apiKey)
         : base("OpenAI (Cloud)",

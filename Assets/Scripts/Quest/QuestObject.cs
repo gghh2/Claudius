@@ -395,7 +395,7 @@ public class QuestObject : MonoBehaviour
         {
             if (nameText != null)
             {
-                nameText.text = $"⌛ Revenez vers {requiredHour:00}h\n[{TextFormatter.FormatName(objectName)}]";
+                nameText.text = $"Revenez vers {requiredHour:00}h\n[{TextFormatter.FormatName(objectName)}]";
                 nameText.color = new Color(0.8f, 0.7f, 1f);
                 nameText.fontSize = fontSize * 1.2f;
             }
@@ -435,7 +435,7 @@ public class QuestObject : MonoBehaviour
         {
             if (nameText != null)
             {
-                nameText.text = $"🪙 {formattedName}\nAppuyer sur E pour creuser";
+                nameText.text = $"{formattedName}\nAppuyer sur E pour creuser";
                 nameText.color = Color.yellow;
                 nameText.fontSize = fontSize * 1.2f;
             }
@@ -459,7 +459,7 @@ public class QuestObject : MonoBehaviour
             // Petite barre ASCII pour le feedback.
             int filled = Mathf.RoundToInt(progress * 10);
             string bar = new string('█', filled) + new string('░', 10 - filled);
-            nameText.text = $"⛏️ Creusement... {percent}%\n[{bar}]";
+            nameText.text = $"Creusement... {percent}%\n[{bar}]";
             nameText.color = Color.Lerp(new Color(0.9f, 0.7f, 0.2f), Color.green, progress);
             nameText.fontSize = fontSize * 1.3f;
         }

@@ -317,7 +317,7 @@ public class InventoryUI : MonoBehaviour
         trt.anchorMax = Vector2.one;
         trt.sizeDelta = Vector2.zero;
         var t = txtGo.AddComponent<TextMeshProUGUI>();
-        t.text = "📖 Lire";
+        t.text = "Lire";
         t.fontSize = 16;
         t.alignment = TextAlignmentOptions.Center;
         t.color = Color.white;

@@ -67,7 +67,7 @@ public class LoreNote : MonoBehaviour
             promptText.fontSize = 3;
             promptText.alignment = TextAlignmentOptions.Center;
             promptText.color = new Color(1f, 0.92f, 0.55f);
-            promptText.text = $"📜 {title}\n[E] Ramasser";
+            promptText.text = $"{title}\n[E] Ramasser";
         }
         if (promptObj != null) promptObj.SetActive(show);
     }

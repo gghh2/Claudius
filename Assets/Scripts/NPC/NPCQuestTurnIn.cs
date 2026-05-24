@@ -171,7 +171,7 @@ public class NPCQuestTurnIn : MonoBehaviour
         {
             // NOUVEAU: Formate le titre de la quête
             string formattedTitle = TextFormatter.FormatName(quest.questTitle);
-            promptText.text = $"🎯 [F] Rendre la quête\n\"{formattedTitle}\"";
+            promptText.text = $"[F] Rendre la quête\n\"{formattedTitle}\"";
             promptText.color = Color.green;
         }
         

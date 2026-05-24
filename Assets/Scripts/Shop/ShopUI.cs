@@ -169,7 +169,7 @@ public class ShopUI : MonoBehaviour
         nameTxt.alignment = TextAlignmentOptions.MidlineLeft;
 
         var priceTxt = CreateText(row.transform, "Price", Vector2.zero, new Vector2(120, 50), 18, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.3f));
-        priceTxt.text = $"{item.price} ¢";
+        priceTxt.text = $"{item.price} cr.";
         priceTxt.rectTransform.anchoredPosition = new Vector2(170, 0);
 
         var btnGo = new GameObject("Buy");

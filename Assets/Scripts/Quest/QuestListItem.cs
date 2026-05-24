@@ -40,13 +40,13 @@ public class QuestListItem : MonoBehaviour
             questTitleText.text = quest.questTitle; // Déjà formaté dans JournalQuest
             
         if (questGiverText != null)
-            questGiverText.text = $"👤 {quest.giverNPCName}"; // Déjà formaté dans JournalQuest
-            
+            questGiverText.text = $"Donneur : {quest.giverNPCName}";
+
         if (questLocationText != null)
-            questLocationText.text = $"📍 {quest.zoneName}"; // Déjà formaté dans JournalQuest
-            
+            questLocationText.text = $"Lieu : {quest.zoneName}";
+
         if (questProgressText != null)
-            questProgressText.text = $"📊 {quest.GetProgressText()}";
+            questProgressText.text = $"Progression : {quest.GetProgressText()}";
         
         // Change la couleur de fond selon le statut
         UpdateAppearance();

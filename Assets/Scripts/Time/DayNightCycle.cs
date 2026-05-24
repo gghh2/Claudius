@@ -40,8 +40,10 @@ public class DayNightCycle : MonoBehaviour
     public string skyboxTintProperty = "_Tint";
 
     [Header("Sun Rotation")]
-    [Tooltip("Angle Y du soleil (orientation horizontale). 170 = direction par défaut Kingdoms.")]
-    public float sunYAngle = 170f;
+    [Tooltip("Angle Y du soleil (azimut). -90 (= 270) fait orbiter le soleil " +
+        "dans le plan Est-Ouest (+X = Est, -X = Ouest), donc le lever a lieu sur " +
+        "+X à 6h et le coucher sur -X à 18h. Ajuste si la convention du terrain diffère.")]
+    public float sunYAngle = -90f;
 
     public bool IsDaytime
     {

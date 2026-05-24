@@ -11,8 +11,9 @@ public class CardinalCompass : MonoBehaviour
 {
     public static CardinalCompass Instance { get; private set; }
 
-    [Tooltip("Source d'orientation. Si null, la Camera.main est utilisée " +
-        "(adapté pour les caméras qui suivent le joueur).")]
+    [Tooltip("Source d'orientation. Si null, le Player (tag Player) est utilisé. " +
+        "À privilégier : avec une caméra ortho inclinée la rotation de la caméra " +
+        "n'a pas de sens horizontal et la boussole resterait figée.")]
     public Transform headingSource;
 
     [Tooltip("Optionnel — laisser null pour HUD auto-construit.")]
@@ -32,14 +33,21 @@ public class CardinalCompass : MonoBehaviour
     void Start()
     {
         if (compassText == null) BuildAutoHud();
-        if (headingSource == null && Camera.main != null)
-            headingSource = Camera.main.transform;
+        ResolveHeadingSource();
+    }
+
+    void ResolveHeadingSource()
+    {
+        if (headingSource != null) return;
+        var p = GameObject.FindGameObjectWithTag("Player");
+        if (p != null) headingSource = p.transform;
+        else if (Camera.main != null) headingSource = Camera.main.transform;
     }
 
     void Update()
     {
         if (compassText == null) return;
-        if (headingSource == null && Camera.main != null) headingSource = Camera.main.transform;
+        if (headingSource == null) ResolveHeadingSource();
         if (headingSource == null) return;
 
         Vector3 fwd = headingSource.forward;

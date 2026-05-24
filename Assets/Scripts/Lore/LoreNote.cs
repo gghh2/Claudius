@@ -1,11 +1,12 @@
 using UnityEngine;
+using TMPro;
 
 /// <summary>
 /// Indice écrit trouvable dans le monde (parchemin, gravure, holotape...).
 /// À attacher à un GameObject avec un Collider trigger.
-/// Touche E à proximité ramasse la note : son contenu va dans la
-/// <see cref="LoreLibrary"/> (devient accessible aux PNJ via injection IA) et
-/// une entrée est ajoutée au Journal d'Aventure.
+/// Touche E à proximité ramasse la note : ajoutée à l'inventaire (objet
+/// lisible avec contenu), enregistrée dans la <see cref="LoreLibrary"/>
+/// pour l'injection IA, et journalisée.
 /// </summary>
 [RequireComponent(typeof(Collider))]
 public class LoreNote : MonoBehaviour
@@ -21,15 +22,25 @@ public class LoreNote : MonoBehaviour
     public KeyCode pickupKey = KeyCode.E;
 
     bool playerInRange;
+    GameObject promptObj;
+    TextMeshPro promptText;
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.transform.root.CompareTag("Player")) playerInRange = true;
+        if (other.transform.root.CompareTag("Player"))
+        {
+            playerInRange = true;
+            ShowPrompt(true);
+        }
     }
 
     void OnTriggerExit(Collider other)
     {
-        if (other.transform.root.CompareTag("Player")) playerInRange = false;
+        if (other.transform.root.CompareTag("Player"))
+        {
+            playerInRange = false;
+            ShowPrompt(false);
+        }
     }
 
     void Update()
@@ -38,17 +49,43 @@ public class LoreNote : MonoBehaviour
         {
             Pickup();
         }
+        // Billboard du prompt vers la caméra.
+        if (promptObj != null && promptObj.activeSelf && Camera.main != null)
+        {
+            promptObj.transform.rotation = Quaternion.LookRotation(Camera.main.transform.forward);
+        }
+    }
+
+    void ShowPrompt(bool show)
+    {
+        if (show && promptObj == null)
+        {
+            promptObj = new GameObject("Prompt");
+            promptObj.transform.SetParent(transform);
+            promptObj.transform.localPosition = new Vector3(0, 1.2f, 0);
+            promptText = promptObj.AddComponent<TextMeshPro>();
+            promptText.fontSize = 3;
+            promptText.alignment = TextAlignmentOptions.Center;
+            promptText.color = new Color(1f, 0.92f, 0.55f);
+            promptText.text = $"📜 {title}\n[E] Ramasser";
+        }
+        if (promptObj != null) promptObj.SetActive(show);
     }
 
     void Pickup()
     {
         if (LoreLibrary.Instance == null)
         {
-            // Auto-instancie la library s'il manque (devient persistante seule).
             var go = new GameObject("LoreLibrary");
             go.AddComponent<LoreLibrary>();
         }
         LoreLibrary.Instance.RegisterNote(noteId, title, content);
+
+        // L'objet va dans l'inventaire — il reste lisible via le panel Reader.
+        if (PlayerInventory.Instance != null)
+        {
+            PlayerInventory.Instance.AddItem(title, 1, "", content);
+        }
 
         if (NotificationManager.Instance != null)
             NotificationManager.Instance.ShowSuccess($"Note trouvée : {title}");

@@ -8,7 +8,11 @@ public class InventoryItem
     public string itemName;
     public int quantity;
     public string questId;
-    
+    [TextArea(2, 6)]
+    [Tooltip("Si non vide, l'item est 'lisible' (note, lettre, livre) — bouton Lire " +
+        "apparaît dans l'inventaire et ouvre un panneau de lecture.")]
+    public string readableContent;
+
     public InventoryItem(string name, int qty, string quest = "")
     {
         itemName = name;
@@ -44,17 +48,29 @@ public class PlayerInventory : MonoBehaviour
     
     public void AddItem(string itemName, int quantity = 1, string questId = "")
     {
+        AddItem(itemName, quantity, questId, null);
+    }
+
+    public void AddItem(string itemName, int quantity, string questId, string readableContent)
+    {
         InventoryItem existingItem = items.FirstOrDefault(i => i.itemName == itemName && i.questId == questId);
-        
+
         if (existingItem != null)
         {
             existingItem.quantity += quantity;
+            // Si l'objet existant n'avait pas de contenu lisible et que celui qu'on
+            // ajoute en a un, on enrichit (utile pour les notes ramassées dont on
+            // n'aurait pas fixé le content du premier coup).
+            if (string.IsNullOrEmpty(existingItem.readableContent) && !string.IsNullOrEmpty(readableContent))
+                existingItem.readableContent = readableContent;
         }
         else
         {
-            items.Add(new InventoryItem(itemName, quantity, questId));
+            var item = new InventoryItem(itemName, quantity, questId);
+            item.readableContent = readableContent;
+            items.Add(item);
         }
-        
+
         if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
         {
             Debug.Log($"📦 INVENTAIRE: Ajouté {quantity}x {itemName} (Quête: {questId})");

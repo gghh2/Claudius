@@ -230,14 +230,20 @@ public class PauseMenuUI : MonoBehaviour
         if (playerController != null)
             playerController.enabled = false;
         // Le curseur est géré par SmartCursorManager (autorité unique).
+
+        // L'horloge in-game est mise en pause (sinon elle continuerait via
+        // unscaledDeltaTime même quand le joueur a explicitement pause).
+        GameClock.Instance?.Pause();
     }
-    
+
     void OnPauseMenuClosed()
     {
         isPaused = false;
 
         if (playerController != null)
             playerController.enabled = true;
+
+        GameClock.Instance?.Resume();
     }
     
     public void Pause()

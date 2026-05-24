@@ -275,14 +275,52 @@ public class InventoryUI : MonoBehaviour
             
             itemText.fontSize = 20;
             itemText.alignment = TextAlignmentOptions.MidlineLeft;
-            
+
             // Configure le RectTransform du texte
             RectTransform textRect = textObj.GetComponent<RectTransform>();
             textRect.anchorMin = Vector2.zero;
             textRect.anchorMax = Vector2.one;
             textRect.sizeDelta = Vector2.zero;
             textRect.anchoredPosition = new Vector2(10, 0); // Padding gauche
+
+            // Bouton 'Lire' pour les items lisibles (notes, lettres, livres...).
+            if (!string.IsNullOrEmpty(item.readableContent))
+            {
+                AddReadButton(itemDisplay, item);
+            }
         }
+    }
+
+    void AddReadButton(GameObject parent, InventoryItem item)
+    {
+        var btnGo = new GameObject("ReadButton");
+        btnGo.transform.SetParent(parent.transform, false);
+        var rt = btnGo.AddComponent<RectTransform>();
+        rt.anchorMin = new Vector2(1, 0.5f);
+        rt.anchorMax = new Vector2(1, 0.5f);
+        rt.pivot = new Vector2(1, 0.5f);
+        rt.anchoredPosition = new Vector2(-10, 0);
+        rt.sizeDelta = new Vector2(90, 36);
+
+        var img = btnGo.AddComponent<Image>();
+        img.color = new Color(0.25f, 0.2f, 0.35f, 0.95f);
+
+        var btn = btnGo.AddComponent<Button>();
+        string title = TextFormatter.FormatName(item.itemName);
+        string body = item.readableContent;
+        btn.onClick.AddListener(() => ReaderPanel.Show(title, body));
+
+        var txtGo = new GameObject("T");
+        txtGo.transform.SetParent(btnGo.transform, false);
+        var trt = txtGo.AddComponent<RectTransform>();
+        trt.anchorMin = Vector2.zero;
+        trt.anchorMax = Vector2.one;
+        trt.sizeDelta = Vector2.zero;
+        var t = txtGo.AddComponent<TextMeshProUGUI>();
+        t.text = "📖 Lire";
+        t.fontSize = 16;
+        t.alignment = TextAlignmentOptions.Center;
+        t.color = Color.white;
     }
     
     // Méthode publique pour vérifier si l'inventaire est ouvert

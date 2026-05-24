@@ -42,6 +42,11 @@ public class GameClock : MonoBehaviour
 
     public static bool Use12HourFormat => CurrentFormat == TimeFormat.Hours12;
 
+    [Tooltip("Si vrai, l'horloge est en pause (utilisé par le menu Pause).")]
+    public bool isPaused = false;
+    public void Pause() => isPaused = true;
+    public void Resume() => isPaused = false;
+
     // Minutes totales écoulées depuis le démarrage (Jour 1 00:00).
     [SerializeField] private float totalMinutes;
     public float TotalMinutes => totalMinutes;
@@ -100,9 +105,10 @@ public class GameClock : MonoBehaviour
     void Update()
     {
         if (minutesPerRealSecond <= 0f) return;
-        // unscaledDeltaTime : le temps in-game continue de défiler même quand
-        // l'UI met Time.timeScale = 0 (dialogue, pause, menus). Sinon les PNJ
-        // ne verraient jamais l'heure changer entre deux conversations.
+        if (isPaused) return; // ECHAP / menu Pause arrête volontairement le temps.
+        // unscaledDeltaTime : le temps in-game continue de défiler pendant les
+        // dialogues (où Time.timeScale = 0). Le menu Pause appelle Pause()
+        // explicitement pour figer la clock.
         totalMinutes += Time.unscaledDeltaTime * minutesPerRealSecond;
 
         if (Minute != lastMinute)

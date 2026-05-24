@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Rendering.Universal;
 
 /// <summary>
 /// Mini-carte top-down. Crée une caméra orthographique secondaire qui suit
@@ -13,8 +14,15 @@ public class MiniMap : MonoBehaviour
     [Tooltip("Optionnel — Transform suivi. Si null, le joueur (tag Player) est trouvé.")]
     public Transform target;
 
-    [Tooltip("Taille orthographique de la caméra mini-map (rayon visible en m).")]
+    [Tooltip("Taille orthographique de base (utilisée si syncWithPlayerCamera = false).")]
     public float orthoSize = 25f;
+
+    [Tooltip("Si vrai, l'orthoSize de la mini-map suit celle de la caméra joueur " +
+        "(multipliée par zoomMultiplier). Permet d'avoir une mini-map qui dézoome " +
+        "naturellement quand on dézoome avec la molette.")]
+    public bool syncWithPlayerCamera = true;
+    [Tooltip("Multiplicateur appliqué à l'orthoSize de la caméra joueur.")]
+    public float zoomMultiplier = 4f;
 
     [Tooltip("Hauteur au-dessus du target.")]
     public float height = 50f;
@@ -64,6 +72,16 @@ public class MiniMap : MonoBehaviour
             // Suit le joueur en X/Z, fixe en Y (vue dessus).
             mapCam.transform.position = new Vector3(target.position.x, target.position.y + height, target.position.z);
             mapCam.transform.rotation = Quaternion.Euler(90f, 0f, 0f); // Nord = +Z = haut de l'image.
+
+            // Synchronise le zoom avec la caméra joueur si demandé.
+            if (syncWithPlayerCamera && Camera.main != null && Camera.main.orthographic)
+            {
+                mapCam.orthographicSize = Mathf.Max(5f, Camera.main.orthographicSize * zoomMultiplier);
+            }
+            else
+            {
+                mapCam.orthographicSize = orthoSize;
+            }
         }
     }
 
@@ -84,6 +102,15 @@ public class MiniMap : MonoBehaviour
         mapCam.depth = -2; // Rendu avant la main camera.
         mapCam.allowHDR = false;
         mapCam.allowMSAA = false;
+
+        // URP : désactive les ombres sur la mini-map (lecture plus propre,
+        // moins de bruit pour une vue stylisée carte).
+        var urpData = mapCam.GetUniversalAdditionalCameraData();
+        if (urpData != null)
+        {
+            urpData.renderShadows = false;
+            urpData.renderPostProcessing = false;
+        }
     }
 
     void BuildHud()

@@ -278,7 +278,15 @@ public class AdventureJournalUI : MonoBehaviour
         StringBuilder prompt = new StringBuilder();
 
         prompt.AppendLine("Tu rédiges le journal de bord intime du JOUEUR, dans un univers de space opera.");
-        prompt.AppendLine("Le joueur explore une planète alien parsemée de ruines anciennes.");
+        if (WorldLore.Instance != null && WorldLore.Instance.HasPlanetName)
+        {
+            prompt.AppendLine($"Le joueur explore la planète {WorldLore.Instance.PlanetName}, parsemée de ruines anciennes.");
+            prompt.AppendLine($"Utilise toujours le nom « {WorldLore.Instance.PlanetName} » quand tu évoques cette planète — ne le réinvente jamais.");
+        }
+        else
+        {
+            prompt.AppendLine("Le joueur explore une planète alien parsemée de ruines anciennes (le nom n'est pas encore connu — reste sur 'cette planète', 'ce monde').");
+        }
         if (GameClock.Instance != null)
         {
             prompt.AppendLine($"Date in-game au moment de l'écriture : {GameClock.Instance.FormatNow()} ({GameClock.Instance.TimeOfDayLabel()}).");

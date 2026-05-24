@@ -268,10 +268,13 @@ public class QuestObject : MonoBehaviour
     
     void CreateNameDisplay()
     {
+        // PAS de SetParent : les prefabs de quest object peuvent avoir un scale
+        // non uniforme (terminal, marker...), et l'héritage écraserait le texte.
+        // On suit la position du parent chaque frame dans Update à la place.
         nameDisplay = new GameObject($"{gameObject.name}_QuestName");
-        nameDisplay.transform.SetParent(transform);
-        nameDisplay.transform.localPosition = nameOffset;
-        
+        nameDisplay.transform.position = transform.position + nameOffset;
+        nameDisplay.transform.localScale = Vector3.one;
+
         nameText = nameDisplay.AddComponent<TextMeshPro>();
         
         string displayText = GetDisplayText();
@@ -315,7 +318,13 @@ public class QuestObject : MonoBehaviour
                 return formattedName;
         }
     }
-    
+
+    void OnDestroy()
+    {
+        // nameDisplay n'est PAS enfant -> on doit le nettoyer manuellement.
+        if (nameDisplay != null) Destroy(nameDisplay);
+    }
+
     Color GetTextColor()
     {
         switch (objectType)
@@ -335,11 +344,13 @@ public class QuestObject : MonoBehaviour
     
     void Update()
     {
-        // Billboard effect - always face camera
-        if (nameDisplay != null && mainCamera != null)
+        // Billboard + suivi de position (le nameDisplay n'est PAS parente pour
+        // eviter l'heritage du scale deforme des prefabs de quete).
+        if (nameDisplay != null)
         {
-            // Make the text face the camera's forward direction
-            nameDisplay.transform.rotation = Quaternion.LookRotation(mainCamera.transform.forward);
+            nameDisplay.transform.position = transform.position + nameOffset;
+            if (mainCamera != null)
+                nameDisplay.transform.rotation = Quaternion.LookRotation(mainCamera.transform.forward);
         }
         
         // (L'interaction E est désormais gérée plus bas, gated sur le type :

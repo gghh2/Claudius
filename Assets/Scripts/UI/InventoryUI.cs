@@ -186,6 +186,8 @@ public class InventoryUI : MonoBehaviour
     
     void RefreshInventoryDisplay()
     {
+        Debug.Log($"[InventoryUI] Refresh — items={(PlayerInventory.Instance != null ? PlayerInventory.Instance.items.Count : -1)} container={inventoryContent?.name}");
+
         // Nettoie l'affichage actuel
         foreach (Transform child in inventoryContent)
         {
@@ -203,6 +205,7 @@ public class InventoryUI : MonoBehaviour
         if (PlayerInventory.Instance != null)
         {
             var items = PlayerInventory.Instance.items;
+            Debug.Log($"[InventoryUI] Refresh — iterating {items.Count} items");
             
             if (items.Count == 0)
             {

@@ -69,27 +69,43 @@ public class ReaderPanel : MonoBehaviour
         cgo.AddComponent<CanvasScaler>();
         cgo.AddComponent<GraphicRaycaster>();
 
+        // Root plein écran : capture les clics derrière le panneau de
+        // lecture pour empêcher d'interagir avec l'inventaire en dessous.
         root = new GameObject("ReaderRoot");
         root.transform.SetParent(cgo.transform, false);
         var rt = root.AddComponent<RectTransform>();
-        rt.anchorMin = new Vector2(0.5f, 0.5f);
-        rt.anchorMax = new Vector2(0.5f, 0.5f);
-        rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.sizeDelta = new Vector2(600, 460);
-        var bg = root.AddComponent<Image>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+        var overlay = root.AddComponent<Image>();
+        // Voile semi-transparent : assombrit l'arrière et bloque les clics.
+        overlay.color = new Color(0f, 0f, 0f, 0.55f);
+
+        // Panneau central enfant : c'est lui qui porte le contenu du reader.
+        var panelGo = new GameObject("Panel");
+        panelGo.transform.SetParent(root.transform, false);
+        var prt = panelGo.AddComponent<RectTransform>();
+        prt.anchorMin = new Vector2(0.5f, 0.5f);
+        prt.anchorMax = new Vector2(0.5f, 0.5f);
+        prt.pivot = new Vector2(0.5f, 0.5f);
+        prt.sizeDelta = new Vector2(600, 460);
+        var bg = panelGo.AddComponent<Image>();
         bg.color = new Color(0.08f, 0.07f, 0.05f, 0.96f);
+        // À partir d'ici tout est enfant du panneau central.
+        var panelT = panelGo.transform;
 
         // Bordure dorée (simple imagecadre via Outline-like via second Image plus petit)
         // Simplification : on garde juste le fond sombre.
 
-        titleText = MakeText(root.transform, "Title", new Vector2(0, 195), new Vector2(560, 50), 26, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.3f));
+        titleText = MakeText(panelT, "Title", new Vector2(0, 195), new Vector2(560, 50), 26, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.3f));
         titleText.fontStyle = FontStyles.Bold;
 
-        bodyText = MakeText(root.transform, "Body", new Vector2(0, -20), new Vector2(540, 320), 18, TextAlignmentOptions.TopLeft, new Color(0.95f, 0.92f, 0.85f));
+        bodyText = MakeText(panelT, "Body", new Vector2(0, -20), new Vector2(540, 320), 18, TextAlignmentOptions.TopLeft, new Color(0.95f, 0.92f, 0.85f));
         bodyText.enableWordWrapping = true;
 
         var closeGo = new GameObject("Close");
-        closeGo.transform.SetParent(root.transform, false);
+        closeGo.transform.SetParent(panelT, false);
         var crt = closeGo.AddComponent<RectTransform>();
         crt.anchorMin = new Vector2(0.5f, 0f);
         crt.anchorMax = new Vector2(0.5f, 0f);

@@ -513,6 +513,18 @@ public class QuestManager : MonoBehaviour
         ActiveQuest quest = GetActiveQuest(questId);
         if (quest != null)
         {
+            // Génère un rapport d'exploration et l'injecte dans la mémoire IA
+            // du donneur — il pourra en parler quand le joueur revient.
+            if (AIDialogueManager.Instance != null && !string.IsNullOrEmpty(quest.giverNPCName))
+            {
+                string zone = quest.targetZone != null ? quest.targetZone.zoneName : quest.questData.zoneName;
+                string report = ExplorationReport.Generate(zone);
+                AIDialogueManager.Instance.InjectContextForNPC(quest.giverNPCName, report);
+
+                if (NotificationManager.Instance != null)
+                    NotificationManager.Instance.ShowInfo("Exploration terminée — rapport prêt");
+            }
+
             CompleteQuest(quest);
         }
     }

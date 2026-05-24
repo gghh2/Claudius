@@ -81,7 +81,10 @@ public static class QuestManagerHelper
         if (type == QuestObjectType.Marker)
         {
             questObj.triggerRadius = QuestSystemConfig.DefaultTriggerRadius;
-            questObj.explorationTimeRequired = QuestSystemConfig.DefaultExplorationTime;
+            // Temps d'exploration variable : chaque EXPLORE est différente pour
+            // que le joueur ne sache pas a priori combien de temps rester.
+            questObj.explorationTimeRequired = Random.Range(
+                QuestSystemConfig.MinExplorationTime, QuestSystemConfig.MaxExplorationTime);
             
             // Assure qu'il y a un collider
             if (obj.GetComponent<Collider>() == null)

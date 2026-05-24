@@ -559,6 +559,26 @@ RÈGLES :
     {
         return conversationHistories.ContainsKey(npcName) && conversationHistories[npcName].hasSpokenBefore;
     }
+
+    /// <summary>
+    /// Injecte un fait dans le contexte IA d'un PNJ (sans l'afficher dans
+    /// l'historique visible du joueur). Utilisé p.ex. au retour d'une quête
+    /// EXPLORE : le PNJ qui a donné la mission "sait" ce que le joueur a vu.
+    /// </summary>
+    public void InjectContextForNPC(string npcName, string fact)
+    {
+        if (string.IsNullOrWhiteSpace(npcName) || string.IsNullOrWhiteSpace(fact)) return;
+
+        if (!conversationsByNpc.TryGetValue(npcName, out var ctx))
+        {
+            ctx = new List<OpenAIMessage>();
+            conversationsByNpc[npcName] = ctx;
+        }
+        ctx.Add(new OpenAIMessage("system", $"[Information complémentaire à la prochaine reprise] {fact}"));
+
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.AI))
+            Debug.Log($"[AI] Contexte injecté pour {npcName} : {fact}");
+    }
     
     public bool IsConfigured()
     {

@@ -25,6 +25,10 @@ public static class QuestSystemConfig
     // === QUÊTES ===
     public const int DefaultMaxActiveQuests = 5;
     public const float DefaultExplorationTime = 2f;
+    // Range pour les EXPLORE : chaque quête tire un temps aléatoire dans
+    // [Min, Max] pour donner des explorations de longueurs variables.
+    public const float MinExplorationTime = 3f;
+    public const float MaxExplorationTime = 8f;
     public const float DefaultTriggerRadius = 3f;
     
     // === SONS - VOLUMES PAR DÉFAUT ===

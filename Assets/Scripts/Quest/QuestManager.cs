@@ -565,9 +565,12 @@ public class QuestManager : MonoBehaviour
         ActiveQuest quest = GetActiveQuest(questId);
         if (quest != null)
         {
-            // Génère un rapport d'exploration et l'injecte dans la mémoire IA
-            // du donneur — il pourra en parler quand le joueur revient.
-            if (AIDialogueManager.Instance != null && !string.IsNullOrEmpty(quest.giverNPCName))
+            // Rapport d'exploration injecté dans la mémoire IA du donneur
+            // uniquement pour les quêtes EXPLORE — TREASURE utilise la même
+            // mécanique marker mais représente un déterrage, pas un rapport.
+            if (quest.questData.questType == QuestType.EXPLORE
+                && AIDialogueManager.Instance != null
+                && !string.IsNullOrEmpty(quest.giverNPCName))
             {
                 string zone = quest.targetZone != null ? quest.targetZone.zoneName : quest.questData.zoneName;
                 string report = ExplorationReport.Generate(zone);
@@ -575,6 +578,11 @@ public class QuestManager : MonoBehaviour
 
                 if (NotificationManager.Instance != null)
                     NotificationManager.Instance.ShowInfo("Exploration terminée — rapport prêt");
+            }
+            else if (quest.questData.questType == QuestType.TREASURE
+                && NotificationManager.Instance != null)
+            {
+                NotificationManager.Instance.ShowSuccess($"Trésor déterré : {TextFormatter.FormatName(quest.questData.objectName)}");
             }
 
             CompleteQuest(quest);

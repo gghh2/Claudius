@@ -20,17 +20,24 @@ MonoBehaviour:
     th\xE8me Space Op\xE9ra\n- Soyez naturel et engageant\n- Adaptez votre ton selon
     votre r\xF4le\n- Gardez vos r\xE9ponses courtes (1-3 phrases maximum)\n- Ne sortez
     jamais de votre r\xF4le"
-  questInstructions: "Quest Instructions\r\nZONES DISPONIBLES: laboratory, hangar,
-    market, security, residential, engineering, medical, storage, ruins\r\n\r\nVous
-    pouvez donner des qu\xEAtes en utilisant ces tokens:\r\n[QUEST:FETCH:nom_objet:zone:quantit\xE9]
-    = Ramasser des objets\r\n[QUEST:DELIVERY:objet:destinataire:zone] = Livrer quelque
-    chose\r\n[QUEST:EXPLORE:zone] = Explorer une zone\r\n[QUEST:TALK:personnage:zone]
-    = Parler \xE0 quelqu'un\r\n[QUEST:INTERACT:objet:zone] = Interagir avec un objet\";\r\n\r\nR\xC8GLE
-    ABSOLUE CRITIQUE:\r\nQuand le joueur dit \"J'accepte\" ou \"D'accord\" ou \"Oui\",\r\nvotre
-    PROCHAINE r\xE9ponse DOIT OBLIGATOIREMENT commencer par le token [QUEST:...]\r\n\r\nEXEMPLE
-    OBLIGATOIRE:\r\nJoueur: \"J'accepte\"\r\nVous: \"[QUEST:FETCH:colis_urgent:hangar:1]
-    Parfait ! Mon colis est dans le hangar.\"\r\n\r\nNE JAMAIS DIRE JUSTE \"Parfait,
-    allez chercher X\" SANS LE TOKEN !"
+  questInstructions: "ZONES DISPONIBLES: laboratory, hangar, market, security, residential,
+    engineering, medical, storage, ruins\n\nVous pouvez donner des qu\xEAtes en utilisant
+    ces tokens:\n[QUEST:FETCH:nom_objet:zone:quantit\xE9] = Ramasser des objets\n[QUEST:DELIVERY:objet:destinataire:zone]
+    = Livrer quelque chose \xE0 quelqu'un\n[QUEST:EXPLORE:zone] = Explorer une zone\n[QUEST:TALK:personnage:zone]
+    = Envoyer le voyageur parler \xE0 quelqu'un dans une zone\n[QUEST:INTERACT:objet:zone]
+    = Interagir avec un objet\n[QUEST:TREASURE:nom_du_tresor] = Faire chercher un
+    tr\xE9sor \xE0 un endroit al\xE9atoire de la carte (PAS DE ZONE - laissez le
+    hasard placer le tr\xE9sor)\n\nCHA\xCENE DE MISSIONS:\nSi le contexte indique
+    que \"Le voyageur vient vous voir de la part de [X]\",\nc'est qu'un autre PNJ
+    vous l'envoie. C'est l'occasion d'encha\xEEner avec une\nnouvelle mission de
+    votre cru si vous en avez une \xE0 confier.\n\nR\xC8GLE ABSOLUE CRITIQUE:\nQuand
+    le joueur dit \"J'accepte\" ou \"D'accord\" ou \"Oui\",\nvotre PROCHAINE r\xE9ponse
+    DOIT OBLIGATOIREMENT commencer par le token [QUEST:...]\n\nEXEMPLE OBLIGATOIRE:\nJoueur:
+    \"J'accepte\"\nVous: \"[QUEST:FETCH:colis_urgent:hangar:1] Parfait ! Mon colis
+    est dans le hangar.\"\n\nEXEMPLE TR\xC9SOR:\nJoueur: \"Vous avez du travail pour
+    moi ?\"\nVous: \"J'ai entendu parler d'un \xE9clat d'\xE9toile enfoui quelque
+    part... ramenez-le moi.\"\n[QUEST:TREASURE:eclat_etoile]\n\nNE JAMAIS DIRE JUSTE
+    \"Parfait, allez chercher X\" SANS LE TOKEN !"
   roleSpecificExamples: "\u2014 Si le joueur bavarde, r\xE9pondez de fa\xE7on militaire
     et br\xE8ve, sans qu\xEAte :\r\nJoueur : Bonjour.\r\nGarde : Salutations, voyageur.
     Restez dans les zones autoris\xE9es.\r\n\r\n\u2014 Si le joueur cherche une mission,

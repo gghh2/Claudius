@@ -61,7 +61,11 @@
   IA. Reste à affiner les prompts pour exploiter au mieux.
 - ✅ *(2026-05-24)* Nouveau type **TREASURE** ajouté (token
   `[QUEST:TREASURE:nom]`, location aléatoire, récompense 200 crédits).
-  L'IA ne le proposera spontanément qu'après mise à jour des prompts.
+  Prompts IA mis à jour pour le proposer naturellement.
+- 🟢 **TREASURE — UX du déterrage** : actuellement réutilise la mécanique
+  EXPLORE (rester X secondes près du marker). Idéalement : prompt "Appuyer
+  sur E pour creuser", anim/particules, l'objet apparaît à la place du
+  marker et le joueur le ramasse.
 - 🟡 Écran des quêtes : redesign en cours (chevauchement des entrées).
 - 🟡 Quand il y a beaucoup de quêtes, le scroll masque une partie de la liste.
 - 🟡 Notification écran (toast) à : nouvelle quête, quête terminée, nouvelle

@@ -251,7 +251,24 @@ public class UnifiedUIManager : MonoBehaviour
         {
             HandleEscapeKey();
         }
-        
+
+        // Toggle: re-presser la touche du panneau actuellement ouvert le referme
+        if (Input.GetKeyDown(KeyCode.J) && currentPanel == UnifiedUIPanelNames.QuestJournal)
+        {
+            NavigateBack();
+            return;
+        }
+        if (Input.GetKeyDown(KeyCode.I) && currentPanel == UnifiedUIPanelNames.Inventory)
+        {
+            NavigateBack();
+            return;
+        }
+        if (Input.GetKeyDown(KeyCode.L) && currentPanel == UnifiedUIPanelNames.AdventureJournal)
+        {
+            NavigateBack();
+            return;
+        }
+
         // Handle direct shortcuts ONLY from game state
         if (currentPanel == GAME_STATE && !IsAnyBlockingPanelOpen())
         {

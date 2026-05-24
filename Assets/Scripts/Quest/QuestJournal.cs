@@ -175,6 +175,13 @@ public class QuestJournal : MonoBehaviour
 
             // Log la complétion de la quête dans le Journal d'Aventure
             AdventureJournalExtensions.LogQuestCompleted(quest.description);
+
+            // Récompense en crédits (barème fixé côté jeu, pas par l'IA).
+            if (PlayerWallet.Instance != null)
+            {
+                int reward = QuestRewardScale.GetReward(quest.questType, quest.maxProgress);
+                if (reward > 0) PlayerWallet.Instance.AddCredits(reward);
+            }
         }
     }
     

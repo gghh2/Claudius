@@ -443,6 +443,12 @@ public class SaveGameManager : MonoBehaviour
             data.journalData = AdventureJournalUI.Instance.GetSaveData();
         }
 
+        // Wallet data
+        if (PlayerWallet.Instance != null)
+        {
+            data.walletData = new WalletSaveData { credits = PlayerWallet.Instance.Credits };
+        }
+
         return data;
     }
     
@@ -662,6 +668,12 @@ public class SaveGameManager : MonoBehaviour
         if (AdventureJournalUI.Instance != null && data.journalData != null)
         {
             AdventureJournalUI.Instance.LoadSaveData(data.journalData);
+        }
+
+        // Wallet
+        if (PlayerWallet.Instance != null)
+        {
+            PlayerWallet.Instance.LoadCredits(data.walletData != null ? data.walletData.credits : 0);
         }
     }
     
@@ -944,6 +956,13 @@ public class SaveData
     public InventorySaveData inventoryData;
     public GameSettingsSaveData gameSettings;
     public AdventureJournalUI.JournalSaveData journalData;
+    public WalletSaveData walletData;
+}
+
+[System.Serializable]
+public class WalletSaveData
+{
+    public int credits;
 }
 
 [System.Serializable]

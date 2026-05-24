@@ -14,12 +14,10 @@
   instancié à chaque spawn de PNJ de quête → 10+ erreurs console au Play).
 - 🟡 Script manquant sur `Assets/Resources/QuestMarkerConfig.asset`
   (à vérifier — l'audit ScriptableObject de cette session n'a rien remonté).
-- 🟡 Transparence caméra (`URPCameraObstacleHandler`) : un objet sur lequel le
-  joueur **se tient** (ex. une Tombe) devient transparent. Le fade d'obstacle
-  ne distingue pas « objet entre la caméra et le joueur » de « surface sous le
-  joueur » — avec la caméra ortho inclinée, l'objet porteur est sur la ligne
-  caméra→joueur. Derrière un objet (colonne) le comportement est correct.
-  Piste : exclure du raycast l'objet sur lequel le joueur repose (sol courant).
+- ✅ *(2026-05-24)* `URPCameraObstacleHandler` : exclut le collider sur
+  lequel le joueur est posé (raycast vertical descendant) du raycast
+  caméra→joueur, pour ne pas le rendre transparent. Toggle
+  `excludeGroundUnderPlayer` dans l'Inspector si besoin de désactiver.
 - 🟡 Dialogue : re-parler à un PNJ affiche d'abord brièvement le **texte du
   dialogue précédent**, puis l'efface et le remplace par la nouvelle réponse.
   À étudier (`DialogueUI` / `AIDialogueManager` — sans doute un `ShowText` avec

@@ -23,6 +23,12 @@ public class URPCameraObstacleHandler : MonoBehaviour
     [SerializeField] private float raycastPadding = 0.5f;
     [SerializeField] private bool useSphereCast = true;
     [SerializeField] private float sphereRadius = 0.5f;
+
+    [Tooltip("Exclut du raycast l'objet sur lequel le joueur est posé (sol courant) " +
+        "pour éviter qu'il devienne transparent quand la caméra ortho regarde par-dessus.")]
+    [SerializeField] private bool excludeGroundUnderPlayer = true;
+    [Tooltip("Distance vers le bas depuis le joueur pour trouver le sol courant.")]
+    [SerializeField] private float groundProbeDistance = 1.5f;
     
     [Header("Debug")]
     [SerializeField] private bool showDebugRays = false;
@@ -155,9 +161,23 @@ public class URPCameraObstacleHandler : MonoBehaviour
         Vector3 direction = player.position - cam.transform.position;
         float distance = direction.magnitude - raycastPadding;
         direction.Normalize();
-        
+
+        // Trouve le collider sur lequel le joueur est posé (le sol courant) pour
+        // l'exclure : sinon, avec la caméra ortho inclinée, ce collider est sur
+        // la ligne caméra→joueur et devient transparent (ex. une tombe).
+        Collider groundCollider = null;
+        if (excludeGroundUnderPlayer)
+        {
+            Vector3 origin = player.position + Vector3.up * 0.1f;
+            if (Physics.Raycast(origin, Vector3.down, out RaycastHit groundHit,
+                groundProbeDistance, obstacleLayerMask, QueryTriggerInteraction.Ignore))
+            {
+                groundCollider = groundHit.collider;
+            }
+        }
+
         RaycastHit[] hits;
-        
+
         if (useSphereCast)
         {
             hits = Physics.SphereCastAll(cam.transform.position, sphereRadius, direction, distance, obstacleLayerMask);
@@ -166,16 +186,19 @@ public class URPCameraObstacleHandler : MonoBehaviour
         {
             hits = Physics.RaycastAll(cam.transform.position, direction, distance, obstacleLayerMask);
         }
-        
+
         // Marquer tous les objets actuels comme "à restaurer"
         foreach (var kvp in transparentObjects)
         {
             kvp.Value.isTransparent = false;
         }
-        
+
         // Traiter les objets touchés
         foreach (var hit in hits)
         {
+            // Le sol sous le joueur reste opaque.
+            if (groundCollider != null && hit.collider == groundCollider) continue;
+
             Renderer renderer = hit.collider.GetComponent<Renderer>();
             if (renderer != null && renderer.enabled)
             {
@@ -186,7 +209,7 @@ public class URPCameraObstacleHandler : MonoBehaviour
                     transparentObjects.Add(renderer, info);
                     renderer.materials = info.transparentMaterials;
                 }
-                
+
                 transparentObjects[renderer].isTransparent = true;
             }
         }

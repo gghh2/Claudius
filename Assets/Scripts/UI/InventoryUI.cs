@@ -79,21 +79,27 @@ public class InventoryUI : MonoBehaviour
             PlayerInventory.Instance.OnItemsChanged -= OnInventoryChanged;
     }
 
-    void OnEnable()
+    // Note : on ne peut pas se fier à OnEnable du script. Sur ce projet le
+    // composant InventoryUI vit sur un GO toujours actif (l'UI racine),
+    // tandis que le panel inventaire (un enfant) s'active/désactive. OnEnable
+    // ne firerait qu'une fois au scene-load. À la place, on poll dans Update
+    // si le panel parent vient de devenir actif.
+    bool wasContentActive;
+
+    void Update()
     {
-        // L'inventaire est rendu visible par UnifiedUIManager.NavigateTo qui
-        // SetActive(true) le panel. On rafraîchit le contenu à chaque ouverture
-        // (le manager n'appelle plus OpenInventory directement).
-        if (Application.isPlaying && inventoryContent != null)
+        if (inventoryContent == null) return;
+        bool isActive = inventoryContent.gameObject.activeInHierarchy;
+        if (isActive && !wasContentActive)
         {
             isOpen = true;
             RefreshInventoryDisplay();
         }
-    }
-
-    void OnDisable()
-    {
-        isOpen = false;
+        else if (!isActive && wasContentActive)
+        {
+            isOpen = false;
+        }
+        wasContentActive = isActive;
     }
 
     void OnCreditsChanged(int newCredits)
@@ -139,11 +145,6 @@ public class InventoryUI : MonoBehaviour
         tr.anchorMax = Vector2.one;
         tr.sizeDelta = Vector2.zero;
         tr.anchoredPosition = new Vector2(10, 0);
-    }
-    
-    void Update()
-    {
-        // I shortcut and ESCAPE are handled by UnifiedUIManager
     }
     
     public void ToggleInventory()

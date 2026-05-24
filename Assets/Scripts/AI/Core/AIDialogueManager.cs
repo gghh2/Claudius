@@ -98,6 +98,7 @@ public class AIDialogueManager : MonoBehaviour
         {
             currentConversation = existing;
             InjectTimeContext();
+            InjectLoreContext(npcData.name);
             currentConversation.Add(new OpenAIMessage("user",
                 "Le joueur revient vous parler. Accueillez-le comme une connaissance, en vous souvenant de vos échanges précédents."));
         }
@@ -108,6 +109,7 @@ public class AIDialogueManager : MonoBehaviour
 
             currentConversation.Add(new OpenAIMessage("system", BuildSystemPrompt(npcData)));
             InjectTimeContext();
+            InjectLoreContext(npcData.name);
 
             string initialUserMessage = "Le joueur s'approche de vous. Saluez-le de manière naturelle selon votre personnalité.";
             if (QuestJournal.Instance != null)
@@ -593,6 +595,24 @@ RÈGLES :
             $"Contexte temporel : nous sommes au {now} ({moment}). " +
             "Vous êtes conscient de l'heure et du moment de la journée. Adaptez " +
             "votre ton et vos références si pertinent (sans le rabâcher)."));
+    }
+
+    /// <summary>
+    /// Si le joueur a récemment trouvé une note que ce PNJ ne connaît pas
+    /// encore, on injecte le contenu dans son contexte — il peut s'en
+    /// servir comme entrée en matière ("Vous portez là un parchemin
+    /// curieux...") ou réagir si le joueur en parle.
+    /// </summary>
+    void InjectLoreContext(string npcName)
+    {
+        if (LoreLibrary.Instance == null) return;
+        var note = LoreLibrary.Instance.GetUninjectedNoteFor(npcName);
+        if (note == null) return;
+        currentConversation.Add(new OpenAIMessage("system",
+            $"Information complémentaire : le voyageur a trouvé une note intitulée " +
+            $"« {note.title} » qui dit : « {note.content} ». Vous pouvez y faire référence " +
+            "si la conversation s'y prête (par curiosité, par lecture mentale...) mais " +
+            "ne pas l'imposer."));
     }
 
     /// <summary>

@@ -469,6 +469,12 @@ public class SaveGameManager : MonoBehaviour
             data.clockData = GameClock.Instance.GetSaveData();
         }
 
+        // Bibliothèque des notes/indices trouvés
+        if (LoreLibrary.Instance != null)
+        {
+            data.loreData = LoreLibrary.Instance.GetSaveData();
+        }
+
         return data;
     }
     
@@ -706,6 +712,12 @@ public class SaveGameManager : MonoBehaviour
         if (GameClock.Instance != null && data.clockData != null)
         {
             GameClock.Instance.LoadSaveData(data.clockData);
+        }
+
+        // Lore
+        if (LoreLibrary.Instance != null && data.loreData != null)
+        {
+            LoreLibrary.Instance.LoadSaveData(data.loreData);
         }
     }
     
@@ -1009,6 +1021,7 @@ public class SaveData
     public WalletSaveData walletData;
     public ConversationsSaveData conversationsData;
     public GameClockSaveData clockData;
+    public LoreSaveData loreData;
 }
 
 [System.Serializable]

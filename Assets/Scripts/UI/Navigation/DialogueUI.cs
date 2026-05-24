@@ -242,7 +242,13 @@ public class DialogueUI : MonoBehaviour
         // Affiche le nom du NPC avec sa couleur
         npcNameText.text = TextFormatter.FormatName(currentNPC.name);
         npcNameText.color = GetNPCColor(currentNPC.name);
-        
+
+        // Vide le texte du dialogue précédent (sinon il flashe brièvement avant
+        // l'arrivée de la réponse IA) et marque le champ comme dispo pour ShowText.
+        dialogueText.text = "";
+        currentFullText = "";
+        isCurrentlyDisplaying = false;
+
         // Affiche le bouton historique si on a déjà parlé à ce NPC
         UpdateHistoryButtonVisibility();
         

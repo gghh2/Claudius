@@ -39,8 +39,20 @@ public class CompanionSpeedSync : MonoBehaviour
     
     void Update()
     {
-        if (!autoSyncSpeed || playerController == null || companion == null) return;
-        
+        if (companion == null) return;
+
+        // En build, l'ordre des Awake/Start des managers peut faire que le
+        // joueur n'existait pas encore au Start ici → sync jamais faite et
+        // compagnon plus lent que prévu. On retente tant qu'il n'est pas trouvé.
+        if (playerController == null)
+        {
+            playerController = FindFirstObjectByType<PlayerControllerCC>();
+            if (playerController != null && autoSyncSpeed) SyncWithPlayer();
+            return;
+        }
+
+        if (!autoSyncSpeed) return;
+
         // Ajuste la vitesse en temps réel si le joueur sprinte
         if (followPlayerSprint)
         {

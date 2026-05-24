@@ -864,24 +864,42 @@ public class SaveGameManager : MonoBehaviour
                     if (questInfo.spawnedObjects != null && questInfo.spawnedObjects.Count > 0)
                     {
                         Debug.Log($"[SaveGame] Quest {questInfo.questTitle} had {questInfo.spawnedObjects.Count} spawned objects saved");
-                        
+
                         // Only restore positions for ACTIVE objects (not collected)
                         var activeObjects = questInfo.spawnedObjects.Where(obj => obj.isActive).ToList();
                         Debug.Log($"[SaveGame] {activeObjects.Count} objects are still active (not collected)");
-                        
-                        // Try to restore positions of spawned objects
+
+                        // Restore positions for items qui sont encore actifs.
                         for (int i = 0; i < activeQuest.spawnedObjects.Count && i < activeObjects.Count; i++)
                         {
                             var spawnedObj = activeQuest.spawnedObjects[i];
                             var savedObj = activeObjects[i];
-                            
+
                             if (spawnedObj != null)
                             {
                                 spawnedObj.transform.position = savedObj.position;
                                 spawnedObj.transform.rotation = Quaternion.Euler(savedObj.rotation);
-                                spawnedObj.SetActive(savedObj.isActive);
+                                spawnedObj.SetActive(true);
                                 Debug.Log($"[SaveGame] Restored position for {savedObj.objectName} at {savedObj.position}");
                             }
+                        }
+
+                        // Désactive + détruit les items en surplus : la quête vient
+                        // d'être recréée à plein (ex. 5 items), mais seuls activeObjects
+                        // restaient avant le save (ex. 2). Les autres ont déjà été ramassés.
+                        for (int i = activeObjects.Count; i < activeQuest.spawnedObjects.Count; i++)
+                        {
+                            var extra = activeQuest.spawnedObjects[i];
+                            if (extra != null)
+                            {
+                                Debug.Log($"[SaveGame] Destroying already-collected spawn: {extra.name}");
+                                Destroy(extra);
+                            }
+                        }
+                        if (activeQuest.spawnedObjects.Count > activeObjects.Count)
+                        {
+                            activeQuest.spawnedObjects.RemoveRange(activeObjects.Count,
+                                activeQuest.spawnedObjects.Count - activeObjects.Count);
                         }
                     }
                 }

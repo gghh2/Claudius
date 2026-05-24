@@ -434,12 +434,12 @@ public class QuestTokenDetector : MonoBehaviour
             }
 
             // 3. Un destinataire qui porte le nom d'un PNJ déjà présent dans la
-            //    scène ferait spawner un doublon fantôme : on rejette.
-            if (MatchesExistingNPC(target))
+            //    scène est désormais accepté : QuestManager.CreateTalkQuest /
+            //    CreateDeliveryQuest le réutilisent comme cible au lieu de
+            //    spawner un doublon. On garde juste un log informatif.
+            if (debugMode && MatchesExistingNPC(target))
             {
-                if (debugMode)
-                    Debug.LogWarning($"[QuestTokenDetector] Token rejeté — '{token.targetName}' est déjà un PNJ existant, un doublon serait créé ({token.questType})");
-                return false;
+                Debug.Log($"[QuestTokenDetector] '{token.targetName}' existe déjà — sera réutilisé comme cible ({token.questType})");
             }
         }
 

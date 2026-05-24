@@ -9,9 +9,61 @@ using System.Text.RegularExpressions;
 public static class QuestManagerHelper
 {
     /// <summary>
+    /// Cherche un PNJ existant en scène par nom (normalisé : espaces et casse
+    /// ignorés). Utilisé par TALK/DELIVERY pour réutiliser un PNJ déjà
+    /// présent comme cible plutôt que d'en spawner un doublon.
+    /// </summary>
+    public static GameObject FindExistingNPCByName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return null;
+        string normalized = NormalizeName(name);
+
+        foreach (NPC npc in Object.FindObjectsByType<NPC>(FindObjectsSortMode.None))
+        {
+            if (NormalizeName(npc.npcName) == normalized)
+                return npc.gameObject;
+        }
+        return null;
+    }
+
+    static string NormalizeName(string s) =>
+        (s ?? string.Empty).Trim().ToLowerInvariant().Replace(" ", "").Replace("_", "");
+
+    /// <summary>
+    /// Zone la plus proche d'une position monde. Utilisé pour assigner la
+    /// targetZone d'une quête qui réutilise un PNJ existant : on prend la
+    /// zone enregistrée la plus proche du PNJ pour que les markers UI
+    /// pointent vers le bon endroit.
+    /// </summary>
+    public static QuestZone FindClosestZoneTo(Vector3 worldPos)
+    {
+        var zones = Object.FindObjectsByType<QuestZone>(FindObjectsSortMode.None);
+        QuestZone best = null;
+        float bestSq = float.MaxValue;
+        foreach (var z in zones)
+        {
+            float d = (z.transform.position - worldPos).sqrMagnitude;
+            if (d < bestSq) { bestSq = d; best = z; }
+        }
+        return best;
+    }
+
+    /// <summary>
+    /// Nettoie un PNJ existant qui était réutilisé comme cible de quête :
+    /// retire son QuestObject (sans détruire le GameObject) pour qu'il
+    /// reprenne son rôle initial.
+    /// </summary>
+    public static void DetachReusedNPC(GameObject obj)
+    {
+        if (obj == null) return;
+        QuestObject qo = obj.GetComponent<QuestObject>();
+        if (qo != null) Object.Destroy(qo);
+    }
+
+    /// <summary>
     /// Configure un GameObject avec un composant QuestObject
     /// </summary>
-    public static void ConfigureQuestObject(GameObject obj, ActiveQuest quest, string objectName, 
+    public static void ConfigureQuestObject(GameObject obj, ActiveQuest quest, string objectName,
         QuestObjectType type, bool isDeliveryTarget = false)
     {
         if (obj == null || quest == null) return;

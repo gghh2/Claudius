@@ -10,6 +10,10 @@ public class ActiveQuest
     public bool isCompleted = false;
     public int currentProgress = 0;
     public List<GameObject> spawnedObjects = new List<GameObject>();
+    // PNJ existants en scène réutilisés comme cible de quête (TALK/DELIVERY).
+    // On les détache du nettoyage Destroy : à la complétion, on retire juste
+    // leur QuestObject pour qu'ils reprennent leur rôle initial.
+    public List<GameObject> reusedObjects = new List<GameObject>();
     public string giverNPCName;
     public QuestZone targetZone; // Store the exact zone reference
     
@@ -283,39 +287,56 @@ public class QuestManager : MonoBehaviour
     bool CreateDeliveryQuest(ActiveQuest quest)
     {
         QuestToken token = quest.questData;
-        
+
         debugMode.LogQuest("[DELIVERY] Création quête livraison: {0} à {1}", token.objectName, token.targetName);
-        
+
         // Ajoute l'objet à l'inventaire
         if (!AddItemToInventory(token.objectName, 1, quest.questId))
             return false;
-        
+
+        // Si un PNJ porte déjà ce nom, on le réutilise comme destinataire.
+        GameObject existing = QuestManagerHelper.FindExistingNPCByName(token.targetName);
+        if (existing != null)
+        {
+            debugMode.LogQuest("[DELIVERY] PNJ existant réutilisé comme destinataire: {0}", existing.name);
+            QuestZone existingZone = QuestManagerHelper.FindClosestZoneTo(existing.transform.position);
+            if (existingZone != null) quest.SetTargetZone(existingZone);
+
+            QuestObject qo = existing.GetComponent<QuestObject>() ?? existing.AddComponent<QuestObject>();
+            qo.questId = quest.questId;
+            qo.objectName = token.targetName;
+            qo.objectType = QuestObjectType.NPC;
+            qo.isDeliveryTarget = true;
+            quest.reusedObjects.Add(existing);
+            return true;
+        }
+
         // Trouve la zone
         QuestZone targetZone = QuestManagerHelper.GetQuestZone(token, QuestObjectType.NPC, debugMode);
         if (targetZone == null) return false;
-        
+
         quest.SetTargetZone(targetZone);
-        
+
         // Spawn le NPC destinataire
         GameObject deliveryNPC = targetZone.SpawnQuestObject(npcPrefab, QuestObjectType.NPC);
         if (deliveryNPC != null)
         {
             QuestManagerHelper.ConfigureQuestObject(deliveryNPC, quest, token.targetName, QuestObjectType.NPC, true);
-            
+
             string description = $"Attend la livraison de {token.objectName} de la part de {quest.giverNPCName}";
-            QuestManagerHelper.ConfigureNPCComponent(deliveryNPC, token.targetName, 
+            QuestManagerHelper.ConfigureNPCComponent(deliveryNPC, token.targetName,
                 QuestSystemConfig.DeliveryNPCRole, description, debugMode);
-            
+
             // Ajoute un indicateur visuel
             NPCNameDisplay nameDisplay = deliveryNPC.GetComponent<NPCNameDisplay>();
             if (nameDisplay != null)
             {
                 nameDisplay.SetDisplayName($"{token.targetName} (Destinataire)");
             }
-            
+
             return true;
         }
-        
+
         return false;
     }
     
@@ -359,26 +380,44 @@ public class QuestManager : MonoBehaviour
     bool CreateTalkQuest(ActiveQuest quest)
     {
         QuestToken token = quest.questData;
-        
+
         debugMode.LogQuest("[TALK] Création quête dialogue: parler à {0}", token.targetName);
-        
+
+        // Si un PNJ porte déjà ce nom en scène, on le réutilise comme cible
+        // (au lieu de rejeter le token ou de spawner un doublon fantôme).
+        GameObject existing = QuestManagerHelper.FindExistingNPCByName(token.targetName);
+        if (existing != null)
+        {
+            debugMode.LogQuest("[TALK] PNJ existant réutilisé comme cible: {0}", existing.name);
+            QuestZone existingZone = QuestManagerHelper.FindClosestZoneTo(existing.transform.position);
+            if (existingZone != null) quest.SetTargetZone(existingZone);
+
+            QuestObject qo = existing.GetComponent<QuestObject>() ?? existing.AddComponent<QuestObject>();
+            qo.questId = quest.questId;
+            qo.objectName = token.targetName;
+            qo.objectType = QuestObjectType.NPC;
+            qo.isDeliveryTarget = false;
+            quest.reusedObjects.Add(existing);
+            return true;
+        }
+
         QuestZone targetZone = QuestManagerHelper.GetQuestZone(token, QuestObjectType.NPC, debugMode);
         if (targetZone == null) return false;
-        
+
         quest.SetTargetZone(targetZone);
-        
+
         GameObject npc = targetZone.SpawnQuestObject(npcPrefab, QuestObjectType.NPC);
         if (npc != null)
         {
             QuestManagerHelper.ConfigureQuestObject(npc, quest, token.targetName, QuestObjectType.NPC);
-            
+
             string description = $"Une personne importante pour votre quête. {quest.giverNPCName} vous a demandé de lui parler.";
-            QuestManagerHelper.ConfigureNPCComponent(npc, token.targetName, 
+            QuestManagerHelper.ConfigureNPCComponent(npc, token.targetName,
                 QuestSystemConfig.TalkNPCRole, description, debugMode);
-            
+
             return true;
         }
-        
+
         return false;
     }
     
@@ -523,13 +562,20 @@ public class QuestManager : MonoBehaviour
     {
         ActiveQuest quest = GetActiveQuest(questId);
         if (quest == null) return;
-        
-        // Nettoie les objets
+
+        // Détruit les objets fraîchement spawnés pour la quête.
         foreach (GameObject obj in quest.spawnedObjects)
         {
             if (obj != null) Destroy(obj);
         }
-        
+
+        // Pour les PNJ existants réutilisés : ne pas détruire, juste retirer
+        // le composant QuestObject pour qu'ils reprennent leur rôle initial.
+        foreach (GameObject obj in quest.reusedObjects)
+        {
+            QuestManagerHelper.DetachReusedNPC(obj);
+        }
+
         // Nettoie le mapping
         ActiveQuestExtensions.ClearZoneMapping(questId);
         
@@ -556,13 +602,17 @@ public class QuestManager : MonoBehaviour
     {
         ActiveQuest quest = GetActiveQuest(questId);
         if (quest == null) return;
-        
+
         // Nettoie les objets
         foreach (GameObject obj in quest.spawnedObjects)
         {
             if (obj != null) Destroy(obj);
         }
-        
+        foreach (GameObject obj in quest.reusedObjects)
+        {
+            QuestManagerHelper.DetachReusedNPC(obj);
+        }
+
         // Nettoie le mapping
         ActiveQuestExtensions.ClearZoneMapping(questId);
         
@@ -588,8 +638,12 @@ public class QuestManager : MonoBehaviour
             {
                 if (obj != null) Destroy(obj);
             }
+            foreach (GameObject obj in quest.reusedObjects)
+            {
+                QuestManagerHelper.DetachReusedNPC(obj);
+            }
         }
-        
+
         activeQuests.Clear();
         Debug.Log("Toutes les quêtes ont été nettoyées");
     }

@@ -278,19 +278,19 @@ public class UnifiedUIManager : MonoBehaviour
     /// </summary>
     public void NavigateTo(string panelName)
     {
-        Debug.Log($"[UnifiedUIManager] NavigateTo called: {panelName}");
-        
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI)) Debug.Log($"[UnifiedUIManager] NavigateTo called: {panelName}");
+
         // Block navigation if a modal dialog is open
         if (IsModalDialogOpen() && panelName != UnifiedUIPanelNames.Confirmation)
         {
-            Debug.Log("[UnifiedUIManager] Navigation blocked by modal dialog");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI)) Debug.Log("[UnifiedUIManager] Navigation blocked by modal dialog");
             return;
         }
-        
+
         // Check if transition is allowed
         if (!IsTransitionAllowed(currentPanel, panelName))
         {
-            Debug.Log($"[UnifiedUIManager] Transition not allowed from {currentPanel} to {panelName}");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI)) Debug.Log($"[UnifiedUIManager] Transition not allowed from {currentPanel} to {panelName}");
             return;
         }
         
@@ -318,7 +318,7 @@ public class UnifiedUIManager : MonoBehaviour
         // Special handling for confirmation dialog
         if (panelName == UnifiedUIPanelNames.Confirmation)
         {
-            Debug.Log("[UnifiedUIManager] NavigateTo: Special handling for Confirmation dialog");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI)) Debug.Log("[UnifiedUIManager] NavigateTo: Special handling for Confirmation dialog");
             ShowModalDialog(panelName);
             return;
         }
@@ -338,7 +338,7 @@ public class UnifiedUIManager : MonoBehaviour
             ShowPanel(panelName);
             currentPanel = panelName;
             
-            Debug.Log($"[UnifiedUIManager] Successfully navigated to: {panelName}");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI)) Debug.Log($"[UnifiedUIManager] Successfully navigated to: {panelName}");
         }
     }
 
@@ -528,14 +528,14 @@ public class UnifiedUIManager : MonoBehaviour
 
     void ShowModalDialog(string dialogName)
     {
-        Debug.Log($"[UnifiedUIManager] ShowModalDialog called for: {dialogName}");
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI)) Debug.Log($"[UnifiedUIManager] ShowModalDialog called for: {dialogName}");
         
         if (panelConfigs.ContainsKey(dialogName))
         {
             var config = panelConfigs[dialogName];
             if (config.gameObject != null)
             {
-                Debug.Log($"[UnifiedUIManager] Activating panel: {dialogName}");
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI)) Debug.Log($"[UnifiedUIManager] Activating panel: {dialogName}");
                 config.gameObject.SetActive(true);
                 config.gameObject.transform.SetAsLastSibling();
                 currentPanel = dialogName;

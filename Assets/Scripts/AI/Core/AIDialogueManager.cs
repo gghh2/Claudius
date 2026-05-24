@@ -171,10 +171,10 @@ public class AIDialogueManager : MonoBehaviour
             }
             
             currentConversation.Add(new OpenAIMessage("assistant", cleanMessage));
-            Debug.Log($"Contexte ajouté pour {npcData.name}: {cleanMessage}");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.AI)) Debug.Log($"[AI] Contexte ajouté pour {npcData.name}: {cleanMessage}");
         }
-        
-        Debug.Log($"Conversation IA initialisée avec contexte pour {npcData.name}");
+
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.AI)) Debug.Log($"[AI] Conversation IA initialisée avec contexte pour {npcData.name}");
     }
     
     public void InitializeConversation(NPCData npcData)
@@ -220,7 +220,7 @@ public class AIDialogueManager : MonoBehaviour
             
             if (npcActiveQuest != null)
             {
-                Debug.Log($"🎯 QUÊTE ACTIVE DÉTECTÉE: {npcActiveQuest.description} - Progression: {npcActiveQuest.GetProgressText()}");
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.AI)) Debug.Log($"[AI] 🎯 QUÊTE ACTIVE DÉTECTÉE: {npcActiveQuest.description} - Progression: {npcActiveQuest.GetProgressText()}");
                 activeQuestInfo = $@"
 QUÊTE EN COURS avec ce voyageur : {npcActiveQuest.description}
 Progression : {npcActiveQuest.GetProgressText()}
@@ -456,7 +456,7 @@ AUTRES EXEMPLES:
             new List<OpenAIMessage>(currentConversation),
             aiConfig.temperature, aiConfig.maxTokens);
 
-        Debug.Log($"Envoi requête IA pour {npcData.name}");
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.AI)) Debug.Log($"[AI] Envoi requête IA pour {npcData.name}");
 
         // Chronomètre la latence réelle de l'appel IA (diagnostic des délais).
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -503,7 +503,7 @@ AUTRES EXEMPLES:
             if (QuestTokenDetector.Instance != null)
                 aiResponse = QuestTokenDetector.Instance.CleanMessageFromTokens(aiResponse);
 
-            Debug.Log($"🤖 Réponse de chat ({npcData.name}) en {responseSeconds:N1} s : {aiResponse}");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.AI)) Debug.Log($"[AI] 🤖 Réponse de chat ({npcData.name}) en {responseSeconds:N1} s : {aiResponse}");
 
             currentConversation.Add(new OpenAIMessage("assistant", aiResponse));
 
@@ -623,7 +623,7 @@ RÈGLES :
     void ProcessQuestAnalysis(string analysisOutput, NPCData npcData, string playerMessage, string chatReply, double seconds)
     {
         string raw = (analysisOutput ?? string.Empty).Trim();
-        Debug.Log($"[QuestAnalysis] Sortie ({seconds:N1} s) : {raw}");
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.AI)) Debug.Log($"[QuestAnalysis] Sortie ({seconds:N1} s) : {raw}");
 
         List<QuestToken> detectedQuests = null;
         if (QuestTokenDetector.Instance != null)
@@ -634,7 +634,7 @@ RÈGLES :
 
         if (detectedQuests != null && detectedQuests.Count > 0)
         {
-            Debug.Log($"🎯 {detectedQuests.Count} quête(s) issue(s) de l'analyse");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.AI)) Debug.Log($"[AI] 🎯 {detectedQuests.Count} quête(s) issue(s) de l'analyse");
             if (DialogueUI.Instance != null)
                 DialogueUI.Instance.SetPendingQuests(detectedQuests, npcData.name);
         }
@@ -642,7 +642,7 @@ RÈGLES :
 
     void UseFallback(NPCData npcData, bool isWelcome, string playerMessage)
     {
-        Debug.Log("Utilisation du mode fallback");
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.AI)) Debug.Log("[AI] Utilisation du mode fallback");
         
         string fallbackResponse;
         
@@ -716,7 +716,7 @@ RÈGLES :
         conversationHistories[npcName].messages.Add(formattedMessage);
         conversationHistories[npcName].hasSpokenBefore = true;
         
-        Debug.Log($"Message sauvé pour {npcName}: {formattedMessage}");
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.AI)) Debug.Log($"[AI] Message sauvé pour {npcName}: {formattedMessage}");
     }
     
     public ConversationHistory GetConversationHistory(string npcName)
@@ -747,7 +747,7 @@ RÈGLES :
     {
         conversationHistories.Clear();
         conversationsByNpc.Clear();
-        Debug.Log("Historique des conversations effacé");
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.AI)) Debug.Log("[AI] Historique des conversations effacé");
     }
     
     [ContextMenu("Reload API Key")]

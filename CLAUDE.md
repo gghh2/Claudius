@@ -94,6 +94,24 @@ par fileID/GUID). Pour lui fournir la structure d'une scène, lancer le composan
 **Toujours régénérer ce dump avant de s'y fier** — un dump ancien ne reflète plus
 la scène réelle.
 
+### MCP Unity (CoplayDev `MCP For Unity`)
+Le projet est équipé du bridge **MCP For Unity** (`com.coplaydev.unity-mcp` dans
+`Packages/manifest.json`, config Claude Code dans `.mcp.json` — transport HTTP
+sur `127.0.0.1:8080/mcp`). Quand Unity tourne avec la fenêtre **Window > MCP For
+Unity** sur "Session Active", Claude a accès direct à l'éditeur via les outils
+`mcp__UnityMCP__*` : `read_console`, `find_gameobjects`, `manage_scene`,
+`manage_asset`, `editor_state`, etc.
+
+**Usage recommandé** :
+- Après modif d'un script : `read_console` pour vérifier la compilation avant
+  d'enchaîner.
+- Inspection de scène : `find_gameobjects` / `manage_scene` plutôt que parser
+  les `.unity` ou re-lancer `HierarchyDebugger`.
+- État de l'éditeur (en train de compiler ?) : ressource `editor_state`.
+
+Si le MCP est down (Unity fermé, bridge revoqué) : tomber sur le workflow legacy
+(`HierarchyDebugger`, lecture des fichiers).
+
 ## Conventions
 
 - **Noms d'objets** : `snake_case` dans les données (`crystal_energy`, `zone_ruins_temple`).

@@ -11,7 +11,8 @@ public enum DebugSystem
     Footstep,
     AI,
     Quest,
-    DynamicAssets
+    DynamicAssets,
+    UI
 }
 
 /// <summary>
@@ -49,7 +50,10 @@ public class GlobalDebugManager : MonoBehaviour
     
     [Tooltip("Active le debug des assets dynamiques")]
     public bool dynamicAssetsDebug = false;
-    
+
+    [Tooltip("Active le debug de l'UI (navigation, panels)")]
+    public bool uiDebug = false;
+
     void Awake()
     {
         if (instance == null)
@@ -81,8 +85,6 @@ public class GlobalDebugManager : MonoBehaviour
     {
         // Plus besoin de modifier les scripts individuels
         // car ils vont maintenant lire directement depuis GlobalDebugManager
-        
-        Debug.Log($"[GlobalDebug] Settings appliqués - Master: {masterDebugEnabled}");
     }
     
     /// <summary>
@@ -109,6 +111,8 @@ public class GlobalDebugManager : MonoBehaviour
                 return Instance.questDebug;
             case DebugSystem.DynamicAssets:
                 return Instance.dynamicAssetsDebug;
+            case DebugSystem.UI:
+                return Instance.uiDebug;
             default:
                 return false;
         }
@@ -127,9 +131,10 @@ public class GlobalDebugManager : MonoBehaviour
         aiDebug = true;
         questDebug = true;
         dynamicAssetsDebug = true;
+        uiDebug = true;
         ApplyDebugSettings();
     }
-    
+
     [ContextMenu("Disable All Debug")]
     public void DisableAllDebug()
     {

@@ -38,7 +38,7 @@ public class NPCQuestTurnIn : MonoBehaviour
             player = playerController.transform;
         }
         
-        if (debugMode)
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
             Debug.Log($"🔄 NPCQuestTurnIn configuré pour {npcScript.npcName}");
     }
     
@@ -77,7 +77,7 @@ public class NPCQuestTurnIn : MonoBehaviour
     {
         if (QuestJournal.Instance == null || PlayerInventory.Instance == null) 
         {
-            if (debugMode)
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
                 Debug.LogWarning("⚠️ QuestJournal ou PlayerInventory manquant");
             return;
         }
@@ -88,7 +88,7 @@ public class NPCQuestTurnIn : MonoBehaviour
         
         if (npcQuest != null)
         {
-            if (debugMode)
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
                 Debug.Log($"🔍 Vérification quête: {npcQuest.questTitle} - Type: {npcQuest.questType}");
             
             bool canTurnIn = false;
@@ -101,7 +101,7 @@ public class NPCQuestTurnIn : MonoBehaviour
                     // On n'affiche plus le prompt [F] pour ces quêtes
                     canTurnIn = false;
                     
-                    if (debugMode)
+                    if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
                     {
                         string objectName = ExtractObjectNameFromDescription(npcQuest.description);
                         int currentCount = PlayerInventory.Instance.GetItemQuantity(objectName, npcQuest.questId);
@@ -116,7 +116,7 @@ public class NPCQuestTurnIn : MonoBehaviour
                     // Vérifier la progression
                     canTurnIn = npcQuest.currentProgress >= npcQuest.maxProgress;
                     
-                    if (debugMode)
+                    if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
                         Debug.Log($"📍 Progression: {npcQuest.currentProgress}/{npcQuest.maxProgress}");
                     break;
                     
@@ -138,7 +138,7 @@ public class NPCQuestTurnIn : MonoBehaviour
                 currentCompletableQuest = npcQuest;
                 ShowTurnInPrompt(npcQuest);
                 
-                if (debugMode)
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
                     Debug.Log($"✅ Quête peut être rendue: {npcQuest.questTitle}");
             }
             else
@@ -147,7 +147,7 @@ public class NPCQuestTurnIn : MonoBehaviour
                 currentCompletableQuest = null;
                 HideTurnInPrompt();
                 
-                if (debugMode)
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
                     Debug.Log($"❌ Quête non complétée: {npcQuest.questTitle}");
             }
         }
@@ -180,7 +180,8 @@ public class NPCQuestTurnIn : MonoBehaviour
             promptDisplay.SetActive(true);
         }
         
-        Debug.Log($"💫 [F] pour rendre: {quest.questTitle}");
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
+            Debug.Log($"💫 [F] pour rendre: {quest.questTitle}");
     }
     
     void HideTurnInPrompt()
@@ -222,7 +223,8 @@ public class NPCQuestTurnIn : MonoBehaviour
         // NOUVEAU: Vérification supplémentaire - ignore les quêtes FETCH
         if (currentCompletableQuest.questType == QuestType.FETCH)
         {
-            Debug.Log("🚫 Les quêtes FETCH sont gérées par le dialogue avec bouton");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
+                Debug.Log("🚫 Les quêtes FETCH sont gérées par le dialogue avec bouton");
             return;
         }
         
@@ -237,7 +239,7 @@ public class NPCQuestTurnIn : MonoBehaviour
                 int quantity = currentCompletableQuest.questType == QuestType.FETCH ? 
                     currentCompletableQuest.maxProgress : 1;
                 
-                if (debugMode)
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
                     Debug.Log($"🎯 Tentative de rendu: {objectName} x{quantity}");
                 
                 // Retire les objets de l'inventaire
@@ -254,7 +256,7 @@ public class NPCQuestTurnIn : MonoBehaviour
                 // Ces quêtes n'ont pas d'objets à retirer
                 success = true;
                 
-                if (debugMode)
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
                     Debug.Log($"🎯 Rendu de quête {currentCompletableQuest.questType}");
                 break;
                 
@@ -289,7 +291,8 @@ public class NPCQuestTurnIn : MonoBehaviour
             currentCompletableQuest = null;
             HideTurnInPrompt();
             
-            Debug.Log($"🎉 QUÊTE RENDUE AVEC SUCCÈS: {currentCompletableQuest.questTitle}");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
+                Debug.Log($"🎉 QUÊTE RENDUE AVEC SUCCÈS: {currentCompletableQuest.questTitle}");
         }
         else
         {
@@ -313,7 +316,8 @@ public class NPCQuestTurnIn : MonoBehaviour
         }
         else
         {
-            Debug.Log($"💬 {completionMessage}");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
+                Debug.Log($"💬 {completionMessage}");
         }
     }
     
@@ -371,14 +375,14 @@ public class NPCQuestTurnIn : MonoBehaviour
                     objectName += words[j].ToLower();
                 }
                 
-                if (debugMode)
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
                     Debug.Log($"[EXTRACT] Description: '{description}' -> Objet: '{objectName}'");
                 return objectName;
             }
         }
         
         // Fallback si le format n'est pas reconnu
-        if (debugMode)
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
             Debug.LogWarning($"⚠️ Format de description non reconnu: {description}");
         
         return "objet_inconnu";

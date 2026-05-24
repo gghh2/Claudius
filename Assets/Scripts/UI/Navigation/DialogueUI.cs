@@ -140,7 +140,7 @@ public class DialogueUI : MonoBehaviour
         {
             acceptQuestButton.onClick.AddListener(AcceptQuests);
             acceptQuestButton.gameObject.SetActive(false);
-            Debug.Log("[UI] Accept button configured and hidden");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI)) Debug.Log("[UI] Accept button configured and hidden");
         }
         else
         {
@@ -151,7 +151,7 @@ public class DialogueUI : MonoBehaviour
         {
             declineQuestButton.onClick.AddListener(DeclineQuests);
             declineQuestButton.gameObject.SetActive(false);
-            Debug.Log("[UI] Decline button configured and hidden");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI)) Debug.Log("[UI] Decline button configured and hidden");
         }
         else
         {
@@ -163,7 +163,7 @@ public class DialogueUI : MonoBehaviour
         {
             deliverButton.onClick.AddListener(DeliverPackage);
             deliverButton.gameObject.SetActive(false);
-            Debug.Log("[UI] Deliver button configured and hidden");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI)) Debug.Log("[UI] Deliver button configured and hidden");
         }
         else
         {
@@ -195,14 +195,14 @@ public class DialogueUI : MonoBehaviour
             // A pour Accepter
             if (Input.GetKeyDown(KeyCode.A))
             {
-                Debug.Log("[UI] Touche A pressée - Acceptation des quêtes");
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI)) Debug.Log("[UI] Touche A pressée - Acceptation des quêtes");
                 StartCoroutine(AnimateButtonPress(acceptQuestButton));
                 AcceptQuests();
             }
             // R pour Refuser
             else if (Input.GetKeyDown(KeyCode.R))
             {
-                Debug.Log("[UI] Touche R pressée - Refus des quêtes");
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI)) Debug.Log("[UI] Touche R pressée - Refus des quêtes");
                 StartCoroutine(AnimateButtonPress(declineQuestButton));
                 DeclineQuests();
             }
@@ -332,11 +332,11 @@ public class DialogueUI : MonoBehaviour
     {
         if (isCurrentlyDisplaying)
         {
-            Debug.Log("ShowText ignoré - déjà en cours d'affichage");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI)) Debug.Log("[UI] ShowText ignoré - déjà en cours d'affichage");
             return;
         }
-        
-        Debug.Log($"ShowText appelé avec: {text}");
+
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI)) Debug.Log($"[UI] ShowText appelé avec: {text}");
         
         StopAllCoroutines();
         isCurrentlyDisplaying = true;
@@ -348,8 +348,8 @@ public class DialogueUI : MonoBehaviour
         dialogueText.text = coloredText;
         
         isCurrentlyDisplaying = false;
-        
-        Debug.Log($"Texte affiché: {coloredText}");
+
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI)) Debug.Log($"[UI] Texte affiché: {coloredText}");
     }
     
     string ColorizeNPCText(string text)
@@ -459,7 +459,7 @@ public class DialogueUI : MonoBehaviour
     public void ShowAIResponse(string aiResponse)
     {
         ShowText(aiResponse);
-        Debug.Log($"Affichage réponse IA: {aiResponse}");
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI)) Debug.Log($"[UI] Affichage réponse IA: {aiResponse}");
     }
     
     // SYSTÈME DE CONFIRMATION DES QUÊTES
@@ -475,7 +475,7 @@ public class DialogueUI : MonoBehaviour
             SetAIElementsVisibility(false);
             SetQuestButtonsVisibility(true);
             
-            Debug.Log($"Quêtes en attente de confirmation: {quests.Count}");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI)) Debug.Log($"[UI] Quêtes en attente de confirmation: {quests.Count}");
             
             // Affiche un message d'information
             string questInfo = "\n\n--- MISSION PROPOSÉE ---\n";
@@ -492,7 +492,7 @@ public class DialogueUI : MonoBehaviour
     
     void AcceptQuests()
     {
-        Debug.Log("✅ Joueur accepte les quêtes");
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI)) Debug.Log("[UI] ✅ Joueur accepte les quêtes");
         
         // Crée les quêtes
         if (QuestManager.Instance != null)
@@ -502,7 +502,7 @@ public class DialogueUI : MonoBehaviour
                 bool success = QuestManager.Instance.CreateQuestFromToken(quest, questGiverName);
                 if (success)
                 {
-                    Debug.Log($"✅ Quête créée: {quest.description}");
+                    if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest)) Debug.Log($"[QUEST] ✅ Quête créée: {quest.description}");
 
                     // Log l'acceptation de la quête dans le Journal d'Aventure
                     AdventureJournalExtensions.LogQuestAccepted(quest.description, questGiverName);
@@ -530,7 +530,7 @@ public class DialogueUI : MonoBehaviour
     
     void DeclineQuests()
     {
-        Debug.Log("❌ Joueur refuse les quêtes");
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI)) Debug.Log("[UI] ❌ Joueur refuse les quêtes");
         ClearPendingQuests();
         
         // REAFFICHE les éléments IA après refus
@@ -588,7 +588,7 @@ public class DialogueUI : MonoBehaviour
     
     public void ShowFetchQuestButton(string questId, string objectName, int quantity)
     {
-        Debug.Log($"ShowFetchQuestButton appelé: {objectName} x{quantity}");
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI)) Debug.Log($"[UI] ShowFetchQuestButton appelé: {objectName} x{quantity}");
         
         pendingFetchQuestId = questId;
         pendingFetchObjectName = objectName;
@@ -612,7 +612,7 @@ public class DialogueUI : MonoBehaviour
         // Gestion des quêtes DELIVERY
         if (!string.IsNullOrEmpty(pendingDeliveryQuestId))
         {
-            Debug.Log($"🚚 Livraison du colis via UI: {pendingDeliveryPackage}");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest)) Debug.Log($"[QUEST] 🚚 Livraison du colis via UI: {pendingDeliveryPackage}");
             
             QuestObject[] allQuestObjects = FindObjectsByType<QuestObject>(FindObjectsSortMode.None);
             foreach (QuestObject qo in allQuestObjects)
@@ -629,7 +629,7 @@ public class DialogueUI : MonoBehaviour
         // Gestion des quêtes FETCH
         else if (!string.IsNullOrEmpty(pendingFetchQuestId))
         {
-            Debug.Log($"📦 Remise des objets via UI: {pendingFetchObjectName} x{pendingFetchQuantity}");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest)) Debug.Log($"[QUEST] 📦 Remise des objets via UI: {pendingFetchObjectName} x{pendingFetchQuantity}");
             
             bool success = PlayerInventory.Instance.RemoveItem(
                 pendingFetchObjectName, 

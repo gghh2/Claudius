@@ -218,6 +218,8 @@ public class PlayerControllerCC : MonoBehaviour
     
     void UpdateMovement()
     {
+        if (controller == null || !controller.enabled || !controller.gameObject.activeInHierarchy) return;
+
         // Get camera for direction reference
         Camera mainCamera = Camera.main;
         
@@ -235,15 +237,17 @@ public class PlayerControllerCC : MonoBehaviour
         Vector3 move = (right * inputX + forward * inputY) * currentMoveSpeed;
         
         // Apply horizontal movement
+        if (!controller.enabled) return;
         controller.Move(move * Time.deltaTime);
-        
+
         // Apply gravity
         if (isGrounded && velocity.y < 0)
         {
             velocity.y = -2f; // Small downward force to keep grounded
         }
-        
+
         velocity.y += gravity * Time.deltaTime;
+        if (!controller.enabled) return;
         controller.Move(velocity * Time.deltaTime);
         
         // Rotation - face movement direction
@@ -316,8 +320,6 @@ public class PlayerControllerCC : MonoBehaviour
         
         if (jumpSound != null && audioSource != null)
             audioSource.PlayOneShot(jumpSound);
-        
-        Debug.Log("🦘 Saut !");
     }
     
     void UpdateSprint()

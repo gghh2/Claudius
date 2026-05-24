@@ -85,7 +85,8 @@ public class NPC : MonoBehaviour
         
         if (show)
         {
-            Debug.Log($"Appuyez sur E pour parler à {npcName} ({npcRole})");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.NPC))
+                Debug.Log($"Appuyez sur E pour parler à {npcName} ({npcRole})");
             
             if (nameDisplay != null)
             {
@@ -114,7 +115,8 @@ public class NPC : MonoBehaviour
     
     void StartDialogue()
     {
-        Debug.Log($"=== Dialogue avec {npcName} ===");
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.NPC))
+            Debug.Log($"=== Dialogue avec {npcName} ===");
         
         // Arrête le mouvement du NPC
         NPCMovement movement = GetComponent<NPCMovement>();
@@ -192,8 +194,11 @@ public class NPC : MonoBehaviour
         
         var activeQuests = QuestJournal.Instance.GetActiveQuests();
         
-        Debug.Log($"[FETCH] Recherche quête pour NPC: '{npcName}'");
-        Debug.Log($"[FETCH] Quêtes actives: {activeQuests.Count}");
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.NPC))
+        {
+            Debug.Log($"[FETCH] Recherche quête pour NPC: '{npcName}'");
+            Debug.Log($"[FETCH] Quêtes actives: {activeQuests.Count}");
+        }
         
         var fetchQuest = activeQuests.FirstOrDefault(q => 
             q.giverNPCName == npcName && 
@@ -201,12 +206,14 @@ public class NPC : MonoBehaviour
         
         if (fetchQuest != null)
         {
-            Debug.Log($"[FETCH] Quête FETCH trouvée: {fetchQuest.questTitle}");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.NPC))
+                Debug.Log($"[FETCH] Quête FETCH trouvée: {fetchQuest.questTitle}");
             
             // Extrait le nom de l'objet depuis la description
             string objectName = ExtractObjectNameFromDescription(fetchQuest.description);
             
-            Debug.Log($"[FETCH] Objet recherché: {objectName} x{fetchQuest.maxProgress}");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.NPC))
+                Debug.Log($"[FETCH] Objet recherché: {objectName} x{fetchQuest.maxProgress}");
             
             // Vérifie si le joueur a tous les objets nécessaires
             bool hasAllItems = PlayerInventory.Instance.HasItemsForQuest(
@@ -215,11 +222,13 @@ public class NPC : MonoBehaviour
                 fetchQuest.questId
             );
             
-            Debug.Log($"[FETCH] Joueur a tous les objets: {hasAllItems}");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.NPC))
+                Debug.Log($"[FETCH] Joueur a tous les objets: {hasAllItems}");
             
             if (hasAllItems)
             {
-                Debug.Log($"✅ Le joueur a tous les objets pour la quête FETCH: {fetchQuest.questTitle}");
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.NPC))
+                    Debug.Log($"✅ Le joueur a tous les objets pour la quête FETCH: {fetchQuest.questTitle}");
                 
                 if (DialogueUI.Instance != null)
                 {
@@ -235,7 +244,8 @@ public class NPC : MonoBehaviour
         }
         else
         {
-            Debug.Log($"[FETCH] Aucune quête FETCH trouvée pour '{npcName}'");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.NPC))
+                Debug.Log($"[FETCH] Aucune quête FETCH trouvée pour '{npcName}'");
         }
         
         return false;
@@ -274,7 +284,8 @@ public class NPC : MonoBehaviour
                 // Convertit en format avec underscores pour le système interne
                 string internalName = objectName.Replace(" ", "_").ToLower();
                 
-                Debug.Log($"[EXTRACT] Description: '{description}' -> Objet interne: '{internalName}'");
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.NPC))
+                    Debug.Log($"[EXTRACT] Description: '{description}' -> Objet interne: '{internalName}'");
                 return internalName;
             }
         }

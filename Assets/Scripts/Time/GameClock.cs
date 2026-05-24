@@ -59,14 +59,36 @@ public class GameClock : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+            totalMinutes = startHour * 60 + startMinute;
+
+            // Si on est dans une hiérarchie UI (Canvas ancêtre), on N'OSE PAS
+            // détacher : les enfants UI (comme un TMP HUD qu'on porte) perdraient
+            // leur Canvas et cesseraient de s'afficher. On reste donc en place
+            // et on saute DontDestroyOnLoad — la clock vit le temps de la scène
+            // Game (comme l'AdventureJournalUI).
+            if (HasCanvasAncestor())
+            {
+                return;
+            }
+
             if (transform.parent != null) transform.SetParent(null);
             DontDestroyOnLoad(gameObject);
-            totalMinutes = startHour * 60 + startMinute;
         }
         else if (Instance != this)
         {
             Destroy(gameObject);
         }
+    }
+
+    bool HasCanvasAncestor()
+    {
+        Transform t = transform.parent;
+        while (t != null)
+        {
+            if (t.GetComponent<Canvas>() != null) return true;
+            t = t.parent;
+        }
+        return false;
     }
 
     void Start()

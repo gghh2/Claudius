@@ -64,6 +64,23 @@ public class InventoryUI : MonoBehaviour
             PlayerWallet.Instance.OnCreditsChanged -= OnCreditsChanged;
     }
 
+    void OnEnable()
+    {
+        // L'inventaire est rendu visible par UnifiedUIManager.NavigateTo qui
+        // SetActive(true) le panel. On rafraîchit le contenu à chaque ouverture
+        // (le manager n'appelle plus OpenInventory directement).
+        if (Application.isPlaying && inventoryContent != null)
+        {
+            isOpen = true;
+            RefreshInventoryDisplay();
+        }
+    }
+
+    void OnDisable()
+    {
+        isOpen = false;
+    }
+
     void OnCreditsChanged(int newCredits)
     {
         UpdateCreditsText(newCredits);

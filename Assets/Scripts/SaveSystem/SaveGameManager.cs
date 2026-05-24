@@ -463,6 +463,12 @@ public class SaveGameManager : MonoBehaviour
             data.conversationsData = AIDialogueManager.Instance.GetSaveData();
         }
 
+        // Horloge du jeu
+        if (GameClock.Instance != null)
+        {
+            data.clockData = GameClock.Instance.GetSaveData();
+        }
+
         return data;
     }
     
@@ -694,6 +700,12 @@ public class SaveGameManager : MonoBehaviour
         if (AIDialogueManager.Instance != null && data.conversationsData != null)
         {
             AIDialogueManager.Instance.LoadSaveData(data.conversationsData);
+        }
+
+        // Horloge
+        if (GameClock.Instance != null && data.clockData != null)
+        {
+            GameClock.Instance.LoadSaveData(data.clockData);
         }
     }
     
@@ -996,6 +1008,7 @@ public class SaveData
     public AdventureJournalUI.JournalSaveData journalData;
     public WalletSaveData walletData;
     public ConversationsSaveData conversationsData;
+    public GameClockSaveData clockData;
 }
 
 [System.Serializable]

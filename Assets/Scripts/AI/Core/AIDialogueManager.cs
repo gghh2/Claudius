@@ -97,6 +97,7 @@ public class AIDialogueManager : MonoBehaviour
         if (conversationsByNpc.TryGetValue(npcData.name, out var existing) && existing.Count > 0)
         {
             currentConversation = existing;
+            InjectTimeContext();
             currentConversation.Add(new OpenAIMessage("user",
                 "Le joueur revient vous parler. Accueillez-le comme une connaissance, en vous souvenant de vos échanges précédents."));
         }
@@ -106,6 +107,7 @@ public class AIDialogueManager : MonoBehaviour
             conversationsByNpc[npcData.name] = currentConversation;
 
             currentConversation.Add(new OpenAIMessage("system", BuildSystemPrompt(npcData)));
+            InjectTimeContext();
 
             string initialUserMessage = "Le joueur s'approche de vous. Saluez-le de manière naturelle selon votre personnalité.";
             if (QuestJournal.Instance != null)
@@ -558,6 +560,22 @@ RÈGLES :
     public bool HasSpokenToNPC(string npcName)
     {
         return conversationHistories.ContainsKey(npcName) && conversationHistories[npcName].hasSpokenBefore;
+    }
+
+    /// <summary>
+    /// Ajoute un message système rappelant l'heure in-game et le moment de la
+    /// journée à la conversation en cours. Appelé à chaque démarrage de
+    /// dialogue pour que le PNJ puisse réagir au temps qui passe.
+    /// </summary>
+    void InjectTimeContext()
+    {
+        if (GameClock.Instance == null) return;
+        string moment = GameClock.Instance.TimeOfDayLabel();
+        string now = GameClock.Instance.FormatNow();
+        currentConversation.Add(new OpenAIMessage("system",
+            $"Contexte temporel : nous sommes au {now} ({moment}). " +
+            "Vous êtes conscient de l'heure et du moment de la journée. Adaptez " +
+            "votre ton et vos références si pertinent (sans le rabâcher)."));
     }
 
     /// <summary>

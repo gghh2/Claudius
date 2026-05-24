@@ -24,21 +24,9 @@ public class InventoryManager : MonoBehaviour
         }
     }
     
-    void Update()
-    {
-        // Ne pas permettre d'ouvrir l'inventaire si un dialogue est ouvert
-        if (DialogueUI.Instance != null && DialogueUI.Instance.IsDialogueOpen())
-        {
-            return;
-        }
-        
-        // Toggle inventory with I key
-        if (Input.GetKeyDown(inventoryKey))
-        {
-            if (inventoryUI != null)
-            {
-                inventoryUI.ToggleInventory();
-            }
-        }
-    }
+    // Note : la touche I est gérée par UnifiedUIManager (ouverture + toggle).
+    // InventoryManager ne traite plus l'input ici pour éviter le double-fire
+    // (deux NavigateTo/NavigateBack sur la même frame -> il fallait 2 pressions
+    // pour voir l'inventaire). Le refresh à l'ouverture est géré par
+    // InventoryUI.OnEnable.
 }

@@ -42,16 +42,49 @@ public class DayNightCycle : MonoBehaviour
     [Header("Sun Rotation")]
     [Tooltip("Angle Y du soleil (azimut). -90 (= 270) fait orbiter le soleil " +
         "dans le plan Est-Ouest (+X = Est, -X = Ouest), donc le lever a lieu sur " +
-        "+X à 6h et le coucher sur -X à 18h. Ajuste si la convention du terrain diffère.")]
+        "+X et le coucher sur -X. Ajuste si la convention du terrain diffère.")]
     public float sunYAngle = -90f;
+
+    [Header("Cycle horaire")]
+    [Range(0f, 23f)] [Tooltip("Heure du lever de soleil (le soleil franchit l'horizon).")]
+    public float sunriseHour = 6f;
+    [Range(0f, 23f)] [Tooltip("Heure du coucher de soleil (le soleil retombe sous l'horizon).")]
+    public float sunsetHour = 18f;
 
     public bool IsDaytime
     {
         get
         {
             if (GameClock.Instance == null) return true;
-            int h = GameClock.Instance.Hour;
-            return h >= 6 && h < 18;
+            float h = GameClock.Instance.Hour + GameClock.Instance.Minute / 60f;
+            return h >= sunriseHour && h < sunsetHour;
+        }
+    }
+
+    /// <summary>
+    /// Calcule la phase normalisée (0..1) du cycle solaire selon les heures
+    /// configurées : 0/1 = minuit, 0.25 = lever, 0.5 = midi, 0.75 = coucher.
+    /// Le lever/coucher se placent EXACTEMENT à sunriseHour/sunsetHour, le
+    /// gradient/courbe gardent leur sémantique (lever orange, midi blanc...).
+    /// </summary>
+    float ComputePhase(float hour)
+    {
+        float dayLen = Mathf.Max(0.01f, sunsetHour - sunriseHour);
+        float nightLen = Mathf.Max(0.01f, 24f - dayLen);
+
+        if (hour >= sunriseHour && hour < sunsetHour)
+        {
+            // Demi-jour : lever 0.25 -> coucher 0.75.
+            float t = (hour - sunriseHour) / dayLen;
+            return 0.25f + t * 0.5f;
+        }
+        else
+        {
+            // Demi-nuit : coucher 0.75 -> lever (suivant) 1.25 ≡ 0.25.
+            float hAdj = hour < sunriseHour ? hour + 24f : hour;
+            float t = (hAdj - sunsetHour) / nightLen;
+            float phase = 0.75f + t * 0.5f;
+            return phase >= 1f ? phase - 1f : phase;
         }
     }
 
@@ -70,7 +103,11 @@ public class DayNightCycle : MonoBehaviour
 
     void ApplyLighting()
     {
-        float t = (GameClock.Instance.Hour + GameClock.Instance.Minute / 60f) / 24f;
+        // Phase = avancement du soleil 0..1 selon sunriseHour/sunsetHour
+        // (0.25 = lever, 0.5 = midi, 0.75 = coucher). Permet de tordre la
+        // courbe d'heures sans modifier le gradient/courbe d'intensité.
+        float hour = GameClock.Instance.Hour + GameClock.Instance.Minute / 60f;
+        float t = ComputePhase(hour);
 
         if (sunLight != null)
         {
@@ -100,13 +137,18 @@ public class DayNightCycle : MonoBehaviour
         moonLight.enabled = night;
         if (!night) return;
 
-        // Lune à l'opposé du soleil (décalage de 12h).
-        float moonRot = ((GameClock.Instance.Hour + GameClock.Instance.Minute / 60f + 12f) / 24f) * 360f - 90f;
+        // Lune : phase décalée d'une demi-période (coucher du soleil = lever
+        // de la lune). On réutilise la phase t et on ajoute 0.5 pour avoir
+        // le soleil et la lune opposés. La rotation X suit la même mécanique
+        // que le soleil (t*360 - 90 → -90 à minuit, 90 au zénith).
+        float moonPhase = (t + 0.5f) % 1f;
+        float moonRot = moonPhase * 360f - 90f;
         moonLight.transform.rotation = Quaternion.Euler(moonRot, sunYAngle, 0f);
 
-        // Intensité : maximale à minuit, atténuée aux bords de la nuit.
-        float h = GameClock.Instance.Hour + GameClock.Instance.Minute / 60f;
-        float nightProgress = h < 6f ? 1f - (h / 6f) : (h - 18f) / 6f;
+        // Intensité : maximale à minuit (phase 0/1), atténuée aux bords de la nuit.
+        // Phase = 0.75 (coucher) → 0% ; 0 ou 1 (minuit) → 100% ; 0.25 (lever) → 0%.
+        float distFromMidnight = Mathf.Min(t, 1f - t); // 0 à minuit, 0.5 à midi
+        float nightProgress = Mathf.Clamp01(1f - distFromMidnight * 4f); // [0, 0.25] → [1, 0]
         moonLight.intensity = Mathf.Lerp(moonMaxIntensity * 0.25f, moonMaxIntensity, nightProgress);
         moonLight.color = moonColor;
     }

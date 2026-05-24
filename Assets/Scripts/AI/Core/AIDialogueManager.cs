@@ -397,9 +397,16 @@ ZONES VALIDES pour les types AVEC zone (utilise UNIQUEMENT celles-ci) : laborato
 (TREASURE n'a pas de zone — son emplacement est tiré au hasard sur la carte.)
 
 CHOIX DU TYPE :
-- Si la conversation parle d'un OBJET PERDU ou D'UN TRÉSOR enfoui, caché, oublié, ancien, à déterrer → TREASURE (jamais FETCH pour ce type d'objet).
-- Si le sujet est un objet quelconque qu'on récupère dans une zone connue (outils, échantillons, marchandises, paquets) → FETCH.
-- Mot-clé déclencheurs pour TREASURE : « trésor », « enfoui », « caché », « oublié », « ancien », « déterrer », « creuser », « relique », « fragment ».
+- TRIGGER TREASURE : si la conversation contient les mots « trésor », « enfoui »,
+  « caché », « oublié », « ancien », « déterrer », « creuser », « relique »,
+  « fragment », « fouille », « jadis » → tu DOIS répondre avec
+  [QUEST:TREASURE:nom_invente]. Même si le PNJ n'a pas d'objet précis en
+  tête : invente un nom de trésor évocateur (« relique_oubliee »,
+  « fragment_stellaire », « medaille_des_anciens »...). Le joueur EXPRIME
+  son envie de chercher un trésor → c'est suffisant.
+- Si le sujet est un objet quelconque qu'on récupère dans une zone connue
+  (outils, échantillons, marchandises, paquets) → FETCH.
+- En cas d'hésitation entre FETCH 'trésor' et TREASURE : choisis TOUJOURS TREASURE.
 
 RÈGLES :
 - La quête doit découler d'un sujet CONCRET de la conversation : un objet, un lieu, un problème ou un besoin réellement évoqué. Si le joueur exprime de l'intérêt mais qu'aucun sujet concret n'a été abordé, réponds NONE.
@@ -459,7 +466,10 @@ RÈGLES :
     void ProcessQuestAnalysis(string analysisOutput, NPCData npcData, string playerMessage, string chatReply, double seconds)
     {
         string raw = (analysisOutput ?? string.Empty).Trim();
-        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.AI)) Debug.Log($"[QuestAnalysis] Sortie ({seconds:N1} s) : {raw}");
+        // Log inconditionnel : sortie d'analyse visible en build pour le diagnostic
+        // (sans ça, impossible de savoir pourquoi un type de quête n'est jamais
+        // émis — NONE silencieux versus token réel mais rejeté par validation).
+        Debug.Log($"[QuestAnalysis] Sortie ({seconds:N1} s) : {raw}");
 
         List<QuestToken> detectedQuests = null;
         if (QuestTokenDetector.Instance != null)

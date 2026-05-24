@@ -100,7 +100,10 @@ public class GameClock : MonoBehaviour
     void Update()
     {
         if (minutesPerRealSecond <= 0f) return;
-        totalMinutes += Time.deltaTime * minutesPerRealSecond;
+        // unscaledDeltaTime : le temps in-game continue de défiler même quand
+        // l'UI met Time.timeScale = 0 (dialogue, pause, menus). Sinon les PNJ
+        // ne verraient jamais l'heure changer entre deux conversations.
+        totalMinutes += Time.unscaledDeltaTime * minutesPerRealSecond;
 
         if (Minute != lastMinute)
         {

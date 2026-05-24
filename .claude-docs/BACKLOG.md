@@ -46,17 +46,22 @@
 - ✅ *(2026-05-21 — refonte B2)* La génération de quête ne dépend plus du
   dialogue libre : un appel d'analyse séparé décide. Sur-proposition éradiquée,
   tokens absurdes rejetés par validation sémantique.
-- 🟡 Doublon de PNJ : un token TALK/DELIVERY ciblant un PNJ déjà existant est
-  désormais **rejeté** (mitigation). Mieux à terme : **réutiliser** ce PNJ comme
-  cible de la quête plutôt que de rejeter le token.
+- ✅ *(2026-05-24)* Doublon de PNJ — désormais **réutilisé** comme cible
+  de la quête (TALK / DELIVERY) au lieu d'être rejeté. PNJ existant
+  reçoit un QuestObject temporaire, restitué à la complétion.
 - 🟡 DELIVERY : le PNJ de destination doit avoir un nom propre inventé.
-- 🟡 EXPLORE : après une exploration demandée par un PNJ, fournir une explication /
-  des « données » d'exploration au retour.
-- 🟡 EXPLORE : zones à explorer de longueurs variables.
-- 🟡 TALK : chaîne de quête — un PNJ A envoie voir B ; trouver B doit déclencher
-  une mission de B (« TODO à rallonge »).
-- 🟡 Nouveau type de quête **« Déterrer un trésor »** : place un marqueur à un
-  endroit aléatoire de la carte ; le joueur s'y rend et déterre le trésor sur place.
+- ✅ *(2026-05-24)* EXPLORE : un rapport flavor est injecté dans le contexte
+  IA du PNJ donneur au retour (`ExplorationReport` + `InjectContextForNPC`).
+- ✅ *(2026-05-24)* EXPLORE : durée d'exploration variable (range 3-8s
+  tirée aléatoirement à la création de la quête).
+- 🟡 TALK : chaîne de quête A→B partiellement câblée. Quand TALK
+  complète, un message system est injecté dans le contexte IA du PNJ cible
+  ("le voyageur vient de la part de X, c'est l'occasion de proposer une
+  mission") — la suite est gérée naturellement par le pipeline d'analyse
+  IA. Reste à affiner les prompts pour exploiter au mieux.
+- ✅ *(2026-05-24)* Nouveau type **TREASURE** ajouté (token
+  `[QUEST:TREASURE:nom]`, location aléatoire, récompense 200 crédits).
+  L'IA ne le proposera spontanément qu'après mise à jour des prompts.
 - 🟡 Écran des quêtes : redesign en cours (chevauchement des entrées).
 - 🟡 Quand il y a beaucoup de quêtes, le scroll masque une partie de la liste.
 - 🟡 Notification écran (toast) à : nouvelle quête, quête terminée, nouvelle

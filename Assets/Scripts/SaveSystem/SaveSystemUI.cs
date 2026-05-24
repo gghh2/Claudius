@@ -22,8 +22,18 @@ public class SaveSystemUI : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private bool debugMode = false;
     
+    // Index spécial pour le slot quicksave (les slots normaux commencent à 1).
+    private const int QUICKSAVE_SLOT_INDEX = 0;
+    private const string QUICKSAVE_NAME = "quicksave";
+
     // Private
     private Dictionary<int, SlotReferences> slotRefs = new Dictionary<int, SlotReferences>();
+
+    static string GetSaveNameForSlot(int slotIndex) =>
+        slotIndex == QUICKSAVE_SLOT_INDEX ? QUICKSAVE_NAME : $"save_{slotIndex}";
+
+    static string GetDisplayNameForSlot(int slotIndex) =>
+        slotIndex == QUICKSAVE_SLOT_INDEX ? "Sauvegarde rapide" : $"Save {slotIndex}";
     
     private class SlotReferences
     {
@@ -71,18 +81,29 @@ public class SaveSystemUI : MonoBehaviour
     void InitializeSlots()
     {
         if (saveSlotContainer == null) return;
-        
+
         // Clear previous references
         slotRefs.Clear();
-        
-        // Setup each slot
-        for (int i = 0; i < saveSlotContainer.childCount; i++)
+
+        int childCount = saveSlotContainer.childCount;
+
+        // Setup each slot existant (save_1, save_2, ...).
+        for (int i = 0; i < childCount; i++)
         {
             Transform slotTransform = saveSlotContainer.GetChild(i);
-            // Use i+1 for slot index to match display (Slot 1 = save_1)
             SetupSlot(slotTransform.gameObject, i + 1);
         }
-        
+
+        // Slot quicksave : clone du premier slot, déplacé en tête de liste.
+        if (childCount > 0)
+        {
+            GameObject template = saveSlotContainer.GetChild(0).gameObject;
+            GameObject quickSlot = Instantiate(template, saveSlotContainer);
+            quickSlot.name = "SaveSlot_Quick";
+            quickSlot.transform.SetSiblingIndex(0);
+            SetupSlot(quickSlot, QUICKSAVE_SLOT_INDEX);
+        }
+
         // Initial refresh
         RefreshAllSlots();
         
@@ -170,13 +191,14 @@ public class SaveSystemUI : MonoBehaviour
             int index = kvp.Key;
             SlotReferences refs = kvp.Value;
             
-            string saveName = $"save_{index}";
+            string saveName = GetSaveNameForSlot(index);
+            string displayName = GetDisplayNameForSlot(index);
             bool hasSave = SaveGameManager.Instance.SaveExists(saveName);
-            
-            // Update text - index already starts at 1
+
+            // Update text
             if (refs.infoText != null)
             {
-                refs.infoText.text = hasSave ? $"Save {index}" : $"Empty Slot {index}";
+                refs.infoText.text = hasSave ? displayName : $"Empty — {displayName}";
             }
             
             // Update button visibility
@@ -194,15 +216,16 @@ public class SaveSystemUI : MonoBehaviour
     // Button callbacks
     void OnSaveClicked(int slotIndex)
     {
-        string saveName = $"save_{slotIndex}";
-        
+        string saveName = GetSaveNameForSlot(slotIndex);
+        string displayName = GetDisplayNameForSlot(slotIndex);
+
         if (SaveGameManager.Instance.SaveExists(saveName))
         {
             // Use ConfirmationDialogManager
             if (ConfirmationDialogManager.Instance != null)
             {
                 ConfirmationDialogManager.Instance.ShowOverwriteDialog(
-                    $"Save {slotIndex}",
+                    displayName,
                     () => PerformSave(saveName)
                 );
             }
@@ -220,7 +243,8 @@ public class SaveSystemUI : MonoBehaviour
     
     void OnLoadClicked(int slotIndex)
     {
-        string saveName = $"save_{slotIndex}";
+        string saveName = GetSaveNameForSlot(slotIndex);
+        string displayName = GetDisplayNameForSlot(slotIndex);
         Debug.Log($"[SaveSystem] Load clicked for slot {slotIndex}, save name: {saveName}");
         
         // Check if we're in MainMenu scene
@@ -259,7 +283,7 @@ public class SaveSystemUI : MonoBehaviour
             {
                 Debug.Log("[SaveSystem] ConfirmationDialogManager found, showing load dialog");
                 ConfirmationDialogManager.Instance.ShowDialog(
-                    $"Load Save {slotIndex}?\nCurrent progress will be lost.",
+                    $"Charger {displayName} ?\nLa progression actuelle sera perdue.",
                     () => {
                         Debug.Log($"[SaveSystem] Load confirmed for {saveToLoad}");
                         PerformLoad(saveToLoad);
@@ -281,18 +305,19 @@ public class SaveSystemUI : MonoBehaviour
     
     void OnDeleteClicked(int slotIndex)
     {
-        string saveName = $"save_{slotIndex}";
+        string saveName = GetSaveNameForSlot(slotIndex);
+        string displayName = GetDisplayNameForSlot(slotIndex);
         Debug.Log($"[SaveSystem] Delete clicked for slot {slotIndex}, save name: {saveName}");
-        
+
         // Capture the correct save name in a local variable
         string saveToDelete = saveName;
-        
+
         // Use ConfirmationDialogManager
         if (ConfirmationDialogManager.Instance != null)
         {
             Debug.Log("[SaveSystem] ConfirmationDialogManager found, showing delete dialog");
             ConfirmationDialogManager.Instance.ShowDeleteDialog(
-                $"Save {slotIndex}",
+                displayName,
                 () => {
                     Debug.Log($"[SaveSystem] Delete confirmed for {saveToDelete}");
                     SaveGameManager.Instance.DeleteSave(saveToDelete);

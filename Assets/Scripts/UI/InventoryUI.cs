@@ -111,11 +111,9 @@ public class InventoryUI : MonoBehaviour
     {
         if (creditsText != null)
             creditsText.text = $"Crédits : {amount}";
-
-        // Si l'inventaire est ouvert et qu'on génère la ligne dynamiquement
-        // (creditsText null), on régénère pour refléter le solde courant.
-        if (creditsText == null && isOpen)
-            RefreshInventoryDisplay();
+        // Si creditsText est null, la ligne dorée est régénérée par
+        // RefreshInventoryDisplay elle-même (via CreateCreditsHeader).
+        // Pas de re-Refresh ici sinon recursion infinie.
     }
 
     void CreateCreditsHeader(int amount)

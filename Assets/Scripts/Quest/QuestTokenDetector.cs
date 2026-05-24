@@ -264,7 +264,12 @@ public class QuestTokenDetector : MonoBehaviour
                     token.zoneName = null;
                     token.zoneType = null;
                     token.objectType = QuestObjectType.Marker;
-                    token.description = $"Déterrez {token.objectName} quelque part sur la planète";
+                    {
+                        string planet = (WorldLore.Instance != null && WorldLore.Instance.HasPlanetName)
+                            ? WorldLore.Instance.PlanetName
+                            : "la planète";
+                        token.description = $"Déterrez {token.objectName} quelque part sur {planet}";
+                    }
                     break;
             }
             

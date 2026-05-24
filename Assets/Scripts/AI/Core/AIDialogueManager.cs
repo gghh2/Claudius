@@ -41,6 +41,7 @@ public class AIDialogueManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+            if (transform.parent != null) transform.SetParent(null);
             DontDestroyOnLoad(gameObject);
         }
         else

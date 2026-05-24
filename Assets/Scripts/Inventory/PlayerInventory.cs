@@ -31,6 +31,7 @@ public class PlayerInventory : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+            if (transform.parent != null) transform.SetParent(null);
             DontDestroyOnLoad(gameObject);
             if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
                 Debug.Log("✅ PlayerInventory Instance créée");

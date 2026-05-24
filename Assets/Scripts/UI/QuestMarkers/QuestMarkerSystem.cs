@@ -63,6 +63,7 @@ public class QuestMarkerSystem : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+            if (transform.parent != null) transform.SetParent(null);
             DontDestroyOnLoad(gameObject);
             InitializeSystem();
         }

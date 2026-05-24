@@ -37,6 +37,7 @@ namespace DynamicAssets.Generation.API
             if (Instance == null)
             {
                 Instance = this;
+                if (transform.parent != null) transform.SetParent(null);
                 DontDestroyOnLoad(gameObject);
             }
             else

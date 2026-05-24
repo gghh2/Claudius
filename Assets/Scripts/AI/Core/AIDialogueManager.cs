@@ -386,13 +386,20 @@ TA TÂCHE : déterminer si, dans son DERNIER message, le joueur cherche une miss
 - Ta réponse entière doit être SOIT un token, SOIT le mot NONE. Aucun autre texte.
 
 FORMATS DE TOKEN :
-[QUEST:FETCH:objet:zone:quantité]        — rapporter des objets
+[QUEST:FETCH:objet:zone:quantité]        — rapporter des objets ordinaires
 [QUEST:DELIVERY:objet:destinataire:zone] — livrer quelque chose à quelqu'un
 [QUEST:EXPLORE:zone]                     — explorer une zone
 [QUEST:TALK:personnage:zone]             — aller parler à quelqu'un
 [QUEST:INTERACT:objet:zone]              — interagir avec un objet
+[QUEST:TREASURE:nom_du_tresor]           — DÉTERRER un trésor à un endroit aléatoire de la carte (PAS DE ZONE — le jeu place le trésor)
 
-ZONES VALIDES (utilise UNIQUEMENT celles-ci) : laboratory, hangar, market, security, residential, engineering, medical, storage, ruins
+ZONES VALIDES pour les types AVEC zone (utilise UNIQUEMENT celles-ci) : laboratory, hangar, market, security, residential, engineering, medical, storage, ruins
+(TREASURE n'a pas de zone — son emplacement est tiré au hasard sur la carte.)
+
+CHOIX DU TYPE :
+- Si la conversation parle d'un OBJET PERDU ou D'UN TRÉSOR enfoui, caché, oublié, ancien, à déterrer → TREASURE (jamais FETCH pour ce type d'objet).
+- Si le sujet est un objet quelconque qu'on récupère dans une zone connue (outils, échantillons, marchandises, paquets) → FETCH.
+- Mot-clé déclencheurs pour TREASURE : « trésor », « enfoui », « caché », « oublié », « ancien », « déterrer », « creuser », « relique », « fragment ».
 
 RÈGLES :
 - La quête doit découler d'un sujet CONCRET de la conversation : un objet, un lieu, un problème ou un besoin réellement évoqué. Si le joueur exprime de l'intérêt mais qu'aucun sujet concret n'a été abordé, réponds NONE.

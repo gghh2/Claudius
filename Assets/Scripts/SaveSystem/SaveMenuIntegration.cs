@@ -36,26 +36,6 @@ public class SaveMenuIntegration : MonoBehaviour
         }
     }
     
-    // Quick save/load removed
-    /*
-    void Update()
-    {
-        if (!enableQuickSave) return;
-        
-        // Quick save
-        if (Input.GetKeyDown(quickSaveKey))
-        {
-            QuickSave();
-        }
-        
-        // Quick load
-        if (Input.GetKeyDown(quickLoadKey))
-        {
-            QuickLoad();
-        }
-    }
-    */
-    
     void OpenSaveMenu()
     {
         if (saveSystemUI == null) return;
@@ -116,49 +96,6 @@ public class SaveMenuIntegration : MonoBehaviour
             }
         }
     }
-    
-    // Quick save/load methods removed
-    /*
-    void QuickSave()
-    {
-        if (SaveGameManager.Instance != null)
-        {
-            SaveGameManager.Instance.SaveGame("quicksave");
-            ShowNotification("Quick Save Complete!");
-        }
-    }
-    
-    void QuickLoad()
-    {
-        if (SaveGameManager.Instance != null && SaveGameManager.Instance.SaveExists("quicksave"))
-        {
-            SaveGameManager.Instance.LoadGame("quicksave");
-            ShowNotification("Quick Load Complete!");
-        }
-        else
-        {
-            ShowNotification("No Quick Save Found!");
-        }
-    }
-    
-    void ShowNotification(string message)
-    {
-        // Try to use SaveGameUI's notification system
-        if (saveGameUI != null)
-        {
-            var method = saveGameUI.GetType().GetMethod("ShowNotification", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            if (method != null)
-            {
-                method.Invoke(saveGameUI, new object[] { message });
-                return;
-            }
-        }
-        
-        // Fallback to console
-        Debug.Log($"[Save System] {message}");
-    }
-    */
     
     void OnDestroy()
     {

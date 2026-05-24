@@ -107,8 +107,8 @@
   vérifier les autres `com.unity.ai.*` inutilisés).
 - Consolider la gestion du curseur (3 contrôleurs : `SmartCursorManager`,
   `UnifiedUIManager`, `PauseMenuUI`) derrière `UnifiedUIManager`.
-- Retirer les blocs de code commentés : auto-save (`SaveGameManager`),
-  quick-save (`SaveMenuIntegration`).
+- ✅ *(2026-05-24)* Blocs de code commentés retirés (auto-save dans
+  `SaveGameManager`, quick-save dans `SaveMenuIntegration`).
 - Supprimer le code mort de `AIDialogueManager` rendu inutile par la refonte B2 :
   `GetQuestInstructionsForNPC`, `GetAvailableQuestOptionsForAI`,
   `GetRoleSpecificQuestExamples` (~175 lignes).
@@ -127,11 +127,8 @@
 - `QuestMarkerCustomizer` — non câblé (rend mortes 2 méthodes de `QuestMarkerSystem`).
 - `AudioSettingsUI` — remplacé par `PauseMenuUI` (constante `AudioSettings` inutilisée).
 - `MusicZoneTrigger` — jamais placé en scène (ou WIP à assumer ?).
-- `APITester` — attaché à la scène `Game` mais inutilisé → retirer le composant.
-- `AssetManagerTester` — scaffolding de test du `DynamicAssetManager` (tests
-  auto au `Start`), attaché à la scène `Game` → retirer le composant (comme
-  `APITester`). Le code a été rendu robuste, mais ça n'a rien à faire dans un
-  build livré.
+- ✅ *(2026-05-24)* `APITester` retiré de `Game.unity`.
+- ✅ *(2026-05-24)* `AssetManagerTester` retiré de `Game.unity`.
 
 ## Évolutions
 

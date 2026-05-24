@@ -15,13 +15,9 @@ public class SaveGameManager : MonoBehaviour
     [Header("Save Settings")]
     [Tooltip("Name of the save file")]
     public string saveFileName = "savegame";
-    
-    // Auto save removed - no longer needed
-    // [Tooltip("Auto save interval in seconds (0 = disabled)")]
-    // public float autoSaveInterval = 60f;
-    
+
     [Header("Debug")]
-    public bool debugMode = true;
+    public bool debugMode = false;
     
     // Events
     public static event Action OnGameSaved;

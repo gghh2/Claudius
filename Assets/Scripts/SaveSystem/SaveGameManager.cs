@@ -64,23 +64,35 @@ public class SaveGameManager : MonoBehaviour
         }
     }
     
-    // Auto save removed
-    /*
     void Update()
     {
-        // Auto save
-        if (autoSaveInterval > 0)
+        // Quick save / quick load (F5 / F9). Désactivés si un panneau modal
+        // est ouvert pour éviter les sauvegardes pendant un dialogue ou un menu.
+        if (UnifiedUIManager.Instance != null && UnifiedUIManager.Instance.IsInputBlocked())
+            return;
+
+        if (Input.GetKeyDown(KeyCode.F5))
         {
-            autoSaveTimer += Time.deltaTime;
-            if (autoSaveTimer >= autoSaveInterval)
+            SaveGame("quicksave");
+            if (NotificationManager.Instance != null)
+                NotificationManager.Instance.ShowSuccess("Sauvegarde rapide");
+        }
+        else if (Input.GetKeyDown(KeyCode.F9))
+        {
+            string quickPath = Path.Combine(savePath, "quicksave.json");
+            if (File.Exists(quickPath))
             {
-                autoSaveTimer = 0f;
-                SaveGame("autosave");
+                LoadGame("quicksave");
+                if (NotificationManager.Instance != null)
+                    NotificationManager.Instance.ShowInfo("Sauvegarde rapide chargée");
+            }
+            else if (NotificationManager.Instance != null)
+            {
+                NotificationManager.Instance.ShowWarning("Aucune sauvegarde rapide");
             }
         }
     }
-    */
-    
+
     /// <summary>
     /// Save the current game state
     /// </summary>

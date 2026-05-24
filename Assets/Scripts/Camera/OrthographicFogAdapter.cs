@@ -10,11 +10,11 @@ public class OrthographicFogAdapter : MonoBehaviour
     public bool enableFogAdaptation = true;
     
     [Header("Calibration Points")]
-    [Tooltip("Point 1: Zoomed out (Size 20)")]
-    public CalibrationPoint calibrationPoint1 = new CalibrationPoint(20f, 20f, 250f);
-    
-    [Tooltip("Point 2: Normal view (Size 10) - values stay constant below this")]
-    public CalibrationPoint calibrationPoint2 = new CalibrationPoint(10f, 80f, 250f);
+    [Tooltip("Point 1: zoom maxi dezoomé (caméra orthographicSize ~15)")]
+    public CalibrationPoint calibrationPoint1 = new CalibrationPoint(15f, 30f, 200f);
+
+    [Tooltip("Point 2: zoom maxi rapproché (orthographicSize ~2) — valeurs figées en dessous")]
+    public CalibrationPoint calibrationPoint2 = new CalibrationPoint(2f, 10f, 60f);
     
     [Header("Settings")]
     [Tooltip("Fog color")]

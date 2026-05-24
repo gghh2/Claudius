@@ -31,10 +31,8 @@
   QuestManager, QuestZoneManager, QuestMarkerSystem, UnifiedUIManager,
   GlobalDebugManager, AIDialogueManager. Aligner sur le pattern de
   `SaveGameManager`.
-- 🟢 **Double tag "Player"** : le GameObject `space_man_model` (enfant
-  visuel du joueur) est aussi taggé "Player", en plus du root. Les
-  `FindGameObjectsWithTag("Player")` retournent 2 résultats. Aucun bug
-  fonctionnel constaté mais ce sera un piège un jour.
+- ✅ *(2026-05-24)* Double tag "Player" résolu — `space_man_model` est
+  désormais `Untagged`, seul le root porte le tag "Player".
 - ✅ *(2026-05-24)* Raccourcis I / J / L désormais *toggle* — re-presser
   la touche du panneau ouvert le referme (`UnifiedUIManager.Update`).
 - 🟡 **Emojis dans les strings affichées** (toasts, titres de quête, etc.)
@@ -84,9 +82,11 @@
 - 🟢 Feuillage **trop saturé** : matériaux de végétation d'un vert lime trop vif
   (ACES l'amplifie). Désaturer les matériaux, ou courbe Hue vs Sat ciblée sur le
   vert dans le Volume.
-- 🟡 `OrthographicFogAdapter` mal calibré : réglé pour des tailles de caméra
-  19-30 alors que le zoom réel est 2-15 → le brouillard ne s'affiche jamais.
-  À recalibrer (profondeur atmosphérique type PoE).
+- ✅ *(2026-05-24)* `OrthographicFogAdapter` recalibré (défauts du code) :
+  point1 (size 15, start 30, end 200) / point2 (size 2, start 10, end 60),
+  aligné sur le vrai range de zoom 2-15. L'instance en scène garde
+  toutefois ses anciennes valeurs sérialisées — `Reset` sur le composant
+  via Inspector pour les réappliquer.
 - 🟢 Lightmap baké unique en 1024² : basse résolution, AO/GI bakés grossiers.
   Monter la résolution / le nombre de lightmaps pour un baké net.
 - 🔧 **Shader stripping** désactivé (`GraphicsSettings`) → Unity compile toutes

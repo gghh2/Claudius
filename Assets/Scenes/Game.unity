@@ -7759,7 +7759,7 @@ GameObject:
   m_Component:
   - component: {fileID: 396517207}
   m_Layer: 0
-  m_Name: Falaise
+  m_Name: Laboratoire du Perche
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -30048,7 +30048,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1112338128624330, guid: e7965cb5f3b6b49439772edd4131b2b0, type: 3}
       propertyPath: m_TagString
-      value: Player
+      value: Untagged
       objectReference: {fileID: 0}
     - target: {fileID: 4194766461503884, guid: e7965cb5f3b6b49439772edd4131b2b0, type: 3}
       propertyPath: m_LocalPosition.y
@@ -43765,7 +43765,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e52b077ed9c5fb4ca50e43061df7ce1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  zoneName: Zone de Fallback
+  zoneName: Perche
   zoneType: 0
   description: "Si jamais aucune qu\xEAte n'est possible \xE0 g\xE9n\xE9rer dans
     les zones existantes elle peut utiliser cette zone qui contient tous les \xE9l\xE9ments."

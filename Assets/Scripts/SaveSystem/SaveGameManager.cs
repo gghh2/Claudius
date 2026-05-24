@@ -475,6 +475,12 @@ public class SaveGameManager : MonoBehaviour
             data.loreData = LoreLibrary.Instance.GetSaveData();
         }
 
+        // Pool de rumeurs
+        if (RumorPool.Instance != null)
+        {
+            data.rumorData = RumorPool.Instance.GetSaveData();
+        }
+
         return data;
     }
     
@@ -718,6 +724,12 @@ public class SaveGameManager : MonoBehaviour
         if (LoreLibrary.Instance != null && data.loreData != null)
         {
             LoreLibrary.Instance.LoadSaveData(data.loreData);
+        }
+
+        // Rumeurs
+        if (RumorPool.Instance != null && data.rumorData != null)
+        {
+            RumorPool.Instance.LoadSaveData(data.rumorData);
         }
     }
     
@@ -1022,6 +1034,7 @@ public class SaveData
     public ConversationsSaveData conversationsData;
     public GameClockSaveData clockData;
     public LoreSaveData loreData;
+    public RumorSaveData rumorData;
 }
 
 [System.Serializable]

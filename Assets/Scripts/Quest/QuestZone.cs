@@ -77,6 +77,9 @@ public class QuestZone : MonoBehaviour
             AdventureJournalExtensions.LogZoneDiscovered(zoneName);
             if (NotificationManager.Instance != null)
                 NotificationManager.Instance.ShowSuccess($"Nouvelle zone : {formattedName}");
+            if (RumorPool.Instance != null)
+                RumorPool.Instance.AddRumor("zone_" + zoneName,
+                    $"Le voyageur a découvert {formattedName}.");
         }
         else if (NotificationManager.Instance != null)
         {

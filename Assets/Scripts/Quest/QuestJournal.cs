@@ -186,6 +186,15 @@ public class QuestJournal : MonoBehaviour
                 int reward = QuestRewardScale.GetReward(quest.questType, quest.maxProgress);
                 if (reward > 0) PlayerWallet.Instance.AddCredits(reward);
             }
+
+            // Rumeur : les PNJ alentours apprennent que le voyageur a accompli
+            // une mission. À la prochaine convo, l'un d'eux peut le mentionner.
+            if (RumorPool.Instance != null)
+            {
+                string giver = TextFormatter.FormatName(quest.giverNPCName ?? "un mystérieux contact");
+                RumorPool.Instance.AddRumor("quest_" + quest.questId,
+                    $"Le voyageur a terminé une mission pour {giver} : {quest.description}.");
+            }
         }
     }
     

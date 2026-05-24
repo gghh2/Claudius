@@ -99,6 +99,7 @@ public class AIDialogueManager : MonoBehaviour
             currentConversation = existing;
             InjectTimeContext();
             InjectLoreContext(npcData.name);
+            InjectRumorContext(npcData.name);
             currentConversation.Add(new OpenAIMessage("user",
                 "Le joueur revient vous parler. Accueillez-le comme une connaissance, en vous souvenant de vos échanges précédents."));
         }
@@ -110,6 +111,7 @@ public class AIDialogueManager : MonoBehaviour
             currentConversation.Add(new OpenAIMessage("system", BuildSystemPrompt(npcData)));
             InjectTimeContext();
             InjectLoreContext(npcData.name);
+            InjectRumorContext(npcData.name);
 
             string initialUserMessage = "Le joueur s'approche de vous. Saluez-le de manière naturelle selon votre personnalité.";
             if (QuestJournal.Instance != null)
@@ -613,6 +615,22 @@ RÈGLES :
             $"« {note.title} » qui dit : « {note.content} ». Vous pouvez y faire référence " +
             "si la conversation s'y prête (par curiosité, par lecture mentale...) mais " +
             "ne pas l'imposer."));
+    }
+
+    /// <summary>
+    /// Glisse une rumeur fraîche dans le contexte. Sert à propager les
+    /// exploits du joueur entre PNJ — chacun en apprend une au max par
+    /// dialogue, marquée comme déjà entendue (RumorPool gère le suivi).
+    /// </summary>
+    void InjectRumorContext(string npcName)
+    {
+        if (RumorPool.Instance == null) return;
+        var rumor = RumorPool.Instance.GetFreshRumorFor(npcName);
+        if (rumor == null) return;
+        currentConversation.Add(new OpenAIMessage("system",
+            $"Rumeur entendue récemment : « {rumor.text} » Vous pouvez l'évoquer " +
+            "naturellement si la conversation s'y prête, comme un on-dit, sans en " +
+            "faire toute une affaire."));
     }
 
     /// <summary>

@@ -158,12 +158,19 @@ public class QuestManager : MonoBehaviour
         newQuest.currentProgress = initialProgress; // Set initial progress BEFORE creating objects
         
         bool success = CreateQuestByType(newQuest);
-        
+
         if (success)
         {
             FinalizeQuestCreation(newQuest, token, giverNPCName);
+
+            // Toast uniquement pour les nouvelles quêtes (pas les reload save).
+            if (initialProgress == 0 && NotificationManager.Instance != null)
+            {
+                string title = TextFormatter.FormatDescription(token.description);
+                NotificationManager.Instance.ShowSuccess($"Nouvelle mission : {title}");
+            }
         }
-        
+
         return success;
     }
     

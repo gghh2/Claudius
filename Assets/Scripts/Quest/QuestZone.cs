@@ -53,6 +53,7 @@ public class QuestZone : MonoBehaviour
     private List<Vector3> spawnPoints = new List<Vector3>();
     private List<GameObject> spawnedObjects = new List<GameObject>();
     private bool zoneDiscovered = false;
+    private bool playerInside = false;
 
     void Start()
     {
@@ -62,12 +63,31 @@ public class QuestZone : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        // Détecte l'entrée du joueur dans la zone et l'enregistre une seule fois
-        if (!zoneDiscovered && other.CompareTag("Player"))
+        // Le mesh enfant du Player est parfois taggé "Player" aussi — on filtre
+        // par le rootGameObject pour ne fire qu'une fois par entrée réelle.
+        if (!other.transform.root.CompareTag("Player")) return;
+        if (playerInside) return;
+        playerInside = true;
+
+        string formattedName = TextFormatter.FormatName(zoneName);
+
+        if (!zoneDiscovered)
         {
             zoneDiscovered = true;
             AdventureJournalExtensions.LogZoneDiscovered(zoneName);
+            if (NotificationManager.Instance != null)
+                NotificationManager.Instance.ShowSuccess($"Nouvelle zone : {formattedName}");
         }
+        else if (NotificationManager.Instance != null)
+        {
+            NotificationManager.Instance.ShowInfo(formattedName);
+        }
+    }
+
+    void OnTriggerExit(Collider other)
+    {
+        if (!other.transform.root.CompareTag("Player")) return;
+        playerInside = false;
     }
     
     void GenerateSpawnPoints()

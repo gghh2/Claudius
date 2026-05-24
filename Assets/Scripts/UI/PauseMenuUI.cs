@@ -231,9 +231,9 @@ public class PauseMenuUI : MonoBehaviour
             playerController.enabled = false;
         // Le curseur est géré par SmartCursorManager (autorité unique).
 
-        // L'horloge in-game est mise en pause (sinon elle continuerait via
-        // unscaledDeltaTime même quand le joueur a explicitement pause).
-        GameClock.Instance?.Pause();
+        // NB : GameClock.Pause/Resume sont gérés par Pause()/Resume() publics
+        // (vraies actions utilisateur). Ne PAS les appeler ici car OnEnable
+        // se déclenche aussi au scene-load -> sinon clock pausée pour toujours.
     }
 
     void OnPauseMenuClosed()
@@ -242,8 +242,6 @@ public class PauseMenuUI : MonoBehaviour
 
         if (playerController != null)
             playerController.enabled = true;
-
-        GameClock.Instance?.Resume();
     }
     
     public void Pause()
@@ -253,6 +251,8 @@ public class PauseMenuUI : MonoBehaviour
         {
             UnifiedUIManager.Instance.NavigateTo(UnifiedUIPanelNames.PauseMenu);
         }
+        // Pause volontaire du temps in-game (vraie action utilisateur).
+        GameClock.Instance?.Pause();
     }
     
     public void Resume()
@@ -262,6 +262,9 @@ public class PauseMenuUI : MonoBehaviour
         {
             UnifiedUIManager.Instance.NavigateBack();
         }
+        // Resume du temps in-game (la vraie action utilisateur, par opposition
+        // à OnPauseMenuClosed qui peut être déclenché par le scene-load).
+        GameClock.Instance?.Resume();
     }
     
     void ShowSaveMenu()

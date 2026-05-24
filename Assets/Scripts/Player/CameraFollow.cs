@@ -31,6 +31,21 @@ public class CameraFollow : MonoBehaviour
         "réactif que pour l'ortho car on bouge sur 14m de distance par défaut).")]
     public float perspectiveZoomSpeedMultiplier = 5f;
     
+    [Header("Mouse Look (rotation caméra clic-droit)")]
+    [Tooltip("Maintenir le clic droit fait pivoter la caméra autour du joueur.")]
+    public bool enableMouseLook = true;
+    [Tooltip("Sensibilité horizontale (yaw).")]
+    public float yawSensitivity = 4f;
+    [Tooltip("Sensibilité verticale (pitch).")]
+    public float pitchSensitivity = 2.5f;
+    [Tooltip("Pitch minimum (en degrés, vue par-dessous → plonge).")]
+    public float pitchMin = 10f;
+    [Tooltip("Pitch maximum (vue plus rasante).")]
+    public float pitchMax = 75f;
+
+    float yaw, pitch;
+    bool yawPitchInitialized = false;
+
     [Header("Boundaries (Optional)")]
     public bool useBoundaries = false;
     public float minX = -10f;
@@ -91,6 +106,41 @@ public class CameraFollow : MonoBehaviour
     {
         HandleZoomInput();
         UpdateCameraZoom();
+        HandleMouseLook();
+    }
+
+    void HandleMouseLook()
+    {
+        if (!enableMouseLook) return;
+        // Bloque la rotation quand un panel UI est ouvert (sinon le joueur
+        // bouge la caméra sans s'en rendre compte en cliquant dans des menus).
+        if (UnifiedUIManager.Instance != null && UnifiedUIManager.Instance.IsBlockingGameplay())
+            return;
+
+        // Initialise yaw/pitch depuis l'offset courant la 1re frame.
+        if (!yawPitchInitialized)
+        {
+            Vector3 dir = offset.normalized;
+            yaw = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
+            // Pitch positif quand la cam est au-dessus du joueur.
+            pitch = Mathf.Asin(Mathf.Clamp(dir.y, -1f, 1f)) * Mathf.Rad2Deg;
+            yawPitchInitialized = true;
+        }
+
+        if (Input.GetMouseButton(1)) // bouton droit maintenu
+        {
+            yaw += Input.GetAxis("Mouse X") * yawSensitivity;
+            pitch -= Input.GetAxis("Mouse Y") * pitchSensitivity;
+            pitch = Mathf.Clamp(pitch, pitchMin, pitchMax);
+
+            // Reconstruit l'offset (direction) depuis yaw/pitch ; magnitude
+            // conservée pour ne pas perturber le zoom.
+            float radYaw = yaw * Mathf.Deg2Rad;
+            float radPitch = pitch * Mathf.Deg2Rad;
+            float cp = Mathf.Cos(radPitch);
+            Vector3 dir = new Vector3(Mathf.Sin(radYaw) * cp, Mathf.Sin(radPitch), Mathf.Cos(radYaw) * cp);
+            offset = dir * offset.magnitude;
+        }
     }
 
 
@@ -170,6 +220,14 @@ public class CameraFollow : MonoBehaviour
         // Mouvement fluide vers la position désirée
         Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
         transform.position = smoothedPosition;
+
+        // Oriente la caméra vers le joueur (utile dès qu'on active la rotation
+        // souris, sinon la cam garde sa rotation d'origine et le cadrage est
+        // cassé). Sans mouseLook : pas d'effet visible.
+        if (enableMouseLook && target != null)
+        {
+            transform.LookAt(target.position + Vector3.up * 1f);
+        }
     }
     
     // Méthodes publiques utiles

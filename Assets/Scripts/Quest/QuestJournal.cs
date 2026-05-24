@@ -95,7 +95,7 @@ public class QuestJournal : MonoBehaviour
     [SerializeField] private string trackedQuestId = null;
     
     [Header("Debug")]
-    public bool debugMode = true;
+    public bool debugMode = false;
     
     void Awake()
     {
@@ -148,10 +148,13 @@ public class QuestJournal : MonoBehaviour
             if (debugMode)
                 Debug.Log($"📊 Progression mise à jour: {quest.questTitle} ({newProgress}/{quest.maxProgress})");
             
-            // NOUVEAU: Notification visuelle si objectifs accomplis
+            // Notification visuelle si objectifs accomplis — message au joueur.
             if (newProgress >= quest.maxProgress && quest.status == QuestStatus.InProgress)
             {
-                Debug.Log($"🎯 Objectifs accomplis pour: {quest.questTitle} - Retournez voir {quest.giverNPCName} !");
+                if (NotificationManager.Instance != null)
+                    NotificationManager.Instance.ShowSuccess(
+                        $"Objectifs accomplis — retournez voir {TextFormatter.FormatName(quest.giverNPCName)}");
+                if (debugMode) Debug.Log($"[Quest] Objectifs accomplis pour: {quest.questTitle}");
             }
         }
         else

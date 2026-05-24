@@ -78,16 +78,15 @@ public class CompanionSpeedSync : MonoBehaviour
             baseSpeed = playerController.moveSpeed;
             companion.moveSpeed = baseSpeed * companion.speedMultiplier;
             
-            Debug.Log($"🏃 Vitesse synchronisée:");
-            Debug.Log($"  - Vitesse du joueur: {playerController.moveSpeed} m/s");
-            Debug.Log($"  - Multiplicateur (CompanionController): {companion.speedMultiplier}x");
-            Debug.Log($"  - Vitesse du compagnon: {companion.moveSpeed} m/s");
-            
-            if (followPlayerSprint)
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Companion))
             {
-                Debug.Log($"  - Sprint activé: Le compagnon accélérera aussi");
-                float maxSpeed = baseSpeed * companion.speedMultiplier * (playerController.sprintSpeed / playerController.moveSpeed) * sprintRatioMultiplier;
-                Debug.Log($"  - Vitesse max compagnon: {maxSpeed:F1} m/s");
+                Debug.Log($"[Companion] Vitesse synchronisée — joueur={playerController.moveSpeed} m/s, " +
+                    $"mult={companion.speedMultiplier}x, compagnon={companion.moveSpeed} m/s");
+                if (followPlayerSprint)
+                {
+                    float maxSpeed = baseSpeed * companion.speedMultiplier * (playerController.sprintSpeed / playerController.moveSpeed) * sprintRatioMultiplier;
+                    Debug.Log($"[Companion] Sprint suivi — vitesse max: {maxSpeed:F1} m/s");
+                }
             }
         }
         else

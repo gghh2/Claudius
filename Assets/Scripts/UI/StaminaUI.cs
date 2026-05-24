@@ -168,7 +168,8 @@ public class StaminaUI : MonoBehaviour
         }
         else
         {
-            Debug.Log("✅ StaminaUI connectée au PlayerControllerCC");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.UI))
+                Debug.Log("[UI] StaminaUI connectée au PlayerControllerCC");
         }
     }
     

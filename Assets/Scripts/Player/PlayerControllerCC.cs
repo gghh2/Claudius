@@ -107,7 +107,8 @@ public class PlayerControllerCC : MonoBehaviour
             if (animator == null)
             {
                 animator = GetComponentInChildren<Animator>();
-                Debug.Log("🎭 Animator trouvé dans les enfants: " + (animator != null ? animator.name : "AUCUN"));
+                if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
+                    Debug.Log("[Player] Animator trouvé dans les enfants: " + (animator != null ? animator.name : "AUCUN"));
             }
         }
         
@@ -115,7 +116,8 @@ public class PlayerControllerCC : MonoBehaviour
         if (!gameObject.CompareTag("Player"))
         {
             gameObject.tag = "Player";
-            Debug.Log("✅ Tag 'Player' assigné automatiquement");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
+                Debug.Log("[Player] Tag 'Player' assigné automatiquement");
         }
         
         // Configure AudioSource
@@ -139,7 +141,8 @@ public class PlayerControllerCC : MonoBehaviour
             cameraFollow = FindFirstObjectByType<CameraFollow>();
         }
         
-        Debug.Log("🎮 PlayerControllerCC (Character Controller) initialisé");
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
+            Debug.Log("[Player] PlayerControllerCC (Character Controller) initialisé");
     }
     
     void Update()
@@ -392,7 +395,7 @@ public class PlayerControllerCC : MonoBehaviour
     {
         isSprinting = true;
         
-        Debug.Log("🏃 Sprint activé !");
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player)) Debug.Log("[Player] Sprint activé");
         
         if (sprintStartSound != null && audioSource != null)
         {
@@ -409,7 +412,7 @@ public class PlayerControllerCC : MonoBehaviour
     {
         isSprinting = false;
         
-        Debug.Log("🚶 Sprint désactivé");
+        if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player)) Debug.Log("[Player] Sprint désactivé");
         
         if (sprintStopSound != null && audioSource != null)
         {

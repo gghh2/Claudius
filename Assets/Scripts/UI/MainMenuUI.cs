@@ -74,10 +74,8 @@ public class MainMenuUI : MonoBehaviour
         // Pause the game
         Time.timeScale = 0f;
         
-        // Ensure cursor is visible
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
-        
+        // Le curseur est géré par SmartCursorManager (autorité unique).
+
         // Disable player control
         DisablePlayerControl();
         
@@ -337,10 +335,8 @@ public class MainMenuUI : MonoBehaviour
         // Enable player control
         EnablePlayerControl();
         
-        // Hide cursor for gameplay
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
-        
+        // Le curseur est géré par SmartCursorManager (autorité unique).
+
         // Show gameplay UI
         ShowGameplayUI();
         

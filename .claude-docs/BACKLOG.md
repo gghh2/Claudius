@@ -106,8 +106,10 @@
   (`generators-beta.ai.unity.com` → `ApiNoLongerSupported`) → **pollue le log
   éditeur** même au repos. Le projet ne s'en sert pas → retirer ce package (et
   vérifier les autres `com.unity.ai.*` inutilisés).
-- Consolider la gestion du curseur (3 contrôleurs : `SmartCursorManager`,
-  `UnifiedUIManager`, `PauseMenuUI`) derrière `UnifiedUIManager`.
+- ✅ *(2026-05-24)* Curseur consolidé derrière `SmartCursorManager`
+  (autorité unique, déjà en place). Restaient des `Cursor.visible`/
+  `Cursor.lockState` parasites dans `GameLoadingManager` et `MainMenuUI` —
+  retirés. `PauseMenuUI` était déjà clean.
 - ✅ *(2026-05-24)* Blocs de code commentés retirés (auto-save dans
   `SaveGameManager`, quick-save dans `SaveMenuIntegration`).
 - Supprimer le code mort de `AIDialogueManager` rendu inutile par la refonte B2 :

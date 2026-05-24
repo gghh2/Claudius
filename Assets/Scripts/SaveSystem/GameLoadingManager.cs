@@ -148,10 +148,9 @@ public class GameLoadingManager : MonoBehaviour
             }
         }
         
-        // Force cursor to game state
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
-        
+        // Le curseur est géré par SmartCursorManager (autorité unique) ;
+        // ne pas y toucher ici.
+
         // Close any open UI panels that might be blocking
         // Only for save loading, not for new games
         if (UnifiedUIManager.Instance != null)
@@ -172,10 +171,9 @@ public class GameLoadingManager : MonoBehaviour
             loadingScreen.SetActive(false);
         }
         
-        // Setup cursor for gameplay
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
-        
+        // Le curseur est géré par SmartCursorManager (autorité unique) ;
+        // ne pas y toucher ici.
+
         // DO NOT close panels or mess with UnifiedUIManager for new games
         // Let it initialize naturally
     }

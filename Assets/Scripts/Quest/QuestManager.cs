@@ -204,6 +204,8 @@ public class QuestManager : MonoBehaviour
                 return CreateInteractQuest(quest);
             case QuestType.ESCORT:
                 return CreateEscortQuest(quest);
+            case QuestType.TREASURE:
+                return CreateTreasureQuest(quest);
             default:
                 Debug.LogError($"Type de quête non supporté: {quest.questData.questType}");
                 return false;
@@ -456,6 +458,42 @@ public class QuestManager : MonoBehaviour
         // TODO: Implémentation spécifique pour l'escorte
         return CreateTalkQuest(quest);
     }
+
+    bool CreateTreasureQuest(ActiveQuest quest)
+    {
+        QuestToken token = quest.questData;
+
+        debugMode.LogQuest("[TREASURE] Création quête trésor: {0}", token.objectName);
+
+        if (markerPrefab == null)
+        {
+            Debug.LogError("[TREASURE] markerPrefab est NULL !");
+            return false;
+        }
+
+        // Choisit une zone supportant les markers, au hasard, pour servir
+        // d'enveloppe géographique au tirage du point de spawn.
+        QuestZone hostZone = QuestZoneManager.Instance != null
+            ? QuestZoneManager.Instance.GetRandomZoneForObject(QuestObjectType.Marker)
+            : null;
+
+        if (hostZone == null)
+        {
+            Debug.LogError("[TREASURE] Aucune zone supportant Marker — impossible de placer le trésor");
+            return false;
+        }
+
+        quest.SetTargetZone(hostZone);
+
+        GameObject marker = hostZone.SpawnQuestObject(markerPrefab, QuestObjectType.Marker);
+        if (marker != null)
+        {
+            QuestManagerHelper.ConfigureQuestObject(marker, quest, token.objectName, QuestObjectType.Marker);
+            return true;
+        }
+
+        return false;
+    }
     
     #endregion
     
@@ -494,6 +532,20 @@ public class QuestManager : MonoBehaviour
                 Debug.Log("[QUEST] Quête DELIVERY - En attente de livraison via UI");
                 break;
             case QuestType.TALK:
+                // Chaîne de quête : on signale au PNJ cible que le voyageur
+                // vient de la part du donneur, ce qui pousse l'IA d'analyse à
+                // lui proposer une mission de prolongement (selon contexte).
+                if (AIDialogueManager.Instance != null
+                    && !string.IsNullOrEmpty(quest.questData.targetName)
+                    && !string.IsNullOrEmpty(quest.giverNPCName))
+                {
+                    string giverFormatted = TextFormatter.FormatName(quest.giverNPCName);
+                    AIDialogueManager.Instance.InjectContextForNPC(
+                        quest.questData.targetName,
+                        $"Le voyageur vient vous voir de la part de {giverFormatted}. " +
+                        "Si vous avez vous-même un besoin ou un service à demander, " +
+                        "c'est l'occasion de lui proposer une mission.");
+                }
                 CompleteQuestWithoutDestruction(quest);
                 break;
             case QuestType.FETCH:

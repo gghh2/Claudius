@@ -13,6 +13,7 @@ public static class QuestRewardScale
     public const int TALK = 40;
     public const int INTERACT = 50;
     public const int ESCORT = 100;
+    public const int TREASURE = 200;
 
     /// <summary>
     /// Calcule la récompense d'une quête terminée. Retourne un montant
@@ -29,6 +30,7 @@ public static class QuestRewardScale
             case QuestType.TALK:     return TALK;
             case QuestType.INTERACT: return INTERACT;
             case QuestType.ESCORT:   return ESCORT;
+            case QuestType.TREASURE: return TREASURE;
             default:                 return 0;
         }
     }

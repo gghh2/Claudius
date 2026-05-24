@@ -11,7 +11,8 @@ public enum QuestType
     EXPLORE,    // Explorer une zone
     TALK,       // Parler à un NPC
     INTERACT,   // Interagir avec un objet
-    ESCORT      // Escorter quelqu'un
+    ESCORT,     // Escorter quelqu'un
+    TREASURE    // Déterrer un trésor à un emplacement aléatoire
 }
 
 [System.Serializable]
@@ -50,7 +51,9 @@ public class QuestTokenDetector : MonoBehaviour
         { QuestType.EXPLORE, @"\[QUEST:EXPLORE:([^:]+):?([^\]]*)\]" },
         { QuestType.TALK, @"\[QUEST:TALK:([^:]+):([^:]+):?([^\]]*)\]" },
         { QuestType.INTERACT, @"\[QUEST:INTERACT:([^:]+):([^:]+):?([^\]]*)\]" },
-        { QuestType.ESCORT, @"\[QUEST:ESCORT:([^:]+):([^:]+):([^:]+):?([^\]]*)\]" }
+        { QuestType.ESCORT, @"\[QUEST:ESCORT:([^:]+):([^:]+):([^:]+):?([^\]]*)\]" },
+        // TREASURE n'a pas de zone : emplacement aléatoire sur la carte.
+        { QuestType.TREASURE, @"\[QUEST:TREASURE:([^\]]+)\]" }
     };
 
     // Identifiants de zone canoniques (cf. AIDialogueManager / CLAUDE.md).
@@ -254,6 +257,15 @@ public class QuestTokenDetector : MonoBehaviour
                     token.objectType = QuestObjectType.NPC;
                     token.description = $"Escortez {token.targetName} vers {token.zoneName}";
                     break;
+
+                case QuestType.TREASURE:
+                    // [QUEST:TREASURE:fragment_etoile] — pas de zone, emplacement aléatoire.
+                    token.objectName = match.Groups[1].Value;
+                    token.zoneName = null;
+                    token.zoneType = null;
+                    token.objectType = QuestObjectType.Marker;
+                    token.description = $"Déterrez {token.objectName} quelque part sur la planète";
+                    break;
             }
             
             return token;
@@ -401,7 +413,8 @@ public class QuestTokenDetector : MonoBehaviour
     {
         // 1. La zone doit être reconnue. ParseZoneType est volontairement
         //    généreux : un résultat null signale une zone réellement inconnue.
-        if (token.zoneType == null)
+        //    TREASURE est exempté : son emplacement est aléatoire, sans zone.
+        if (token.questType != QuestType.TREASURE && token.zoneType == null)
         {
             if (debugMode)
                 Debug.LogWarning($"[QuestTokenDetector] Token rejeté — zone inconnue : '{token.zoneName}' ({token.questType})");

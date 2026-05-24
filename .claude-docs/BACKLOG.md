@@ -155,10 +155,15 @@
   dur, donc compilée dans le build → extractible par décompilation. Acceptable
   en dev, **interdit pour une distribution** (zip/Steam) : la clé se ferait
   pomper. À résoudre avec le LLM embarqué, ou un schéma « bring-your-own-key ».
-- 🟡 **Système de récompense / crédits** — quand le joueur termine une quête,
-  une vraie récompense (crédits). Décision actée : le **jeu** fixe le montant
-  (barème), pas l'IA — l'IA reste vague, ne cite aucun chiffre. À construire :
-  porte-monnaie joueur, barème, attribution au turn-in, UI, save/load.
+- ✅ *(2026-05-24)* **Système de récompense / crédits** — `PlayerWallet`,
+  `QuestRewardScale`, attribution au turn-in, save/load, toast au gain,
+  **affichage dans l'inventaire** (ligne crédits auto-générée en tête).
+- 🟡 **Mécanique d'escorte / PNJ qui se déplacent** — actuellement
+  l'IA a interdiction de dire « suivez-moi » dans les prompts globaux
+  parce qu'aucun PNJ ne se déplace réellement avec le joueur. Quand on
+  aura une vraie mécanique de PNJ qui marche jusqu'à un lieu (escort),
+  retirer cette règle dans les `AIPromptConfig` pour libérer ce type de
+  formule. Pré-requis : path-following PNJ, état "en route", animation.
 
 ## Polish / assets
 

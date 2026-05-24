@@ -201,8 +201,6 @@ public class InventoryUI : MonoBehaviour
     
     void RefreshInventoryDisplay()
     {
-        Debug.Log($"[InventoryUI] Refresh — items={(PlayerInventory.Instance != null ? PlayerInventory.Instance.items.Count : -1)} container={inventoryContent?.name}");
-
         // Souscription tardive au wallet (cas où PlayerWallet.Awake a tourné
         // APRÈS InventoryUI.Start). Sans ça, l'event OnCreditsChanged n'est
         // pas écouté et le texte reste figé sur 0 même après AddCredits.
@@ -230,7 +228,6 @@ public class InventoryUI : MonoBehaviour
         if (PlayerInventory.Instance != null)
         {
             var items = PlayerInventory.Instance.items;
-            Debug.Log($"[InventoryUI] Refresh — iterating {items.Count} items");
             
             if (items.Count == 0)
             {

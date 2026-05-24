@@ -19,6 +19,30 @@
   joueur » — avec la caméra ortho inclinée, l'objet porteur est sur la ligne
   caméra→joueur. Derrière un objet (colonne) le comportement est correct.
   Piste : exclure du raycast l'objet sur lequel le joueur repose (sol courant).
+- 🟡 Dialogue : re-parler à un PNJ affiche d'abord brièvement le **texte du
+  dialogue précédent**, puis l'efface et le remplace par la nouvelle réponse.
+  À étudier (`DialogueUI` / `AIDialogueManager` — sans doute un `ShowText` avec
+  l'historique affiché avant l'arrivée de la réponse IA).
+- 🔧 **14 erreurs `DontDestroyOnLoad`** au Play : la plupart des managers ne
+  font pas `transform.SetParent(null)` avant `DontDestroyOnLoad` (seul
+  `SaveGameManager` le fait). Liste : MeshyGenerator, CSMGenerator,
+  CSMModelImporter, DynamicAssetManager, InventoryManager, SoundEffectsManager,
+  MusicManager, AudioDistanceManager, QuestTokenDetector, QuestJournal,
+  QuestManager, QuestZoneManager, QuestMarkerSystem, UnifiedUIManager,
+  GlobalDebugManager, AIDialogueManager. Aligner sur le pattern de
+  `SaveGameManager`.
+- 🟢 **Double tag "Player"** : le GameObject `space_man_model` (enfant
+  visuel du joueur) est aussi taggé "Player", en plus du root. Les
+  `FindGameObjectsWithTag("Player")` retournent 2 résultats. Aucun bug
+  fonctionnel constaté mais ce sera un piège un jour.
+- ✅ *(2026-05-24)* Raccourcis I / J / L désormais *toggle* — re-presser
+  la touche du panneau ouvert le referme (`UnifiedUIManager.Update`).
+- 🟡 **Emojis dans les strings affichées** (toasts, titres de quête, etc.)
+  rendent des carrés placeholder dans le jeu — la police TMP ne contient pas
+  les glyphes. Soit : (a) purger les emojis des chaînes user-facing (laisser
+  ceux des `Debug.Log` console), soit (b) ajouter une fallback font emoji à
+  TMP, soit (c) remplacer par des sprites/icônes via TMP `<sprite=...>`.
+  Les `Debug.Log` console ne sont pas concernés (rendu OS, pas TMP).
 
 ## Quêtes
 

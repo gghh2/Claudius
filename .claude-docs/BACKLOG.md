@@ -10,9 +10,10 @@
 - 🔴 La zone de fall-back n'a pas de vrai nom de zone (affiche « Laboratory »).
 - 🟡 `F5` et `F9` ne font rien (raccourcis save/load rapide attendus ?).
 - 🟡 Build&Run : le compagnon est très lent.
-- 🟡 Script manquant sur le prefab `NPC_Quest` (`Assets/Prefabs/Quest/NPC_Quest.prefab`)
-  — composant dont le script est cassé/supprimé (signalé au build).
-- 🟡 Script manquant sur `Assets/Resources/QuestMarkerConfig.asset`.
+- ✅ *(2026-05-24)* Composant orphelin retiré de `NPC_Quest.prefab` (était
+  instancié à chaque spawn de PNJ de quête → 10+ erreurs console au Play).
+- 🟡 Script manquant sur `Assets/Resources/QuestMarkerConfig.asset`
+  (à vérifier — l'audit ScriptableObject de cette session n'a rien remonté).
 - 🟡 Transparence caméra (`URPCameraObstacleHandler`) : un objet sur lequel le
   joueur **se tient** (ex. une Tombe) devient transparent. Le fade d'obstacle
   ne distingue pas « objet entre la caméra et le joueur » de « surface sous le

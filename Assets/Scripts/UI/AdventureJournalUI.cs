@@ -62,7 +62,13 @@ public class AdventureJournalUI : MonoBehaviour
 
         public JournalEntry(string content, bool isAI = false)
         {
-            this.timestamp = System.DateTime.Now.ToString("HH:mm");
+            // Estampille en temps in-game (jour + heure) plutôt que l'heure
+            // système : le journal est un objet diégétique, il doit suivre la
+            // chronologie du jeu. Fallback heure système si pas de GameClock.
+            if (GameClock.Instance != null)
+                this.timestamp = GameClock.Instance.FormatNow();
+            else
+                this.timestamp = System.DateTime.Now.ToString("HH:mm");
             this.content = content;
             this.isAIGenerated = isAI;
         }
@@ -270,9 +276,14 @@ public class AdventureJournalUI : MonoBehaviour
     string BuildAIPrompt()
     {
         StringBuilder prompt = new StringBuilder();
-        
+
         prompt.AppendLine("Tu rédiges le journal de bord intime du JOUEUR, dans un univers de space opera.");
         prompt.AppendLine("Le joueur explore une planète alien parsemée de ruines anciennes.");
+        if (GameClock.Instance != null)
+        {
+            prompt.AppendLine($"Date in-game au moment de l'écriture : {GameClock.Instance.FormatNow()} ({GameClock.Instance.TimeOfDayLabel()}).");
+            prompt.AppendLine("Tu peux référencer l'heure et le moment de la journée pour ancrer le récit, sans en faire trop.");
+        }
         prompt.AppendLine();
         prompt.AppendLine("RÈGLES IMPÉRATIVES :");
         prompt.AppendLine("- Écris à la première personne (« je »). Le narrateur est le JOUEUR lui-même.");

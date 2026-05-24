@@ -61,6 +61,13 @@ public class QuestObject : MonoBehaviour
     public float digDuration = 2.5f;
     private bool isDigging = false;
     private float digTimer = 0f;
+
+    [Header("Rendez-vous (heure requise)")]
+    [Tooltip("Si >= 0 : la quête EXPLORE / TREASURE ne progresse QUE si l'heure " +
+        "in-game correspond. Permet de coder un RDV (ex. requiredHour = 0 = minuit).")]
+    public int requiredHour = -1;
+    [Tooltip("Tolérance en heures autour de requiredHour (ex. 1 = entre H-1 et H+1).")]
+    public int requiredHourTolerance = 1;
     
     // Private variables
     private bool playerInRange = false;
@@ -369,8 +376,32 @@ public class QuestObject : MonoBehaviour
 
     }
     
+    bool IsWithinRequiredHour()
+    {
+        if (requiredHour < 0) return true;
+        if (GameClock.Instance == null) return true;
+        int h = GameClock.Instance.Hour;
+        int dist = Mathf.Min(
+            Mathf.Abs(h - requiredHour),
+            24 - Mathf.Abs(h - requiredHour));
+        return dist <= requiredHourTolerance;
+    }
+
     void UpdateExploreProgress()
     {
+        // Contrainte horaire : si on est hors fenêtre, on bloque la progression
+        // et on l'indique au joueur. La quête reste là, il pourra revenir.
+        if (!IsWithinRequiredHour())
+        {
+            if (nameText != null)
+            {
+                nameText.text = $"⌛ Revenez vers {requiredHour:00}h\n[{TextFormatter.FormatName(objectName)}]";
+                nameText.color = new Color(0.8f, 0.7f, 1f);
+                nameText.fontSize = fontSize * 1.2f;
+            }
+            return;
+        }
+
         if (!isExploring)
         {
             isExploring = true;

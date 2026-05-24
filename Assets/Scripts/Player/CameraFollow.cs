@@ -16,13 +16,20 @@ public class CameraFollow : MonoBehaviour
     [Tooltip("Distance fixe à maintenir avec le joueur")]
     public float fixedDistance = 14.14f; // Distance par défaut (correspond à offset 10,10,-10)
     
-    [Header("Zoom Settings (Orthographic)")]
+    [Header("Zoom Settings")]
     public bool enableZoom = true;
     public float zoomSpeed = 1f;
-    public float minSize = 2f;   // Zoom avant (plus proche)
-    public float maxSize = 15f;  // Zoom arrière (vue d'ensemble)
+    [Tooltip("Caméra ortho : taille orthographique. Caméra perspective : distance " +
+        "minimum (le zoom déplace la cam le long de son offset).")]
+    public float minSize = 2f;
+    [Tooltip("Caméra ortho : taille orthographique. Caméra perspective : distance " +
+        "maximum (cam la plus éloignée du joueur).")]
+    public float maxSize = 15f;
     public float defaultSize = 5f;
     public float zoomSmoothness = 5f;
+    [Tooltip("Caméra perspective : multiplicateur de zoom (le scroll est moins " +
+        "réactif que pour l'ortho car on bouge sur 14m de distance par défaut).")]
+    public float perspectiveZoomSpeedMultiplier = 5f;
     
     [Header("Boundaries (Optional)")]
     public bool useBoundaries = false;
@@ -38,13 +45,9 @@ public class CameraFollow : MonoBehaviour
     {
         // Récupère la caméra
         cam = GetComponent<Camera>();
-        
-        // Assure-toi qu'elle est en mode orthographique
-        if (!cam.orthographic)
-        {
-            cam.orthographic = true;
-            Debug.Log("Caméra mise en mode orthographique");
-        }
+
+        // PAS de force-to-orthographic — la caméra peut être perspective ou
+        // ortho selon le choix du projet. Le zoom s'adapte ci-dessous.
         
         // Trouve le target automatiquement
         if (target == null)
@@ -68,9 +71,20 @@ public class CameraFollow : MonoBehaviour
             Debug.Log($"Distance fixe calculée: {fixedDistance:F2}");
         }
         
-        // Initialise le zoom
-        cam.orthographicSize = defaultSize;
-        targetSize = defaultSize;
+        // Initialise le zoom selon le mode caméra.
+        if (cam.orthographic)
+        {
+            cam.orthographicSize = defaultSize;
+            targetSize = defaultSize;
+        }
+        else
+        {
+            // Perspective : la "taille" est interprétée comme une distance.
+            // On démarre à la distance fixe par défaut, et le zoom modifie
+            // fixedDistance dans la plage [minSize, maxSize].
+            targetSize = Mathf.Clamp(fixedDistance, minSize, maxSize);
+            fixedDistance = targetSize;
+        }
     }
     
     void Update()
@@ -96,8 +110,10 @@ public class CameraFollow : MonoBehaviour
         
         if (scrollInput != 0f)
         {
-            // Ajuste le zoom
-            targetSize -= scrollInput * zoomSpeed;
+            // En perspective, on agit sur la distance (échelle 2-15m typiquement,
+            // donc multiplicateur pour rendre le scroll utile).
+            float speed = zoomSpeed * (cam.orthographic ? 1f : perspectiveZoomSpeedMultiplier);
+            targetSize -= scrollInput * speed;
             targetSize = Mathf.Clamp(targetSize, minSize, maxSize);
         }
         
@@ -110,8 +126,17 @@ public class CameraFollow : MonoBehaviour
     
     void UpdateCameraZoom()
     {
-        // Transition fluide vers la taille cible
-        cam.orthographicSize = Mathf.Lerp(cam.orthographicSize, targetSize, Time.deltaTime * zoomSmoothness);
+        // Transition fluide vers la taille/distance cible selon le mode caméra.
+        if (cam.orthographic)
+        {
+            cam.orthographicSize = Mathf.Lerp(cam.orthographicSize, targetSize, Time.deltaTime * zoomSmoothness);
+        }
+        else
+        {
+            // Perspective : c'est la fixedDistance qui change, le LateUpdate
+            // applique alors la nouvelle position de caméra.
+            fixedDistance = Mathf.Lerp(fixedDistance, targetSize, Time.deltaTime * zoomSmoothness);
+        }
     }
     
     void LateUpdate()
@@ -161,13 +186,16 @@ public class CameraFollow : MonoBehaviour
     
     public float GetCurrentZoom()
     {
-        return cam.orthographicSize;
+        return cam.orthographic ? cam.orthographicSize : fixedDistance;
     }
-    
+
     // Zoom instantané (sans transition)
     public void SetZoomInstant(float size)
     {
         targetSize = Mathf.Clamp(size, minSize, maxSize);
-        cam.orthographicSize = targetSize;
+        if (cam.orthographic)
+            cam.orthographicSize = targetSize;
+        else
+            fixedDistance = targetSize;
     }
 }

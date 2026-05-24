@@ -29,6 +29,9 @@ public class URPCameraObstacleHandler : MonoBehaviour
     [SerializeField] private bool excludeGroundUnderPlayer = true;
     [Tooltip("Distance vers le bas depuis le joueur pour trouver le sol courant.")]
     [SerializeField] private float groundProbeDistance = 1.5f;
+    [Tooltip("Rayon de la sonde sol (≈ largeur du joueur). Permet de capter aussi " +
+        "les bords d'objets quand le joueur n'est pas centré dessus.")]
+    [SerializeField] private float groundProbeRadius = 0.6f;
     
     [Header("Debug")]
     [SerializeField] private bool showDebugRays = false;
@@ -162,18 +165,19 @@ public class URPCameraObstacleHandler : MonoBehaviour
         float distance = direction.magnitude - raycastPadding;
         direction.Normalize();
 
-        // Trouve le collider sur lequel le joueur est posé (le sol courant) pour
-        // l'exclure : sinon, avec la caméra ortho inclinée, ce collider est sur
-        // la ligne caméra→joueur et devient transparent (ex. une tombe).
-        Collider groundCollider = null;
+        // Trouve les colliders sur/proche desquels le joueur est posé (le sol
+        // courant) pour les exclure : sinon, avec la caméra ortho inclinée, ils
+        // sont sur la ligne caméra→joueur et deviennent transparents (ex. tombe).
+        // SphereCast + SphereCastAll pour couvrir le cas où le joueur est sur le
+        // bord d'un objet (un raycast fin manquerait l'objet sous le pied).
+        HashSet<Collider> groundColliders = null;
         if (excludeGroundUnderPlayer)
         {
-            Vector3 origin = player.position + Vector3.up * 0.1f;
-            if (Physics.Raycast(origin, Vector3.down, out RaycastHit groundHit,
-                groundProbeDistance, obstacleLayerMask, QueryTriggerInteraction.Ignore))
-            {
-                groundCollider = groundHit.collider;
-            }
+            groundColliders = new HashSet<Collider>();
+            Vector3 origin = player.position + Vector3.up * (groundProbeRadius + 0.1f);
+            var groundHits = Physics.SphereCastAll(origin, groundProbeRadius, Vector3.down,
+                groundProbeDistance, obstacleLayerMask, QueryTriggerInteraction.Ignore);
+            foreach (var gh in groundHits) groundColliders.Add(gh.collider);
         }
 
         RaycastHit[] hits;
@@ -196,8 +200,8 @@ public class URPCameraObstacleHandler : MonoBehaviour
         // Traiter les objets touchés
         foreach (var hit in hits)
         {
-            // Le sol sous le joueur reste opaque.
-            if (groundCollider != null && hit.collider == groundCollider) continue;
+            // Le sol sous/autour du joueur reste opaque.
+            if (groundColliders != null && groundColliders.Contains(hit.collider)) continue;
 
             Renderer renderer = hit.collider.GetComponent<Renderer>();
             if (renderer != null && renderer.enabled)

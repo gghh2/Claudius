@@ -240,5 +240,41 @@ public class DevConsole : MonoBehaviour
             p.currentStamina = 9999f;
             Print("God mode (stamina ∞)");
         };
+
+        commands["spawnnpc"] = a =>
+        {
+            var spawner = ProceduralNPCSpawner.Instance;
+            if (spawner == null) { Print("ProceduralNPCSpawner absent (ajoute le composant en scène)"); return; }
+            var player = GameObject.FindGameObjectWithTag("Player");
+            if (player == null) { Print("Player absent"); return; }
+            // Spawn 3m devant le joueur.
+            Vector3 pos = player.transform.position + player.transform.forward * 3f;
+            string role = a.Length > 0 ? string.Join(" ", a) : null;
+            var go = spawner.SpawnAt(pos, role);
+            if (go != null) Print($"PNJ procédural spawné : {go.GetComponent<NPC>()?.npcName}");
+        };
+
+        commands["addrumor"] = a =>
+        {
+            if (a.Length == 0) { Print("Usage : addrumor TEXTE"); return; }
+            if (RumorPool.Instance == null) { Print("RumorPool absent"); return; }
+            string text = string.Join(" ", a);
+            RumorPool.Instance.AddRumor($"dev_{System.Guid.NewGuid().ToString().Substring(0, 6)}", text);
+            Print("Rumeur ajoutée");
+        };
+
+        commands["addnote"] = a =>
+        {
+            if (a.Length < 2) { Print("Usage : addnote TITRE TEXTE..."); return; }
+            if (LoreLibrary.Instance == null)
+            {
+                var go = new GameObject("LoreLibrary");
+                go.AddComponent<LoreLibrary>();
+            }
+            string title = a[0];
+            string content = string.Join(" ", a, 1, a.Length - 1);
+            LoreLibrary.Instance.RegisterNote($"dev_{System.Guid.NewGuid().ToString().Substring(0, 6)}", title, content);
+            Print($"Note ajoutée : {title}");
+        };
     }
 }

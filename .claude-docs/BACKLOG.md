@@ -69,8 +69,9 @@
 
 ## Système de sauvegarde
 
-- 🟡 Mémoire de conversation des PNJ : persistante dans la session de jeu
-  (fait), mais **pas dans un save/load** (`conversationsByNpc` est en RAM).
+- ✅ *(2026-05-24)* Mémoire de conversation des PNJ persistée dans le
+  save/load (`ConversationsSaveData` ajoutée à `SaveData` ; serialise
+  `conversationHistories` ET `conversationsByNpc` côté `AIDialogueManager`).
 - 🟡 Au reload : les items de quête déjà ramassés ne doivent pas être recréés
   dans le monde.
 - 🟡 Quête EXPLORE déjà explorée mais non rendue : comportement au reload à définir.

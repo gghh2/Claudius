@@ -457,6 +457,12 @@ public class SaveGameManager : MonoBehaviour
             data.walletData = new WalletSaveData { credits = PlayerWallet.Instance.Credits };
         }
 
+        // Conversations IA (mémoire cross-session)
+        if (AIDialogueManager.Instance != null)
+        {
+            data.conversationsData = AIDialogueManager.Instance.GetSaveData();
+        }
+
         return data;
     }
     
@@ -682,6 +688,12 @@ public class SaveGameManager : MonoBehaviour
         if (PlayerWallet.Instance != null)
         {
             PlayerWallet.Instance.LoadCredits(data.walletData != null ? data.walletData.credits : 0);
+        }
+
+        // Conversations IA
+        if (AIDialogueManager.Instance != null && data.conversationsData != null)
+        {
+            AIDialogueManager.Instance.LoadSaveData(data.conversationsData);
         }
     }
     
@@ -965,6 +977,7 @@ public class SaveData
     public GameSettingsSaveData gameSettings;
     public AdventureJournalUI.JournalSaveData journalData;
     public WalletSaveData walletData;
+    public ConversationsSaveData conversationsData;
 }
 
 [System.Serializable]

@@ -576,6 +576,46 @@ RÈGLES :
         conversationsByNpc.Clear();
         if (GlobalDebugManager.IsDebugEnabled(DebugSystem.AI)) Debug.Log("[AI] Historique des conversations effacé");
     }
+
+    /// <summary>Snapshot des conversations pour le save/load.</summary>
+    public ConversationsSaveData GetSaveData()
+    {
+        var data = new ConversationsSaveData();
+        foreach (var kvp in conversationHistories)
+        {
+            data.histories.Add(kvp.Value);
+        }
+        foreach (var kvp in conversationsByNpc)
+        {
+            data.contexts.Add(new ConversationContextEntry { npcName = kvp.Key, messages = new List<OpenAIMessage>(kvp.Value) });
+        }
+        return data;
+    }
+
+    /// <summary>Restaure les conversations depuis une sauvegarde.</summary>
+    public void LoadSaveData(ConversationsSaveData data)
+    {
+        conversationHistories.Clear();
+        conversationsByNpc.Clear();
+        if (data == null) return;
+
+        if (data.histories != null)
+        {
+            foreach (var h in data.histories)
+            {
+                if (h != null && !string.IsNullOrEmpty(h.npcName))
+                    conversationHistories[h.npcName] = h;
+            }
+        }
+        if (data.contexts != null)
+        {
+            foreach (var c in data.contexts)
+            {
+                if (c != null && !string.IsNullOrEmpty(c.npcName) && c.messages != null)
+                    conversationsByNpc[c.npcName] = c.messages;
+            }
+        }
+    }
     
     [ContextMenu("Reload API Key")]
     public void ReloadAPIKey()

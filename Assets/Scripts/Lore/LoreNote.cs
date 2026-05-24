@@ -49,10 +49,14 @@ public class LoreNote : MonoBehaviour
         {
             Pickup();
         }
-        // Billboard du prompt vers la caméra.
-        if (promptObj != null && promptObj.activeSelf && Camera.main != null)
+        // Suivi en monde + billboard caméra (comme NPCNameDisplay). On ne
+        // parente PAS le prompt à la note : la note est un cube scale non
+        // uniforme, l'héritage écraserait le texte.
+        if (promptObj != null && promptObj.activeSelf)
         {
-            promptObj.transform.rotation = Quaternion.LookRotation(Camera.main.transform.forward);
+            promptObj.transform.position = transform.position + Vector3.up * 1.2f;
+            if (Camera.main != null)
+                promptObj.transform.rotation = Quaternion.LookRotation(Camera.main.transform.forward);
         }
     }
 
@@ -60,16 +64,27 @@ public class LoreNote : MonoBehaviour
     {
         if (show && promptObj == null)
         {
-            promptObj = new GameObject("Prompt");
-            promptObj.transform.SetParent(transform);
-            promptObj.transform.localPosition = new Vector3(0, 1.2f, 0);
+            promptObj = new GameObject($"LoreNotePrompt_{noteId}");
+            // Pas de SetParent — évite l'héritage du scale déformé du cube.
+            promptObj.transform.position = transform.position + Vector3.up * 1.2f;
+            promptObj.transform.localScale = Vector3.one;
+
             promptText = promptObj.AddComponent<TextMeshPro>();
             promptText.fontSize = 3;
             promptText.alignment = TextAlignmentOptions.Center;
             promptText.color = new Color(1f, 0.92f, 0.55f);
+            promptText.fontStyle = FontStyles.Normal;
+            promptText.outlineWidth = 0f;
             promptText.text = $"{title}\n[E] Ramasser";
         }
         if (promptObj != null) promptObj.SetActive(show);
+    }
+
+    void OnDestroy()
+    {
+        // Le prompt n'étant pas parenté, on doit le nettoyer manuellement
+        // quand la note est ramassée / détruite.
+        if (promptObj != null) Destroy(promptObj);
     }
 
     void Pickup()

@@ -25,6 +25,18 @@ public class LoreNote : MonoBehaviour
     GameObject promptObj;
     TextMeshPro promptText;
 
+    void Start()
+    {
+        // Si la note est déjà connue (ramassée + persistée via save), on se
+        // supprime à l'init pour éviter le respawn au scene-reload.
+        if (LoreLibrary.Instance != null
+            && !string.IsNullOrEmpty(noteId)
+            && LoreLibrary.Instance.HasNote(noteId))
+        {
+            Destroy(gameObject);
+        }
+    }
+
     void OnTriggerEnter(Collider other)
     {
         if (other.transform.root.CompareTag("Player"))

@@ -78,28 +78,31 @@ public static class QuestManagerHelper
     public static QuestZone GetQuestZone(QuestToken token, QuestObjectType requiredType, bool debugMode = false)
     {
         QuestZone targetZone = null;
-        
+
         if (token.zoneType.HasValue)
         {
-            targetZone = QuestZoneManager.Instance?.GetRandomZoneByType(token.zoneType.Value);
+            // Filtre par zoneType ET par supportedObjects pour ne pas tirer une
+            // zone du bon type mais qui ne supporte pas l'objet à spawn (sinon
+            // SpawnQuestObject retourne null et la quête est perdue).
+            targetZone = QuestZoneManager.Instance?.GetRandomZoneByTypeAndObject(
+                token.zoneType.Value, requiredType);
         }
-        
-        // Fallback : chercher n'importe quelle zone du bon type
-        if (targetZone == null && token.zoneType.HasValue)
-        {
-            if (debugMode)
-                Debug.LogWarning($"[QUEST] Aucune zone de type {token.zoneType} trouvée, recherche alternative...");
-            
-            var allZones = Object.FindObjectsByType<QuestZone>(FindObjectsSortMode.None);
-            targetZone = allZones.FirstOrDefault(z => z.zoneType == token.zoneType.Value);
-        }
-        
+
+        // Fallback 1 : n'importe quelle zone supportant le type d'objet, peu importe son zoneType.
         if (targetZone == null)
         {
-            Debug.LogError($"[QUEST] Aucune zone de type {token.zoneType} supportant {requiredType} trouvée pour: {token.zoneName}");
+            if (debugMode)
+                Debug.LogWarning($"[QUEST] Aucune zone de type {token.zoneType} supportant {requiredType} — fallback sur n'importe quelle zone qui supporte {requiredType}.");
+
+            targetZone = QuestZoneManager.Instance?.GetRandomZoneForObject(requiredType);
+        }
+
+        if (targetZone == null)
+        {
+            Debug.LogError($"[QUEST] Aucune zone supportant {requiredType} trouvée (token demandait: {token.zoneName}/{token.zoneType}).");
             Debug.LogError($"[QUEST] Vérifiez que les zones ont bien '{requiredType}' dans leur liste supportedObjects dans l'Inspector");
         }
-        
+
         return targetZone;
     }
     

@@ -42,6 +42,21 @@ public class QuestZoneManager : MonoBehaviour
             Debug.Log($"Zone désenregistrée: {zone.zoneName}");
     }
     
+    // Trouve une zone compatible par zoneType ET supportant un type d'objet donné.
+    // Utilisé pour la création de quête : le tirage random doit éviter les zones
+    // dont supportedObjects ne contient pas le type d'objet à spawn (sinon
+    // SpawnQuestObject échoue silencieusement et la quête est perdue).
+    public QuestZone GetRandomZoneByTypeAndObject(QuestZoneType zoneType, QuestObjectType requiredObjectType)
+    {
+        List<QuestZone> compatible = allZones.Where(z =>
+            z.zoneType == zoneType && z.supportedObjects.Contains(requiredObjectType)).ToList();
+
+        if (compatible.Count > 0)
+            return compatible[Random.Range(0, compatible.Count)];
+
+        return null;
+    }
+
     // Trouve une zone compatible pour un type de quête
     public QuestZone GetRandomZoneByType(QuestZoneType zoneType)
     {

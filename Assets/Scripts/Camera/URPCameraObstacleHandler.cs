@@ -21,7 +21,10 @@ public class URPCameraObstacleHandler : MonoBehaviour
     
     [Header("Détection")]
     [SerializeField] private float raycastPadding = 0.5f;
-    [SerializeField] private bool useSphereCast = true;
+    [Tooltip("Désactivé : rayon fin caméra→joueur, passe au-dessus du sol sur lequel le " +
+        "joueur est posé. Activé : capture aussi les obstacles légèrement décalés mais " +
+        "fait fader le sol porteur — auquel cas activer 'Exclude Ground Under Player'.")]
+    [SerializeField] private bool useSphereCast = false;
     [SerializeField] private float sphereRadius = 0.5f;
 
     [Tooltip("Exclut du raycast l'objet sur lequel le joueur est posé (sol courant) " +

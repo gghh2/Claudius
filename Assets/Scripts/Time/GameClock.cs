@@ -25,6 +25,23 @@ public class GameClock : MonoBehaviour
     [Tooltip("Optionnel : si null, un HUD est généré automatiquement en haut-droite.")]
     public TextMeshProUGUI hudText;
 
+    // Format d'affichage de l'heure — choix du joueur, persistant entre sessions.
+    public enum TimeFormat { Hours24, Hours12 }
+    const string PREF_KEY = "GameClock.TimeFormat";
+
+    public static TimeFormat CurrentFormat
+    {
+        get => (TimeFormat)PlayerPrefs.GetInt(PREF_KEY, (int)TimeFormat.Hours24);
+        set
+        {
+            PlayerPrefs.SetInt(PREF_KEY, (int)value);
+            PlayerPrefs.Save();
+            if (Instance != null) Instance.UpdateHud();
+        }
+    }
+
+    public static bool Use12HourFormat => CurrentFormat == TimeFormat.Hours12;
+
     // Minutes totales écoulées depuis le démarrage (Jour 1 00:00).
     [SerializeField] private float totalMinutes;
     public float TotalMinutes => totalMinutes;
@@ -74,7 +91,22 @@ public class GameClock : MonoBehaviour
     void UpdateHud()
     {
         if (hudText != null)
-            hudText.text = $"Jour {Day} — {Hour:00}:{Minute:00}";
+            hudText.text = $"Jour {Day} — {FormatHourMinute()}";
+    }
+
+    /// <summary>
+    /// Formate l'heure courante selon le format choisi par le joueur (12h/24h).
+    /// </summary>
+    public string FormatHourMinute()
+    {
+        if (Use12HourFormat)
+        {
+            int h12 = Hour % 12;
+            if (h12 == 0) h12 = 12;
+            string suffix = Hour < 12 ? "AM" : "PM";
+            return $"{h12}:{Minute:00} {suffix}";
+        }
+        return $"{Hour:00}:{Minute:00}";
     }
 
     void BuildAutoHud()
@@ -117,7 +149,7 @@ public class GameClock : MonoBehaviour
 
     public string FormatNow()
     {
-        return $"Jour {Day}, {Hour:00}h{Minute:00}";
+        return $"Jour {Day}, {FormatHourMinute()}";
     }
 
     /// <summary>Étiquette grossière du moment de la journée pour l'IA.</summary>

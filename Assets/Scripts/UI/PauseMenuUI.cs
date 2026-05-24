@@ -30,6 +30,12 @@ public class PauseMenuUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI musicVolumeText;
     [SerializeField] private Slider sfxVolumeSlider;
     [SerializeField] private TextMeshProUGUI sfxVolumeText;
+
+    [Header("Time Settings")]
+    [Tooltip("Toggle pour activer le format 12h (coche = 12h, décoche = 24h). " +
+        "Persistant via PlayerPrefs sous la clé GameClock.TimeFormat.")]
+    [SerializeField] private Toggle use12HourToggle;
+    [SerializeField] private TextMeshProUGUI timeFormatLabel;
     
     [Header("Debug Controls")]
     [SerializeField] private GameObject debugControlsPanel;
@@ -385,6 +391,29 @@ public class PauseMenuUI : MonoBehaviour
         
         SetupVolumeSlider(musicVolumeSlider, savedMusicVolume, OnMusicVolumeChanged, UpdateMusicVolumeText);
         SetupVolumeSlider(sfxVolumeSlider, savedSFXVolume, OnSFXVolumeChanged, UpdateSFXVolumeText);
+
+        SetupTimeFormatToggle();
+    }
+
+    void SetupTimeFormatToggle()
+    {
+        if (use12HourToggle == null) return;
+
+        use12HourToggle.onValueChanged.RemoveAllListeners();
+        use12HourToggle.isOn = GameClock.Use12HourFormat;
+        UpdateTimeFormatLabel(use12HourToggle.isOn);
+
+        use12HourToggle.onValueChanged.AddListener(is12 =>
+        {
+            GameClock.CurrentFormat = is12 ? GameClock.TimeFormat.Hours12 : GameClock.TimeFormat.Hours24;
+            UpdateTimeFormatLabel(is12);
+        });
+    }
+
+    void UpdateTimeFormatLabel(bool is12)
+    {
+        if (timeFormatLabel != null)
+            timeFormatLabel.text = is12 ? "Format 12h" : "Format 24h";
     }
     
     void SetupVolumeSlider(Slider slider, float savedValue, UnityEngine.Events.UnityAction<float> onChange, System.Action<float> updateText)

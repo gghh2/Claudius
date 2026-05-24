@@ -7,12 +7,16 @@ public class InventoryUI : MonoBehaviour
     [Header("UI Elements")]
     [Tooltip("Content area for inventory items")]
     public Transform inventoryContent;
-    
+
     [Tooltip("Prefab for inventory item display")]
     public GameObject inventoryItemPrefab;
-    
+
     [Tooltip("Close button")]
     public Button closeButton;
+
+    [Tooltip("Optionnel : texte TMP qui affiche le solde de crédits du joueur. " +
+        "Si null, une ligne sera générée en tête de l'inventaire à chaque refresh.")]
+    public TextMeshProUGUI creditsText;
     
     [Header("Settings")]
     [Tooltip("Key to open/close inventory")]
@@ -38,12 +42,71 @@ public class InventoryUI : MonoBehaviour
     {
         // NE PAS désactiver gameObject car cela désactive tout l'UI !
         // UnifiedUIManager gère la visibilité des panels
-        
+
         // Configure le bouton de fermeture
         if (closeButton != null)
         {
             closeButton.onClick.AddListener(CloseInventory);
         }
+
+        // S'abonne au wallet pour rafraîchir le solde quand il change même
+        // pendant que l'inventaire est ouvert.
+        if (PlayerWallet.Instance != null)
+        {
+            PlayerWallet.Instance.OnCreditsChanged += OnCreditsChanged;
+            UpdateCreditsText(PlayerWallet.Instance.Credits);
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (PlayerWallet.Instance != null)
+            PlayerWallet.Instance.OnCreditsChanged -= OnCreditsChanged;
+    }
+
+    void OnCreditsChanged(int newCredits)
+    {
+        UpdateCreditsText(newCredits);
+    }
+
+    void UpdateCreditsText(int amount)
+    {
+        if (creditsText != null)
+            creditsText.text = $"Crédits : {amount}";
+
+        // Si l'inventaire est ouvert et qu'on génère la ligne dynamiquement
+        // (creditsText null), on régénère pour refléter le solde courant.
+        if (creditsText == null && isOpen)
+            RefreshInventoryDisplay();
+    }
+
+    void CreateCreditsHeader(int amount)
+    {
+        GameObject header = new GameObject("CreditsHeader");
+        header.transform.SetParent(inventoryContent);
+        header.transform.SetSiblingIndex(0);
+
+        Image bg = header.AddComponent<Image>();
+        bg.color = new Color(0.15f, 0.12f, 0.05f, 0.85f);
+
+        RectTransform rect = header.GetComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(400, 50);
+        rect.localScale = Vector3.one;
+
+        GameObject textObj = new GameObject("Text");
+        textObj.transform.SetParent(header.transform);
+
+        TextMeshProUGUI t = textObj.AddComponent<TextMeshProUGUI>();
+        t.text = $"Crédits : {amount}";
+        t.fontSize = 24;
+        t.color = new Color(1f, 0.85f, 0.3f);
+        t.alignment = TextAlignmentOptions.MidlineLeft;
+
+        RectTransform tr = textObj.GetComponent<RectTransform>();
+        tr.anchorMin = Vector2.zero;
+        tr.anchorMax = Vector2.one;
+        tr.sizeDelta = Vector2.zero;
+        tr.anchoredPosition = new Vector2(10, 0);
     }
     
     void Update()
@@ -111,7 +174,14 @@ public class InventoryUI : MonoBehaviour
         {
             Destroy(child.gameObject);
         }
-        
+
+        // Ligne crédits en tête (auto-générée si pas de creditsText câblé dans
+        // l'Inspector). On garde un fallback pour ne rien demander à l'utilisateur.
+        if (creditsText == null && PlayerWallet.Instance != null)
+        {
+            CreateCreditsHeader(PlayerWallet.Instance.Credits);
+        }
+
         // Récupère l'inventaire du joueur
         if (PlayerInventory.Instance != null)
         {

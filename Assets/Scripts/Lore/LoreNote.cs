@@ -13,13 +13,22 @@ public class LoreNote : MonoBehaviour
 {
     [Tooltip("Identifiant unique de la note (snake_case). Utilisé pour la persistance.")]
     public string noteId;
-    [Tooltip("Titre court affiché au joueur.")]
+    [Tooltip("Titre court affiché au joueur. Ignoré si useRandomContent.")]
     public string title = "Note";
-    [Tooltip("Contenu : court paragraphe injecté dans la mémoire des PNJ et lisible dans le journal.")]
+    [Tooltip("Contenu : court paragraphe injecté dans la mémoire des PNJ et lisible dans le journal. Ignoré si useRandomContent.")]
     [TextArea(3, 6)]
     public string content;
     [Tooltip("Touche pour ramasser quand le joueur est dans le trigger.")]
     public KeyCode pickupKey = KeyCode.E;
+
+    [Header("Aléatoire")]
+    [Tooltip("Si vrai, le titre et le contenu sont tirés du LoreContentLibrary " +
+        "au lieu d'utiliser ceux serialises. Chaque entrée n'est tirée qu'une " +
+        "fois par session.")]
+    public bool useRandomContent = true;
+    [Tooltip("Si vrai, applique une rotation Y aléatoire à la note au démarrage " +
+        "pour casser l'alignement régulier.")]
+    public bool randomizeYRotation = true;
 
     bool playerInRange;
     GameObject promptObj;
@@ -34,6 +43,26 @@ public class LoreNote : MonoBehaviour
             && LoreLibrary.Instance.HasNote(noteId))
         {
             Destroy(gameObject);
+            return;
+        }
+
+        // Contenu aléatoire : remplace titre + contenu par une entrée
+        // piochée dans le catalogue commun (non répétante par session).
+        if (useRandomContent)
+        {
+            var entry = LoreContentLibrary.PickRandom();
+            title = entry.title;
+            content = entry.content;
+            // Génère un id stable basé sur le titre pour la persistance.
+            if (string.IsNullOrEmpty(noteId))
+                noteId = "note_" + title.GetHashCode().ToString("X");
+        }
+
+        // Rotation Y aléatoire — casse l'alignement régulier des notes posées.
+        if (randomizeYRotation)
+        {
+            var e = transform.eulerAngles;
+            transform.eulerAngles = new Vector3(e.x, Random.Range(0f, 360f), e.z);
         }
     }
 

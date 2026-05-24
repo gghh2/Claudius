@@ -203,6 +203,16 @@ public class InventoryUI : MonoBehaviour
     {
         Debug.Log($"[InventoryUI] Refresh — items={(PlayerInventory.Instance != null ? PlayerInventory.Instance.items.Count : -1)} container={inventoryContent?.name}");
 
+        // Souscription tardive au wallet (cas où PlayerWallet.Awake a tourné
+        // APRÈS InventoryUI.Start). Sans ça, l'event OnCreditsChanged n'est
+        // pas écouté et le texte reste figé sur 0 même après AddCredits.
+        if (PlayerWallet.Instance != null)
+        {
+            PlayerWallet.Instance.OnCreditsChanged -= OnCreditsChanged;
+            PlayerWallet.Instance.OnCreditsChanged += OnCreditsChanged;
+            UpdateCreditsText(PlayerWallet.Instance.Credits);
+        }
+
         // Nettoie l'affichage actuel
         foreach (Transform child in inventoryContent)
         {

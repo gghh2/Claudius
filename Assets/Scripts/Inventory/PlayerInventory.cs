@@ -24,7 +24,13 @@ public class InventoryItem
 public class PlayerInventory : MonoBehaviour
 {
     public static PlayerInventory Instance { get; private set; }
-    
+
+    /// <summary>
+    /// Émis dès que la liste des items change (Add / Remove / clear).
+    /// Permet à l'UI de refresh live au lieu d'attendre une réouverture.
+    /// </summary>
+    public event System.Action OnItemsChanged;
+
     [Header("Inventory")]
     public List<InventoryItem> items = new List<InventoryItem>();
     
@@ -75,6 +81,8 @@ public class PlayerInventory : MonoBehaviour
         {
             Debug.Log($"📦 INVENTAIRE: Ajouté {quantity}x {itemName} (Quête: {questId})");
         }
+
+        OnItemsChanged?.Invoke();
     }
     
     public bool RemoveItem(string itemName, int quantity = 1, string questId = "")
@@ -89,10 +97,11 @@ public class PlayerInventory : MonoBehaviour
             {
                 items.Remove(item);
             }
-            
+
             if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
                 Debug.Log($"📤 INVENTAIRE: Retiré {quantity}x {itemName}");
-            
+
+            OnItemsChanged?.Invoke();
             return true;
         }
         
@@ -118,6 +127,7 @@ public class PlayerInventory : MonoBehaviour
             items.Remove(item);
             if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
                 Debug.Log($"📤 INVENTAIRE: Retiré objet de quête {itemName} (Quête annulée: {questId})");
+            OnItemsChanged?.Invoke();
         }
     }
     

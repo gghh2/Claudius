@@ -481,6 +481,12 @@ public class SaveGameManager : MonoBehaviour
             data.rumorData = RumorPool.Instance.GetSaveData();
         }
 
+        // Lore du monde (nom de planète, lieux nommés)
+        if (WorldLore.Instance != null)
+        {
+            data.worldLoreData = WorldLore.Instance.GetSaveData();
+        }
+
         return data;
     }
     
@@ -730,6 +736,12 @@ public class SaveGameManager : MonoBehaviour
         if (RumorPool.Instance != null && data.rumorData != null)
         {
             RumorPool.Instance.LoadSaveData(data.rumorData);
+        }
+
+        // Lore monde
+        if (WorldLore.Instance != null && data.worldLoreData != null)
+        {
+            WorldLore.Instance.LoadSaveData(data.worldLoreData);
         }
     }
     
@@ -1035,6 +1047,7 @@ public class SaveData
     public GameClockSaveData clockData;
     public LoreSaveData loreData;
     public RumorSaveData rumorData;
+    public WorldLoreSaveData worldLoreData;
 }
 
 [System.Serializable]

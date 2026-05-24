@@ -56,12 +56,27 @@ public class InventoryUI : MonoBehaviour
             PlayerWallet.Instance.OnCreditsChanged += OnCreditsChanged;
             UpdateCreditsText(PlayerWallet.Instance.Credits);
         }
+
+        // Refresh live quand l'inventaire change (ex. note ramassée pendant
+        // que le panel est ouvert) — évite le "temps de retard" d'attendre
+        // une réouverture pour voir les nouveaux objets.
+        if (PlayerInventory.Instance != null)
+        {
+            PlayerInventory.Instance.OnItemsChanged += OnInventoryChanged;
+        }
+    }
+
+    void OnInventoryChanged()
+    {
+        if (isOpen) RefreshInventoryDisplay();
     }
 
     void OnDestroy()
     {
         if (PlayerWallet.Instance != null)
             PlayerWallet.Instance.OnCreditsChanged -= OnCreditsChanged;
+        if (PlayerInventory.Instance != null)
+            PlayerInventory.Instance.OnItemsChanged -= OnInventoryChanged;
     }
 
     void OnEnable()
@@ -285,12 +300,13 @@ public class InventoryUI : MonoBehaviour
             textRect.anchorMax = Vector2.one;
             textRect.sizeDelta = Vector2.zero;
             textRect.anchoredPosition = new Vector2(10, 0); // Padding gauche
+        }
 
-            // Bouton 'Lire' pour les items lisibles (notes, lettres, livres...).
-            if (!string.IsNullOrEmpty(item.readableContent))
-            {
-                AddReadButton(itemDisplay, item);
-            }
+        // Bouton 'Lire' pour les items lisibles (notes, lettres, livres...).
+        // Hors du else : marche aussi si l'utilisateur a un inventoryItemPrefab.
+        if (!string.IsNullOrEmpty(item.readableContent))
+        {
+            AddReadButton(itemDisplay, item);
         }
     }
 

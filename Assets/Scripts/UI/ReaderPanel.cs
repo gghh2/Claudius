@@ -14,6 +14,7 @@ public class ReaderPanel : MonoBehaviour
     GameObject root;
     TextMeshProUGUI titleText;
     TextMeshProUGUI bodyText;
+    public bool IsOpen => root != null && root.activeSelf;
 
     void Awake()
     {

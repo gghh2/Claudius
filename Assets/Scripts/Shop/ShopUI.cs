@@ -16,6 +16,7 @@ public class ShopUI : MonoBehaviour
     TextMeshProUGUI titleText;
     TextMeshProUGUI creditsText;
     Shop currentShop;
+    public bool IsOpen => root != null && root.activeSelf;
 
     void Awake()
     {

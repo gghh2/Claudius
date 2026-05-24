@@ -100,6 +100,7 @@ public class AIDialogueManager : MonoBehaviour
             InjectTimeContext();
             InjectLoreContext(npcData.name);
             InjectRumorContext(npcData.name);
+            InjectWorldLoreContext();
             currentConversation.Add(new OpenAIMessage("user",
                 "Le joueur revient vous parler. Accueillez-le comme une connaissance, en vous souvenant de vos échanges précédents."));
         }
@@ -112,6 +113,7 @@ public class AIDialogueManager : MonoBehaviour
             InjectTimeContext();
             InjectLoreContext(npcData.name);
             InjectRumorContext(npcData.name);
+            InjectWorldLoreContext();
 
             string initialUserMessage = "Le joueur s'approche de vous. Saluez-le de manière naturelle selon votre personnalité.";
             if (QuestJournal.Instance != null)
@@ -335,6 +337,10 @@ jouer votre personnage et de discuter.";
             // aucune quête (la détection est faite par l'appel d'analyse séparé).
             if (QuestTokenDetector.Instance != null)
                 aiResponse = QuestTokenDetector.Instance.CleanMessageFromTokens(aiResponse);
+
+            // Si la planète n'a pas encore de nom et que le PNJ en propose un,
+            // on l'extrait et on le fixe pour le reste de la partie.
+            ExtractPlanetNameIfAny(aiResponse);
 
             if (GlobalDebugManager.IsDebugEnabled(DebugSystem.AI)) Debug.Log($"[AI] 🤖 Réponse de chat ({npcData.name}) en {responseSeconds:N1} s : {aiResponse}");
 
@@ -596,7 +602,81 @@ RÈGLES :
         currentConversation.Add(new OpenAIMessage("system",
             $"Contexte temporel : nous sommes au {now} ({moment}). " +
             "Vous êtes conscient de l'heure et du moment de la journée. Adaptez " +
-            "votre ton et vos références si pertinent (sans le rabâcher)."));
+            "votre ton et vos références si pertinent (sans le rabâcher). " +
+            "Ne JAMAIS donner une heure différente de celle-ci si on vous demande l'heure."));
+    }
+
+    /// <summary>
+    /// Cohérence du monde : si un nom de planète a déjà été établi par un PNJ
+    /// précédent, on l'injecte. Sinon on demande au PNJ d'en inventer un et
+    /// de le mentionner naturellement — le post-traitement de la réponse
+    /// extraira le nom (premier mot capitalisé proche du mot "planète").
+    /// </summary>
+    /// <summary>
+    /// Cherche dans la réponse IA un nom de planète proposé ("sur Khael-Tor",
+    /// "notre Sevra-Mun", "planète Vorn", etc.) et le fixe dans WorldLore.
+    /// No-op si le nom est déjà fixé.
+    /// </summary>
+    void ExtractPlanetNameIfAny(string aiResponse)
+    {
+        if (WorldLore.Instance == null || WorldLore.Instance.HasPlanetName) return;
+        if (string.IsNullOrEmpty(aiResponse)) return;
+
+        // Pattern : un mot Capitalisé (+ option [-/']suite), proche d'un mot clé.
+        // Ex: "Bienvenue sur Khael-Tor", "Notre vieille Sevra-Mun", "Planète Vorn".
+        var rx = new System.Text.RegularExpressions.Regex(
+            @"\b(?:sur|planète|monde|notre|cette|ce|de)\s+(?:vieille\s+|vieux\s+|petite\s+|grand\s+)?([A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+(?:[-'][A-ZÀ-ÖØ-Ý]?[a-zà-öø-ÿ]+)?)",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        // Mais on veut que le NOM extrait soit Capitalisé. On re-vérifie après.
+        var m = rx.Match(aiResponse);
+        if (m.Success)
+        {
+            string candidate = m.Groups[1].Value;
+            // Filtre simple : pas un mot français courant.
+            string lower = candidate.ToLowerInvariant();
+            if (candidate.Length >= 4
+                && char.IsUpper(candidate[0])
+                && !IsCommonFrenchWord(lower))
+            {
+                WorldLore.Instance.SetPlanetName(candidate);
+            }
+        }
+    }
+
+    static bool IsCommonFrenchWord(string lower)
+    {
+        switch (lower)
+        {
+            case "monde": case "planète": case "planete": case "voyageur":
+            case "vieille": case "vieux": case "petite": case "grand":
+            case "notre": case "votre": case "cette": case "celui":
+            case "marchand": case "garde": case "soldat": case "voyage":
+            case "soleils": case "soleil": case "étoile": case "étoiles":
+                return true;
+            default: return false;
+        }
+    }
+
+    void InjectWorldLoreContext()
+    {
+        if (WorldLore.Instance == null) return;
+
+        if (WorldLore.Instance.HasPlanetName)
+        {
+            currentConversation.Add(new OpenAIMessage("system",
+                $"Lore monde : nous sommes sur la planète {WorldLore.Instance.PlanetName}. " +
+                "Si vous évoquez ce monde, utilisez ce nom — ne réinventez surtout pas."));
+        }
+        else
+        {
+            currentConversation.Add(new OpenAIMessage("system",
+                "Lore monde : la planète sur laquelle vous vivez n'a pas encore été " +
+                "nommée dans la conversation. À l'occasion d'une remarque naturelle, " +
+                "donnez-lui un nom évocateur (une seule fois, dans une phrase comme " +
+                "« Bienvenue sur Khael-Tor » ou « Notre vieille Sevra-Mun ne se laisse " +
+                "pas dompter »). Inventez le nom avec parcimonie : 1-3 syllabes, " +
+                "consonance space-opera. Ne le surutilisez pas."));
+        }
     }
 
     /// <summary>

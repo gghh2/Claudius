@@ -33,8 +33,23 @@ public class SmartCursorManager : MonoBehaviour
         // Pas de UnifiedUIManager dans la scène (ex. MainMenu) → on n'est pas
         // en jeu : curseur libre. En jeu, l'état suit l'ouverture des panels.
         bool cursorFree = uiManager == null || uiManager.IsShowingPanel;
+
+        // Cas spécial : UIs hors UnifiedUIManager (boutique, panneau de lecture,
+        // console dev) doivent aussi libérer le curseur. On consulte leurs
+        // singletons directement.
+        if (!cursorFree && IsExternalUiActive()) cursorFree = true;
+
         Cursor.visible = cursorFree;
         Cursor.lockState = cursorFree ? CursorLockMode.None : CursorLockMode.Locked;
+    }
+
+    static bool IsExternalUiActive()
+    {
+        // Boutique : ShopUI a une transform de root quand ouvert.
+        if (ShopUI.Instance != null && ShopUI.Instance.IsOpen) return true;
+        // Reader : pareil.
+        if (ReaderPanel.Instance != null && ReaderPanel.Instance.IsOpen) return true;
+        return false;
     }
 
     void OnDisable()

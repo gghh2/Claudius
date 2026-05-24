@@ -53,6 +53,14 @@ public class QuestObject : MonoBehaviour
     public float explorationTimeRequired = 2f;
     private float explorationTimer = 0f;
     private bool isExploring = false;
+
+    [Header("Treasure Settings")]
+    [Tooltip("Marker en mode trésor : nécessite d'appuyer sur E pour creuser.")]
+    public bool isTreasure = false;
+    [Tooltip("Temps de creusement (secondes) une fois E pressé.")]
+    public float digDuration = 2.5f;
+    private bool isDigging = false;
+    private float digTimer = 0f;
     
     // Private variables
     private bool playerInRange = false;
@@ -327,14 +335,9 @@ public class QuestObject : MonoBehaviour
             nameDisplay.transform.rotation = Quaternion.LookRotation(mainCamera.transform.forward);
         }
         
-        // Interaction
-        if (playerInRange && Input.GetKeyDown(KeyCode.E) && !isCollected)
-        {
-            if (debugMode)
-                Debug.Log($"🎯 Tentative d'interaction avec {objectName}");
-            InteractWithObject();
-        }
-        
+        // (L'interaction E est désormais gérée plus bas, gated sur le type :
+        // les Markers ont leur propre logique — EXPLORE auto / TREASURE dig.)
+
         // Effet de pulsation
         if (objectRenderer != null && !isCollected)
         {
@@ -342,37 +345,16 @@ public class QuestObject : MonoBehaviour
             objectRenderer.material.SetColor("_EmissionColor", glowColor * pulse * 0.5f);
         }
         
-        // NOUVEAU : Timer d'exploration pour les marqueurs
+        // Markers : deux modes — EXPLORE auto-progressif, TREASURE à creuser.
         if (objectType == QuestObjectType.Marker && playerInRange && !isCollected)
         {
-            if (!isExploring)
+            if (isTreasure)
             {
-                isExploring = true;
-                explorationTimer = 0f;
-                Debug.Log($"🗺️ Début exploration de {objectName}...");
+                UpdateTreasureDig();
             }
-            
-            explorationTimer += Time.deltaTime;
-            
-            // Affiche la progression
-            if (nameText != null)
+            else
             {
-                float progress = Mathf.Clamp01(explorationTimer / explorationTimeRequired);
-                string formattedName = TextFormatter.FormatName(objectName);
-                nameText.text = $"[EXPLORE] {formattedName}\nProgress: {Mathf.RoundToInt(progress * 100)}%";
-                
-                // Change la couleur selon la progression
-                nameText.color = Color.Lerp(Color.yellow, Color.green, progress);
-                
-                // Augmente la taille pendant l'exploration
-                nameText.fontSize = fontSize * 1.3f;
-            }
-            
-            // Validation automatique après le délai
-            if (explorationTimer >= explorationTimeRequired)
-            {
-                Debug.Log($"🗺️ ZONE EXPLORÉE : {objectName}");
-                ExploreMarker();
+                UpdateExploreProgress();
             }
         }
         
@@ -387,6 +369,88 @@ public class QuestObject : MonoBehaviour
 
     }
     
+    void UpdateExploreProgress()
+    {
+        if (!isExploring)
+        {
+            isExploring = true;
+            explorationTimer = 0f;
+            if (debugMode) Debug.Log($"🗺️ Début exploration de {objectName}...");
+        }
+
+        explorationTimer += Time.deltaTime;
+
+        if (nameText != null)
+        {
+            float progress = Mathf.Clamp01(explorationTimer / explorationTimeRequired);
+            string formattedName = TextFormatter.FormatName(objectName);
+            nameText.text = $"[EXPLORE] {formattedName}\nProgress: {Mathf.RoundToInt(progress * 100)}%";
+            nameText.color = Color.Lerp(Color.yellow, Color.green, progress);
+            nameText.fontSize = fontSize * 1.3f;
+        }
+
+        if (explorationTimer >= explorationTimeRequired)
+        {
+            ExploreMarker();
+        }
+    }
+
+    void UpdateTreasureDig()
+    {
+        string formattedName = TextFormatter.FormatName(objectName);
+
+        // Phase 1 : pas encore commencé à creuser → prompt 'E pour creuser'.
+        if (!isDigging)
+        {
+            if (nameText != null)
+            {
+                nameText.text = $"🪙 {formattedName}\nAppuyer sur E pour creuser";
+                nameText.color = Color.yellow;
+                nameText.fontSize = fontSize * 1.2f;
+            }
+
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                isDigging = true;
+                digTimer = 0f;
+                if (debugMode) Debug.Log($"⛏️ Début du creusement : {objectName}");
+            }
+            return;
+        }
+
+        // Phase 2 : creusement en cours, on freine le joueur par retour visuel.
+        digTimer += Time.deltaTime;
+        float progress = Mathf.Clamp01(digTimer / digDuration);
+
+        if (nameText != null)
+        {
+            int percent = Mathf.RoundToInt(progress * 100);
+            // Petite barre ASCII pour le feedback.
+            int filled = Mathf.RoundToInt(progress * 10);
+            string bar = new string('█', filled) + new string('░', 10 - filled);
+            nameText.text = $"⛏️ Creusement... {percent}%\n[{bar}]";
+            nameText.color = Color.Lerp(new Color(0.9f, 0.7f, 0.2f), Color.green, progress);
+            nameText.fontSize = fontSize * 1.3f;
+        }
+
+        // Visuel : le marker s'enfonce progressivement sous le sol.
+        if (objectRenderer != null)
+        {
+            Vector3 pos = transform.position;
+            // On garde un offset relatif (sink jusqu'à -0.5 sous la position d'origine).
+            // L'offset est appliqué via material, pas la transform, pour ne pas
+            // perturber les colliders ; ici on fait un léger scale-down.
+            float s = Mathf.Lerp(1f, 0.4f, progress);
+            transform.localScale = new Vector3(s, Mathf.Lerp(1f, 0.2f, progress), s);
+        }
+
+        if (digTimer >= digDuration)
+        {
+            if (debugMode) Debug.Log($"⛏️ TRÉSOR DÉTERRÉ : {objectName}");
+            ExploreMarker();
+        }
+    }
+
     void InteractWithObject()
     {
         // Pour les NPCs de livraison, ne pas marquer comme collecté ici
@@ -739,13 +803,24 @@ public class QuestObject : MonoBehaviour
             playerInRange = false;
             ShowInteractionPrompt(false);
             
-            // NOUVEAU : Reset le timer d'exploration si on quitte la zone
-            if (objectType == QuestObjectType.Marker && isExploring && !isCollected)
+            // Reset le timer d'exploration / creusement si on quitte la zone.
+            if (objectType == QuestObjectType.Marker && !isCollected)
             {
-                isExploring = false;
-                explorationTimer = 0f;
-                Debug.Log($"📤 Exploration interrompue pour {objectName}");
-                
+                if (isExploring)
+                {
+                    isExploring = false;
+                    explorationTimer = 0f;
+                    if (debugMode) Debug.Log($"📤 Exploration interrompue pour {objectName}");
+                }
+                if (isDigging)
+                {
+                    isDigging = false;
+                    digTimer = 0f;
+                    // Restaure l'échelle d'origine.
+                    transform.localScale = Vector3.one;
+                    if (debugMode) Debug.Log($"📤 Creusement interrompu pour {objectName}");
+                }
+
                 if (nameText != null)
                 {
                     nameText.text = GetDisplayText();

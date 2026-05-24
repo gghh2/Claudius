@@ -85,6 +85,12 @@ public static class QuestManagerHelper
             // que le joueur ne sache pas a priori combien de temps rester.
             questObj.explorationTimeRequired = Random.Range(
                 QuestSystemConfig.MinExplorationTime, QuestSystemConfig.MaxExplorationTime);
+
+            // Quêtes TREASURE : marker en mode "à creuser", attend E.
+            if (quest.questData.questType == QuestType.TREASURE)
+            {
+                questObj.isTreasure = true;
+            }
             
             // Assure qu'il y a un collider
             if (obj.GetComponent<Collider>() == null)

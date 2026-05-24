@@ -74,6 +74,8 @@ public class LoreNote : MonoBehaviour
 
     void Pickup()
     {
+        Debug.Log($"[LoreNote] Pickup '{title}' (id={noteId}) — content {content?.Length ?? 0} chars");
+
         if (LoreLibrary.Instance == null)
         {
             var go = new GameObject("LoreLibrary");
@@ -85,6 +87,11 @@ public class LoreNote : MonoBehaviour
         if (PlayerInventory.Instance != null)
         {
             PlayerInventory.Instance.AddItem(title, 1, "", content);
+            Debug.Log($"[LoreNote] AddItem OK — inventaire contient {PlayerInventory.Instance.items.Count} items");
+        }
+        else
+        {
+            Debug.LogError("[LoreNote] PlayerInventory.Instance est NULL — la note n'a pas pu être ajoutée à l'inventaire !");
         }
 
         if (NotificationManager.Instance != null)

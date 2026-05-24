@@ -169,32 +169,42 @@ public class QuestJournal : MonoBehaviour
     public void CompleteQuest(string questId)
     {
         JournalQuest quest = allQuests.FirstOrDefault(q => q.questId == questId);
-        if (quest != null)
+        if (quest == null)
         {
-            quest.status = QuestStatus.Completed;
-            quest.currentProgress = quest.maxProgress;
+            Debug.LogError($"[QuestJournal.CompleteQuest] Aucune JournalQuest trouvée pour questId={questId} — pas de récompense crédits. Liste actuelle ({allQuests.Count}) : {string.Join(", ", allQuests.Select(q => q.questId))}");
+            return;
+        }
 
-            if (debugMode)
-                Debug.Log($"✅ Quête terminée: {quest.questTitle}");
+        quest.status = QuestStatus.Completed;
+        quest.currentProgress = quest.maxProgress;
 
-            // Log la complétion de la quête dans le Journal d'Aventure
-            AdventureJournalExtensions.LogQuestCompleted(quest.description);
+        Debug.Log($"[QuestJournal.CompleteQuest] questId={questId} type={quest.questType} maxProg={quest.maxProgress}");
 
-            // Récompense en crédits (barème fixé côté jeu, pas par l'IA).
-            if (PlayerWallet.Instance != null)
-            {
-                int reward = QuestRewardScale.GetReward(quest.questType, quest.maxProgress);
-                if (reward > 0) PlayerWallet.Instance.AddCredits(reward);
-            }
+        if (debugMode)
+            Debug.Log($"✅ Quête terminée: {quest.questTitle}");
 
-            // Rumeur : les PNJ alentours apprennent que le voyageur a accompli
-            // une mission. À la prochaine convo, l'un d'eux peut le mentionner.
-            if (RumorPool.Instance != null)
-            {
-                string giver = TextFormatter.FormatName(quest.giverNPCName ?? "un mystérieux contact");
-                RumorPool.Instance.AddRumor("quest_" + quest.questId,
-                    $"Le voyageur a terminé une mission pour {giver} : {quest.description}.");
-            }
+        // Log la complétion de la quête dans le Journal d'Aventure
+        AdventureJournalExtensions.LogQuestCompleted(quest.description);
+
+        // Récompense en crédits (barème fixé côté jeu, pas par l'IA).
+        if (PlayerWallet.Instance != null)
+        {
+            int reward = QuestRewardScale.GetReward(quest.questType, quest.maxProgress);
+            Debug.Log($"[QuestJournal.CompleteQuest] reward={reward} pour {quest.questType}/{quest.maxProgress}");
+            if (reward > 0) PlayerWallet.Instance.AddCredits(reward);
+        }
+        else
+        {
+            Debug.LogError("[QuestJournal.CompleteQuest] PlayerWallet.Instance est NULL — pas de récompense possible.");
+        }
+
+        // Rumeur : les PNJ alentours apprennent que le voyageur a accompli
+        // une mission. À la prochaine convo, l'un d'eux peut le mentionner.
+        if (RumorPool.Instance != null)
+        {
+            string giver = TextFormatter.FormatName(quest.giverNPCName ?? "un mystérieux contact");
+            RumorPool.Instance.AddRumor("quest_" + quest.questId,
+                $"Le voyageur a terminé une mission pour {giver} : {quest.description}.");
         }
     }
     

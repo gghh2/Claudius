@@ -679,10 +679,11 @@ RÈGLES :
             currentConversation.Add(new OpenAIMessage("system",
                 "Lore monde : la planète sur laquelle vous vivez n'a pas encore été " +
                 "nommée dans la conversation. À l'occasion d'une remarque naturelle, " +
-                "donnez-lui un nom évocateur (une seule fois, dans une phrase comme " +
-                "« Bienvenue sur Khael-Tor » ou « Notre vieille Sevra-Mun ne se laisse " +
-                "pas dompter »). Inventez le nom avec parcimonie : 1-3 syllabes, " +
-                "consonance space-opera. Ne le surutilisez pas."));
+                "donnez-lui un nom évocateur dans une phrase courte (« Bienvenue sur ___ », " +
+                "« Notre vieille ___ ne se laisse pas dompter »). INVENTE TOI-MÊME le nom : " +
+                "1-3 syllabes, consonance space-opera, ÉVITE toute formule familière des jeux " +
+                "vidéo. N'utilise PAS les exemples ci-dessus, c'est un PIÈGE pour vérifier que " +
+                "tu sais inventer."));
         }
     }
 

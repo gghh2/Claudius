@@ -34,11 +34,13 @@ public class LoreNote : MonoBehaviour
     [Tooltip("Pilier de lumière au-dessus de la note pour la repérer de loin.")]
     public bool showBeam = true;
     [Tooltip("Couleur du beam.")]
-    public Color beamColor = new Color(1f, 0.85f, 0.4f, 0.85f);
+    public Color beamColor = new Color(1f, 0.85f, 0.4f, 0.8f);
     [Tooltip("Hauteur du beam (m).")]
-    public float beamHeight = 6f;
+    public float beamHeight = 8f;
     [Tooltip("Rayon du beam (m).")]
-    public float beamRadius = 0.15f;
+    public float beamRadius = 0.25f;
+    [Tooltip("Intensité du shader BeaconBeam (additif).")]
+    public float beamIntensity = 1.5f;
 
     bool playerInRange;
     GameObject promptObj;
@@ -82,48 +84,44 @@ public class LoreNote : MonoBehaviour
 
     void CreateBeam()
     {
-        // Cylindre fin, non parente (pareil que le prompt — evite l'heritage
-        // du scale deforme du cube de la note). Materiau émissif dore.
+        // Cylindre non-parente (evite l'heritage du scale deforme de la note).
+        // Materiau BeaconBeam (shader URP custom, fade vertical + horizontal).
         beamObj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         beamObj.name = $"LoreNoteBeam_{noteId}";
-        // Supprime le collider du primitive (pas besoin d'interaction physique).
         var col = beamObj.GetComponent<Collider>();
         if (col != null) Destroy(col);
 
-        beamObj.transform.position = transform.position + Vector3.up * (beamHeight * 0.5f + 0.1f);
+        // Cylindre Unity : hauteur 2 par défaut, scale.y * 2 = hauteur réelle.
+        beamObj.transform.position = transform.position + Vector3.up * (beamHeight * 0.5f);
         beamObj.transform.localScale = new Vector3(beamRadius * 2f, beamHeight * 0.5f, beamRadius * 2f);
 
-        // Matériau émissif (essaie URP Lit, fallback Standard).
         var renderer = beamObj.GetComponent<Renderer>();
         if (renderer != null)
         {
-            var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            var shader = Shader.Find("LandConquest/BeaconBeam");
             if (shader != null)
             {
                 var mat = new Material(shader);
-                // URP : _BaseColor + _EmissionColor ; Standard : _Color + _EmissionColor.
-                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", beamColor);
-                if (mat.HasProperty("_Color")) mat.SetColor("_Color", beamColor);
-                if (mat.HasProperty("_EmissionColor"))
-                {
-                    mat.SetColor("_EmissionColor", new Color(beamColor.r, beamColor.g, beamColor.b) * 3f);
-                    mat.EnableKeyword("_EMISSION");
-                }
-                // URP : transparence via _Surface (1 = transparent).
-                if (mat.HasProperty("_Surface"))
-                {
-                    mat.SetFloat("_Surface", 1f);
-                    mat.SetFloat("_Blend", 0f); // Alpha
-                    mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-                    mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.One); // additif léger
-                    mat.SetInt("_ZWrite", 0);
-                    mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
-                    mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-                }
+                mat.SetColor("_Color", beamColor);
+                mat.SetFloat("_Intensity", beamIntensity);
+                mat.SetFloat("_FadeStart", 0.2f);
                 renderer.sharedMaterial = mat;
-                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                renderer.receiveShadows = false;
             }
+            else
+            {
+                // Fallback minimal si le shader n'est pas trouvé.
+                Debug.LogWarning("[LoreNote] Shader 'LandConquest/BeaconBeam' introuvable — beam rendu en URP Lit fallback.");
+                var fallback = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+                if (fallback != null)
+                {
+                    var mat = new Material(fallback);
+                    if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", beamColor);
+                    if (mat.HasProperty("_EmissionColor")) { mat.SetColor("_EmissionColor", new Color(beamColor.r, beamColor.g, beamColor.b) * 3f); mat.EnableKeyword("_EMISSION"); }
+                    renderer.sharedMaterial = mat;
+                }
+            }
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
         }
     }
 

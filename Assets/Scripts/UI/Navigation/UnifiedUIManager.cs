@@ -598,25 +598,6 @@ public class UnifiedUIManager : MonoBehaviour
     #region Public API
 
     /// <summary>
-    /// Open a panel (legacy support - redirects to NavigateTo)
-    /// </summary>
-    public void OpenPanel(string panelName)
-    {
-        NavigateTo(panelName);
-    }
-
-    /// <summary>
-    /// Close a panel (legacy support - calls NavigateBack if it's the current panel)
-    /// </summary>
-    public void ClosePanel(string panelName)
-    {
-        if (currentPanel == panelName)
-        {
-            NavigateBack();
-        }
-    }
-
-    /// <summary>
     /// Check if a panel is open
     /// </summary>
     public bool IsPanelOpen(string panelName)

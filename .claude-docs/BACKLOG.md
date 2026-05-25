@@ -8,7 +8,7 @@
 ## Bugs
 
 - 🔴 La zone de fall-back n'a pas de vrai nom de zone (affiche « Laboratory »).
-- 🟡 `F5` et `F9` ne font rien (raccourcis save/load rapide attendus ?).
+- ✅ *(2026-05-25)* `F5` / `F9` quick save/load fonctionnels en jeu.
 - 🟡 Build&Run : le compagnon est très lent.
 - ✅ *(2026-05-24)* Composant orphelin retiré de `NPC_Quest.prefab` (était
   instancié à chaque spawn de PNJ de quête → 10+ erreurs console au Play).
@@ -70,18 +70,18 @@
   pendant le creusement reset le progrès et restaure l'échelle.
 - 🟡 Écran des quêtes : redesign en cours (chevauchement des entrées).
 - 🟡 Quand il y a beaucoup de quêtes, le scroll masque une partie de la liste.
-- 🟡 Notification écran (toast) à : nouvelle quête, quête terminée, nouvelle
-  entrée de journal, **entrée dans une zone / un lieu** — aussi bien un nouveau
-  lieu que le retour dans un lieu déjà connu. Le `NotificationManager` existe
-  déjà — à câbler.
+- ✅ *(2026-05-25)* Notification écran (toast) à : entrée de zone, nouvelle
+  mission, objectif accompli, trésor déterré, crédits gagnés. Câblé via
+  `NotificationManager` aux bons hooks (quête, zone, wallet).
 
 ## Système de sauvegarde
 
 - ✅ *(2026-05-24)* Mémoire de conversation des PNJ persistée dans le
   save/load (`ConversationsSaveData` ajoutée à `SaveData` ; serialise
   `conversationHistories` ET `conversationsByNpc` côté `AIDialogueManager`).
-- 🟡 Au reload : les items de quête déjà ramassés ne doivent pas être recréés
-  dans le monde.
+- ✅ *(2026-05-24)* Au reload : `SaveGameManager.ApplySaveData` détruit
+  les items déjà ramassés (`isActive=false` au save) après la recréation
+  full de la quête. À retester si bug reproduit.
 - 🟡 Quête EXPLORE déjà explorée mais non rendue : comportement au reload à définir.
 
 ## Rendu / graphismes
@@ -89,9 +89,6 @@
 > Issus de la session graphismes du 2026-05-22 (passage à un look type PoE).
 
 - 🟡 Matériaux **magenta** : shaders cassés (non-URP / HDRP) → à reskinner en URP.
-- 🟢 Feuillage **trop saturé** : matériaux de végétation d'un vert lime trop vif
-  (ACES l'amplifie). Désaturer les matériaux, ou courbe Hue vs Sat ciblée sur le
-  vert dans le Volume.
 - ✅ *(2026-05-24)* `OrthographicFogAdapter` recalibré (défauts du code) :
   point1 (size 15, start 30, end 200) / point2 (size 2, start 10, end 60),
   aligné sur le vrai range de zoom 2-15. L'instance en scène garde
@@ -105,7 +102,8 @@
 ## Dette technique — code mort / non câblé (audit 2026-05-20)
 
 ### Décisions en attente
-- **AdventureJournal** — feature complète mais non branchée : finir ou supprimer ?
+- ✅ *(2026-05-25)* **AdventureJournal** = journal d'aventure narratif IA (touche L,
+  panel "AdventureJournal" dans UnifiedUIManager). Branché et actif — pas du code mort.
 - **DynamicAssets / CSM / Meshy** (~12 fichiers) — sous-système instancié en scène
   mais déconnecté du jeu (Phase 2 jamais faite) : reprendre ou geler proprement ?
 - `MeshyGenerator` vs `CSMGenerator` — deux générateurs concurrents : lequel garder ?
@@ -125,8 +123,10 @@
 - Supprimer le code mort de `AIDialogueManager` rendu inutile par la refonte B2 :
   `GetQuestInstructionsForNPC`, `GetAvailableQuestOptionsForAI`,
   `GetRoleSpecificQuestExamples` (~175 lignes).
-- `PauseMenuUI.Pause()` marquée *deprecated* — vérifier le câblage Inspector puis retirer.
-- `UnifiedUIManager.OpenPanel` / `ClosePanel` — passe-plats *legacy*, à fusionner.
+- ✅ *(2026-05-25)* `PauseMenuUI.Pause()` retirée (aucun caller externe,
+  pas de wire scène). `Resume()` conservée (utilisée par `SaveSystemUI`).
+- ✅ *(2026-05-25)* `UnifiedUIManager.OpenPanel` / `ClosePanel` retirées
+  (passe-plats sans caller externe).
 - Nettoyer les `Debug.Log` restants : CSM*, DynamicAsset*, *Tester, NPCQuestTurnIn,
   QuestJournal, PlayerController, StaminaUI, CompanionSpeedSync, DialogueUI,
   AIDialogueManager.
@@ -134,12 +134,14 @@
   guide + architecture ScriptableObjects). Action concrète qui en ressort :
   remplacer les `FindObjectsByType` répétés (NPC, QuestZone, QuestObject) par
   des **SO Runtime Set** (enregistrement en `OnEnable`/`OnDisable`).
+  ⏸️ *(2026-05-25)* Évalué : 14 occurrences, dont 2 dans `QuestMarkerSystem`
+  appelées depuis Update. Pas urgent (aucun bottleneck profilé) — à
+  reprendre si perf devient un sujet.
 
 ### 🔧 Code mort — supprimables (vérifier en scène avant ; dumps datés 2025-07)
-- `NotificationTester`, `InventoryDebugger` — scaffolding de debug, non attachés.
-- `QuestMarkerCustomizer` — non câblé (rend mortes 2 méthodes de `QuestMarkerSystem`).
-- `AudioSettingsUI` — remplacé par `PauseMenuUI` (constante `AudioSettings` inutilisée).
-- `MusicZoneTrigger` — jamais placé en scène (ou WIP à assumer ?).
+- ✅ *(2026-05-25)* `NotificationTester`, `InventoryDebugger`, `AudioSettingsUI`,
+  `MusicZoneTrigger`, `QuestMarkerCustomizer` supprimés (0 instance en scène,
+  aucun caller).
 - ✅ *(2026-05-24)* `APITester` retiré de `Game.unity`.
 - ✅ *(2026-05-24)* `AssetManagerTester` retiré de `Game.unity`.
 

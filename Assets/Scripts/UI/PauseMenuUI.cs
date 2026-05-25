@@ -244,17 +244,6 @@ public class PauseMenuUI : MonoBehaviour
             playerController.enabled = true;
     }
     
-    public void Pause()
-    {
-        // This method is now deprecated - UnifiedUIManager handles navigation
-        if (UnifiedUIManager.Instance != null)
-        {
-            UnifiedUIManager.Instance.NavigateTo(UnifiedUIPanelNames.PauseMenu);
-        }
-        // Pause volontaire du temps in-game (vraie action utilisateur).
-        GameClock.Instance?.Pause();
-    }
-    
     public void Resume()
     {
         // Use UnifiedUIManager for navigation

@@ -10,22 +10,40 @@ public class WorldLore : MonoBehaviour
 {
     public static WorldLore Instance { get; private set; }
 
-    [Tooltip("Nom de la planète. Vide tant qu'aucun PNJ ne l'a inventé.")]
-    [SerializeField] string planetName = "";
+    // NB : pas de [SerializeField] sur ces champs — sinon une valeur fixée à
+    // un Play précédent pourrait fuiter dans le fichier de scène (et l'éditeur
+    // recharger 'Khael Tor' à chaque nouvelle partie). On veut explicitement
+    // que les données ne survivent QUE via le save/load.
+    string planetName = "";
     public string PlanetName => planetName;
     public bool HasPlanetName => !string.IsNullOrWhiteSpace(planetName);
 
-    [Tooltip("Lieux notables nommés au fil du jeu (markets, points d'intérêt) " +
-        "qui s'enrichissent au fur et à mesure.")]
-    [SerializeField] List<string> namedLocations = new List<string>();
+    List<string> namedLocations = new List<string>();
     public IReadOnlyList<string> NamedLocations => namedLocations;
 
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+        // Reset explicite. Au cas où 'Enter Play Mode > Reload Domain' soit
+        // désactivé dans Project Settings : les statiques ne se reset pas
+        // automatiquement, on force ici.
+        planetName = "";
+        namedLocations.Clear();
         if (transform.parent != null) transform.SetParent(null);
         DontDestroyOnLoad(gameObject);
+    }
+
+    /// <summary>
+    /// Réinitialise explicitement (appelé lors d'un 'Nouvelle Partie' depuis
+    /// le menu pour repartir d'un monde vierge même si la singleton avait
+    /// survécu à une partie précédente).
+    /// </summary>
+    public void ClearForNewGame()
+    {
+        planetName = "";
+        namedLocations.Clear();
+        Debug.Log("[WorldLore] Reset (Nouvelle Partie).");
     }
 
     /// <summary>Fixe le nom de la planète. No-op si déjà défini.</summary>

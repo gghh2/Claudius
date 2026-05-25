@@ -43,6 +43,13 @@ public class AIDialogueManager : MonoBehaviour
             Instance = this;
             if (transform.parent != null) transform.SetParent(null);
             DontDestroyOnLoad(gameObject);
+            // Reset explicite des dictionnaires : si 'Enter Play Mode > Reload
+            // Domain' est désactivé dans Project Settings, l'Instance et ses
+            // dicts peuvent survivre à une Play stop -> conversations fuiteraient
+            // d'une partie à la suivante (PNJ qui mentionne un ancien nom de
+            // planète). On force la table rase ici.
+            conversationHistories.Clear();
+            conversationsByNpc.Clear();
         }
         else
         {

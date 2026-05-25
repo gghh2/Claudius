@@ -36,11 +36,11 @@ public class LoreNote : MonoBehaviour
     [Tooltip("Couleur du beam.")]
     public Color beamColor = new Color(1f, 0.85f, 0.4f, 0.8f);
     [Tooltip("Hauteur du beam (m).")]
-    public float beamHeight = 8f;
-    [Tooltip("Rayon du beam (m).")]
-    public float beamRadius = 0.25f;
+    public float beamHeight = 2.37f;
+    [Tooltip("Largeur du beam (m) — c'est un quad billboard, pas un cylindre.")]
+    public float beamRadius = 0.05f;
     [Tooltip("Intensité du shader BeaconBeam (additif).")]
-    public float beamIntensity = 1.5f;
+    public float beamIntensity = 0.71f;
 
     bool playerInRange;
     GameObject promptObj;
@@ -84,16 +84,19 @@ public class LoreNote : MonoBehaviour
 
     void CreateBeam()
     {
-        // Cylindre non-parente (evite l'heritage du scale deforme de la note).
-        // Materiau BeaconBeam (shader URP custom, fade vertical + horizontal).
-        beamObj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        // Quad (rectangle plat) qui billboard vers la camera autour de l'axe Y.
+        // Plus performant qu'un cylindre et le shader BeaconBeam est concu pour
+        // un quad (fade vertical bas->haut + fade horizontal centre->bords).
+        beamObj = GameObject.CreatePrimitive(PrimitiveType.Quad);
         beamObj.name = $"LoreNoteBeam_{noteId}";
         var col = beamObj.GetComponent<Collider>();
         if (col != null) Destroy(col);
 
-        // Cylindre Unity : hauteur 2 par défaut, scale.y * 2 = hauteur réelle.
+        // Quad Unity : 1m x 1m face +Z. On le redimensionne en largeur (X) et
+        // hauteur (Y). Pivot par defaut au centre -> on offset la position
+        // pour que le bas du beam touche la note.
         beamObj.transform.position = transform.position + Vector3.up * (beamHeight * 0.5f);
-        beamObj.transform.localScale = new Vector3(beamRadius * 2f, beamHeight * 0.5f, beamRadius * 2f);
+        beamObj.transform.localScale = new Vector3(beamRadius * 2f, beamHeight, 1f);
 
         var renderer = beamObj.GetComponent<Renderer>();
         if (renderer != null)
@@ -109,7 +112,6 @@ public class LoreNote : MonoBehaviour
             }
             else
             {
-                // Fallback minimal si le shader n'est pas trouvé.
                 Debug.LogWarning("[LoreNote] Shader 'LandConquest/BeaconBeam' introuvable — beam rendu en URP Lit fallback.");
                 var fallback = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
                 if (fallback != null)
@@ -149,14 +151,43 @@ public class LoreNote : MonoBehaviour
         {
             Pickup();
         }
-        // Suivi en monde + billboard caméra (comme NPCNameDisplay). On ne
-        // parente PAS le prompt à la note : la note est un cube scale non
-        // uniforme, l'héritage écraserait le texte.
+
+        var cam = Camera.main;
+
+        // Prompt : suivi position + billboard camera.
         if (promptObj != null && promptObj.activeSelf)
         {
             promptObj.transform.position = transform.position + Vector3.up * 1.2f;
-            if (Camera.main != null)
-                promptObj.transform.rotation = Quaternion.LookRotation(Camera.main.transform.forward);
+            if (cam != null)
+                promptObj.transform.rotation = Quaternion.LookRotation(cam.transform.forward);
+        }
+
+        // Beam : suivi position + scale (live depuis l'Inspector) + billboard
+        // SUR L'AXE Y SEULEMENT (le quad tourne pour faire face à la caméra
+        // sans s'incliner — il reste vertical comme une vraie colonne).
+        if (beamObj != null && cam != null)
+        {
+            beamObj.transform.position = transform.position + Vector3.up * (beamHeight * 0.5f);
+            beamObj.transform.localScale = new Vector3(beamRadius * 2f, beamHeight, 1f);
+
+            // Mise à jour live des propriétés du shader (couleur / intensité).
+            var rend = beamObj.GetComponent<Renderer>();
+            if (rend != null && rend.sharedMaterial != null)
+            {
+                var mat = rend.sharedMaterial;
+                if (mat.HasProperty("_Color") && mat.GetColor("_Color") != beamColor)
+                    mat.SetColor("_Color", beamColor);
+                if (mat.HasProperty("_Intensity") && !Mathf.Approximately(mat.GetFloat("_Intensity"), beamIntensity))
+                    mat.SetFloat("_Intensity", beamIntensity);
+            }
+
+            Vector3 toCam = cam.transform.position - beamObj.transform.position;
+            toCam.y = 0;
+            if (toCam.sqrMagnitude > 0.001f)
+            {
+                // -toCam pour orienter la face +Z du quad vers la caméra.
+                beamObj.transform.rotation = Quaternion.LookRotation(-toCam.normalized, Vector3.up);
+            }
         }
     }
 

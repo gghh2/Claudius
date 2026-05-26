@@ -230,6 +230,17 @@ public class DialogueUI : MonoBehaviour
             AdventureJournalIntegration.MarkAsDone("npc_" + npcData.name);
         }
         
+        // IMPORTANT : on vide AVANT d'activer le panel, sinon le panel
+        // s'affiche brièvement avec l'ancien dialogue (le clear arrive trop
+        // tard, après la 1re layout pass de Unity).
+        dialogueText.text = "";
+        currentFullText = "";
+        isCurrentlyDisplaying = false;
+
+        // Affiche le nom du NPC avec sa couleur (avant activation aussi).
+        npcNameText.text = TextFormatter.FormatName(currentNPC.name);
+        npcNameText.color = GetNPCColor(currentNPC.name);
+
         if (UnifiedUIManager.Instance != null)
         {
             UnifiedUIManager.Instance.NavigateTo(UnifiedUIPanelNames.Dialogue);
@@ -238,16 +249,6 @@ public class DialogueUI : MonoBehaviour
         {
             dialoguePanel.SetActive(true);
         }
-        
-        // Affiche le nom du NPC avec sa couleur
-        npcNameText.text = TextFormatter.FormatName(currentNPC.name);
-        npcNameText.color = GetNPCColor(currentNPC.name);
-
-        // Vide le texte du dialogue précédent (sinon il flashe brièvement avant
-        // l'arrivée de la réponse IA) et marque le champ comme dispo pour ShowText.
-        dialogueText.text = "";
-        currentFullText = "";
-        isCurrentlyDisplaying = false;
 
         // Affiche le bouton historique si on a déjà parlé à ce NPC
         UpdateHistoryButtonVisibility();
@@ -811,11 +812,17 @@ public class DialogueUI : MonoBehaviour
         // Reset
         SetAIElementsVisibility(false);
         SetQuestButtonsVisibility(false);
-        
+
         if (loadingIndicator != null)
             loadingIndicator.SetActive(false);
-            
+
         // Reset le flag
         isSendingMessage = false;
+
+        // Vide le texte pour qu'a la prochaine ouverture le panel ne flashe
+        // pas avec l'ancien dialogue. Ceinture+bretelles avec le clear en
+        // tete de StartDialogue.
+        if (dialogueText != null) dialogueText.text = "";
+        currentFullText = "";
     }
 }

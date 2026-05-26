@@ -22,14 +22,14 @@
   dialogue précédent**, puis l'efface et le remplace par la nouvelle réponse.
   À étudier (`DialogueUI` / `AIDialogueManager` — sans doute un `ShowText` avec
   l'historique affiché avant l'arrivée de la réponse IA).
-- 🔧 **14 erreurs `DontDestroyOnLoad`** au Play : la plupart des managers ne
-  font pas `transform.SetParent(null)` avant `DontDestroyOnLoad` (seul
-  `SaveGameManager` le fait). Liste : MeshyGenerator, CSMGenerator,
-  CSMModelImporter, DynamicAssetManager, InventoryManager, SoundEffectsManager,
-  MusicManager, AudioDistanceManager, QuestTokenDetector, QuestJournal,
-  QuestManager, QuestZoneManager, QuestMarkerSystem, UnifiedUIManager,
-  GlobalDebugManager, AIDialogueManager. Aligner sur le pattern de
-  `SaveGameManager`.
+- ✅ *(2026-05-26)* 14 erreurs `DontDestroyOnLoad` au Play : le pattern
+  `if (transform.parent != null) transform.SetParent(null);` est en place
+  dans tous les managers concernés (MeshyGenerator, CSMGenerator,
+  CSMModelImporter, DynamicAssetManager, InventoryManager,
+  SoundEffectsManager, MusicManager, AudioDistanceManager,
+  QuestTokenDetector, QuestJournal, QuestManager, QuestZoneManager,
+  QuestMarkerSystem, UnifiedUIManager, GlobalDebugManager,
+  AIDialogueManager). Plus d'erreurs au Play, confirmé en jeu.
 - ✅ *(2026-05-24)* Double tag "Player" résolu — `space_man_model` est
   désormais `Untagged`, seul le root porte le tag "Player".
 - ✅ *(2026-05-24)* Raccourcis I / J / L désormais *toggle* — re-presser

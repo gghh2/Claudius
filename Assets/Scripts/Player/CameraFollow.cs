@@ -104,6 +104,9 @@ public class CameraFollow : MonoBehaviour
     
     void Update()
     {
+        // Console dev ouverte = jeu en pause complète, on ne traite rien.
+        if (DevConsole.Instance != null && DevConsole.Instance.IsOpen) return;
+
         HandleZoomInput();
         UpdateCameraZoom();
         HandleMouseLook();

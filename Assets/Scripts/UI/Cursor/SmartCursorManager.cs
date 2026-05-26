@@ -45,10 +45,9 @@ public class SmartCursorManager : MonoBehaviour
 
     static bool IsExternalUiActive()
     {
-        // Boutique : ShopUI a une transform de root quand ouvert.
         if (ShopUI.Instance != null && ShopUI.Instance.IsOpen) return true;
-        // Reader : pareil.
         if (ReaderPanel.Instance != null && ReaderPanel.Instance.IsOpen) return true;
+        if (DevConsole.Instance != null && DevConsole.Instance.IsOpen) return true;
         return false;
     }
 

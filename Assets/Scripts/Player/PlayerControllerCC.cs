@@ -147,9 +147,12 @@ public class PlayerControllerCC : MonoBehaviour
     
     void Update()
     {
+        // Console dev ouverte = jeu en pause complète, on ne traite rien.
+        if (DevConsole.Instance != null && DevConsole.Instance.IsOpen) return;
+
         // Always update stamina
         UpdateStamina();
-        
+
         if (isControlEnabled && enabled)
         {
             // Ground check

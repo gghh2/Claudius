@@ -15,12 +15,32 @@ public class DevConsole : MonoBehaviour
 {
     public static DevConsole Instance { get; private set; }
 
+    [Tooltip("Touche principale d'ouverture.")]
     [SerializeField] KeyCode toggleKey = KeyCode.BackQuote;
+    [Tooltip("Touche alternative (souvent + fiable que BackQuote selon le clavier).")]
+    [SerializeField] KeyCode altToggleKey = KeyCode.F12;
     [SerializeField] int historyLines = 20;
+
+    /// <summary>
+    /// Auto-bootstrap : à chaque chargement de scène, on s'assure qu'un
+    /// DevConsole existe. Évite à l'utilisateur d'avoir à le placer en scène.
+    /// </summary>
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void AutoBootstrap()
+    {
+        if (Instance == null)
+        {
+            var go = new GameObject("DevConsole");
+            go.AddComponent<DevConsole>();
+            // L'instance se DontDestroyOnLoad elle-même dans Awake.
+        }
+    }
 
     GameObject root;
     TMP_InputField input;
     TextMeshProUGUI output;
+
+    public bool IsOpen => root != null && root.activeSelf;
     readonly Queue<string> lines = new Queue<string>();
     readonly Dictionary<string, Action<string[]>> commands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
 
@@ -49,20 +69,57 @@ public class DevConsole : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(toggleKey))
+        if (Input.GetKeyDown(toggleKey) || Input.GetKeyDown(altToggleKey))
         {
             SetVisible(!root.activeSelf);
         }
     }
+
+    float prevTimeScale = 1f;
+    bool dialogueInputWasInteractable;
 
     void SetVisible(bool v)
     {
         root.SetActive(v);
         if (v)
         {
+            prevTimeScale = Time.timeScale;
+            Time.timeScale = 0f;
+
+            // Pause explicite de l'horloge (unscaledDeltaTime ignore timeScale).
+            GameClock.Instance?.Pause();
+
+            // Coupe l'input field du DialogueUI pour qu'il arrête de capter
+            // les frappes et de re-prendre le focus chaque frame.
+            if (DialogueUI.Instance != null && DialogueUI.Instance.playerInputField != null)
+            {
+                var f = DialogueUI.Instance.playerInputField;
+                dialogueInputWasInteractable = f.interactable;
+                f.interactable = false;
+                f.DeactivateInputField();
+            }
+
             input.text = "";
+            var es = UnityEngine.EventSystems.EventSystem.current;
+            if (es != null) es.SetSelectedGameObject(input.gameObject);
             input.ActivateInputField();
             input.Select();
+
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
+        else
+        {
+            Time.timeScale = prevTimeScale;
+            GameClock.Instance?.Resume();
+
+            if (DialogueUI.Instance != null && DialogueUI.Instance.playerInputField != null)
+            {
+                DialogueUI.Instance.playerInputField.interactable = dialogueInputWasInteractable;
+            }
+
+            var es = UnityEngine.EventSystems.EventSystem.current;
+            if (es != null) es.SetSelectedGameObject(null);
         }
     }
 

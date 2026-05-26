@@ -34,6 +34,7 @@ public class AIDialogueManager : MonoBehaviour
     // reprend sa conversation au lieu de la réinitialiser → il se souvient.
     private Dictionary<string, List<OpenAIMessage>> conversationsByNpc = new Dictionary<string, List<OpenAIMessage>>();
 
+
     public static AIDialogueManager Instance { get; private set; }
     
     void Awake()
@@ -104,6 +105,20 @@ public class AIDialogueManager : MonoBehaviour
         if (conversationsByNpc.TryGetValue(npcData.name, out var existing) && existing.Count > 0)
         {
             currentConversation = existing;
+
+            // Économie de tokens : si le joueur a quitté SANS répondre (dernier
+            // message = assistant), on réutilise tel quel ce message au lieu
+            // de re-générer. Exception : si le message faisait référence au
+            // moment de la journée et que ce moment a changé, on re-génère
+            // pour rester cohérent (« bonsoir » à 14h serait bizarre).
+            var last = existing[existing.Count - 1];
+            if (last.role == "assistant" && !TimeOfDayChangedSinceCachedWelcome(npcData.name, last.content))
+            {
+                if (DialogueUI.Instance != null)
+                    DialogueUI.Instance.StartAIDialogue(npcData, $"{npcData.name}: {last.content}");
+                return; // Pas d'appel IA, pas de nouvelles injections.
+            }
+
             InjectTimeContext();
             InjectLoreContext(npcData.name);
             InjectRumorContext(npcData.name);
@@ -349,6 +364,7 @@ jouer votre personnage et de discuter.";
             // on l'extrait et on le fixe pour le reste de la partie.
             ExtractPlanetNameIfAny(aiResponse);
 
+
             if (GlobalDebugManager.IsDebugEnabled(DebugSystem.AI)) Debug.Log($"[AI] 🤖 Réponse de chat ({npcData.name}) en {responseSeconds:N1} s : {aiResponse}");
 
             currentConversation.Add(new OpenAIMessage("assistant", aiResponse));
@@ -428,7 +444,7 @@ CHOIX DU TYPE :
 RÈGLES :
 - La quête doit découler d'un sujet CONCRET de la conversation : un objet, un lieu, un problème ou un besoin réellement évoqué. Si le joueur exprime de l'intérêt mais qu'aucun sujet concret n'a été abordé, réponds NONE.
 - FETCH : si le joueur parle d'UN seul objet, la quantité est 1.
-- Le destinataire d'une DELIVERY et la cible d'un TALK sont des personnages avec un nom propre inventé (« Maître Orin », « Dame Sevra »), jamais un mot générique, jamais un lieu.
+- Le destinataire d'une DELIVERY et la cible d'un TALK sont des personnages avec un nom propre inventé. RÈGLE STRICTE : invente un prénom (et éventuellement un nom/épithète). EXEMPLES VALIDES : « Maître Orin », « Dame Sevra », « Korvyn », « Yliss l'Errante », « Capitaine Brann ». INTERDIT : « le garde », « l'apothicaire », « un marchand », « le frère », « le destinataire », « contact », « informateur » — tout terme générique est REFUSÉ. INTERDIT : un nom de zone (hangar, market, etc.) en position destinataire/cible.
 - INTERDIT : une quête TALK ou DELIVERY ne doit JAMAIS cibler {npcData.name} (le PNJ courant). On n'envoie pas le joueur parler à la personne avec qui il discute déjà — la cible est forcément un AUTRE personnage.";
     }
 
@@ -662,6 +678,40 @@ RÈGLES :
                 return true;
             default: return false;
         }
+    }
+
+    /// <summary>
+    /// Détermine si le message en cache est devenu obsolète à cause du temps.
+    /// Logique : on regarde si le message mentionne un libellé temporel
+    /// DIFFÉRENT du libellé actuel. Si la cache dit "matin" et on est toujours
+    /// le matin → reuse OK. Si la cache dit "soir" et on est le matin → re-gen.
+    /// Si la cache ne mentionne aucun libellé temporel → reuse OK.
+    /// </summary>
+    bool TimeOfDayChangedSinceCachedWelcome(string npcName, string cachedMessage)
+    {
+        if (GameClock.Instance == null) return false;
+        string current = GameClock.Instance.TimeOfDayLabel().ToLowerInvariant();
+        if (string.IsNullOrEmpty(cachedMessage)) return false;
+        string m = cachedMessage.ToLowerInvariant();
+
+        // Tous les libellés temporels possibles (alignés sur GameClock.TimeOfDayLabel).
+        string[] labels = { "matin", "midi", "après-midi", "apres-midi", "soir", "nuit", "aube", "aurore", "crépuscule", "crepuscule" };
+
+        bool mentionsCurrent = m.Contains(current);
+        bool mentionsAnyOther = false;
+        foreach (var l in labels)
+        {
+            if (l == current) continue;
+            // 'midi' est inclus dans 'après-midi' : on s'assure de matcher le mot entier.
+            if (System.Text.RegularExpressions.Regex.IsMatch(m, $@"\b{System.Text.RegularExpressions.Regex.Escape(l)}\b"))
+            {
+                mentionsAnyOther = true;
+                break;
+            }
+        }
+
+        // Obsolète si le message évoque un autre moment de la journée que celui en cours.
+        return mentionsAnyOther && !mentionsCurrent;
     }
 
     void InjectWorldLoreContext()

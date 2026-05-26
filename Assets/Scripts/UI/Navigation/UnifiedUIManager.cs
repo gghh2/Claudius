@@ -241,6 +241,9 @@ public class UnifiedUIManager : MonoBehaviour
 
     void Update()
     {
+        // DevConsole ouverte = jeu en pause totale, aucun raccourci ne passe.
+        if (DevConsole.Instance != null && DevConsole.Instance.IsOpen) return;
+
         // Check if a modal dialog is blocking all input
         if (IsModalDialogOpen())
         {
@@ -445,18 +448,21 @@ public class UnifiedUIManager : MonoBehaviour
 
     bool IsModalDialogOpen()
     {
+        // DevConsole se comporte comme un modal qui bloque toute l'UI.
+        if (DevConsole.Instance != null && DevConsole.Instance.IsOpen) return true;
+
         if (panelConfigs.ContainsKey(currentPanel))
         {
             return panelConfigs[currentPanel].blocksAllInput;
         }
-        
-        if (currentPanel == UnifiedUIPanelNames.Confirmation && 
+
+        if (currentPanel == UnifiedUIPanelNames.Confirmation &&
             panelConfigs.ContainsKey(UnifiedUIPanelNames.Confirmation))
         {
             var confirmPanel = panelConfigs[UnifiedUIPanelNames.Confirmation];
             return confirmPanel.gameObject != null && confirmPanel.gameObject.activeSelf;
         }
-        
+
         return false;
     }
 

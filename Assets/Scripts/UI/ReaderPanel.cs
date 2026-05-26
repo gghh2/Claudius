@@ -26,6 +26,7 @@ public class ReaderPanel : MonoBehaviour
 
     void Update()
     {
+        if (DevConsole.Instance != null && DevConsole.Instance.IsOpen) return;
         if (root != null && root.activeSelf && Input.GetKeyDown(KeyCode.Escape))
             Close();
     }

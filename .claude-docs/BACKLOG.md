@@ -59,6 +59,16 @@
   ("le voyageur vient de la part de X, c'est l'occasion de proposer une
   mission") — la suite est gérée naturellement par le pipeline d'analyse
   IA. Reste à affiner les prompts pour exploiter au mieux.
+- 🟡 **Memoire des transactions PNJ asymetrique (vu 2026-05-27)** : un
+  PNJ donneur de quete FETCH (ex. Arcan demande des cristaux d'energie)
+  ne se souvient PAS d'avoir recu la livraison au dialogue suivant — il
+  parle au conditionnel (« si tu avais ces cristaux »). La conversation
+  history existe, mais aucun fait n'est injecte au turn-in. Le mecanisme
+  `AIDialogueManager.InjectContextForNPC` existe deja et est cable pour
+  les retours EXPLORE — etendre a FETCH / DELIVERY / TALK / INTERACT au
+  moment du `QuestJournal.CompleteQuest` : injecter un fait type
+  « Le voyageur t'a remis {item} x{qty}, mission accomplie » dans le
+  contexte du giver.
 - ✅ *(2026-05-24)* Nouveau type **TREASURE** ajouté (token
   `[QUEST:TREASURE:nom]`, location aléatoire, récompense 200 crédits).
   Prompts IA mis à jour pour le proposer naturellement.

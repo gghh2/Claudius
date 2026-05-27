@@ -8,6 +8,12 @@
 ## Bugs
 
 - 🔴 La zone de fall-back n'a pas de vrai nom de zone (affiche « Laboratory »).
+- 🔴 **Securite contenu — interdire dialogue impliquant des enfants** :
+  contrainte a poser dans le system prompt commun et la generation de
+  PNJ procedural. Aucun NPC enfant, aucune evocation d'enfants en
+  contexte sensible. A cabler dans `BuildSystemPrompt` et a verifier
+  cote `ProceduralNPCSpawner` que les roles generes ne produisent pas
+  d'enfants.
 - ✅ *(2026-05-25)* `F5` / `F9` quick save/load fonctionnels en jeu.
 - 🟡 Build&Run : le compagnon est très lent.
 - ✅ *(2026-05-24)* Composant orphelin retiré de `NPC_Quest.prefab` (était

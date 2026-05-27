@@ -186,12 +186,15 @@ public class PlayerInventory : MonoBehaviour
     }
     
     /// <summary>
-    /// Clear the entire inventory
+    /// Clear the entire inventory. Vide aussi l'historique de possession
+    /// (utile pour New Game / load — les AddItem qui suivent un load
+    /// repeupleront proprement EverPossessedItemNames).
     /// </summary>
     public void ClearInventory()
     {
         items.Clear();
-        
+        EverPossessedItemNames.Clear();
+
         if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
             Debug.Log("📦 INVENTAIRE: Inventaire vidé");
     }

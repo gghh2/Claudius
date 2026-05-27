@@ -185,6 +185,13 @@ public class QuestJournal : MonoBehaviour
             if (reward > 0) PlayerWallet.Instance.AddCredits(reward);
         }
 
+        // Memoire de transaction pour le PNJ donneur : il doit se souvenir
+        // a la prochaine conversation que cette mission est ACCOMPLIE (pas
+        // au conditionnel). Different de la rumeur (qui circule entre PNJ
+        // tiers). Different du report EXPLORE (qui est un long narratif
+        // injecte plus tot via OnMarkerExplored).
+        InjectGiverCompletionMemory(quest);
+
         // Rumeur : les PNJ alentours apprennent que le voyageur a accompli
         // une mission. À la prochaine convo, l'un d'eux peut le mentionner.
         if (RumorPool.Instance != null)
@@ -193,6 +200,54 @@ public class QuestJournal : MonoBehaviour
             RumorPool.Instance.AddRumor("quest_" + quest.questId,
                 $"Le voyageur a terminé une mission pour {giver} : {quest.description}.");
         }
+    }
+
+    /// <summary>
+    /// Injecte un fait court dans le contexte IA du PNJ donneur pour qu'il
+    /// se souvienne, a la prochaine conversation, que la mission est
+    /// terminee (et pas au conditionnel comme « si tu avais... »).
+    /// </summary>
+    void InjectGiverCompletionMemory(JournalQuest quest)
+    {
+        if (AIDialogueManager.Instance == null) return;
+        if (string.IsNullOrEmpty(quest.giverNPCName)) return; // TREASURE / pas de giver
+
+        string desc = quest.description; // deja formate au constructeur de JournalQuest
+        string fact = null;
+
+        switch (quest.questType)
+        {
+            case QuestType.FETCH:
+                // Le joueur a apporte les items demandes. Cas le plus visible
+                // du bug observe avec Arcan/cristaux d'energie (2026-05-27).
+                fact = $"Le voyageur vient de vous remettre ce que vous lui aviez demande : {desc}. " +
+                       "Vous l'avez accepte avec gratitude. La mission est CLOSE — n'en reparlez plus " +
+                       "comme d'une chose a faire ou au conditionnel, c'est ACCOMPLI.";
+                break;
+            case QuestType.DELIVERY:
+                fact = $"Le voyageur a accompli la livraison que vous lui aviez confiee : {desc}. " +
+                       "Vous savez que c'est fait. Mission CLOSE.";
+                break;
+            case QuestType.TALK:
+                fact = $"Le voyageur a transmis votre message dans le cadre de : {desc}. Mission CLOSE.";
+                break;
+            case QuestType.EXPLORE:
+                // EXPLORE recoit deja un report flavor via QuestManager.
+                // OnMarkerExplored ; ici on confirme juste le statut clos.
+                fact = $"L'exploration que vous aviez confiee au voyageur ({desc}) est TERMINEE.";
+                break;
+            case QuestType.INTERACT:
+                fact = $"Le voyageur a realise l'action que vous lui aviez demandee : {desc}. Mission CLOSE.";
+                break;
+            case QuestType.ESCORT:
+                fact = $"L'escorte demandee est terminee : {desc}. Mission CLOSE.";
+                break;
+            default:
+                fact = $"Le voyageur a accompli la mission : {desc}. Elle est CLOSE.";
+                break;
+        }
+
+        AIDialogueManager.Instance.InjectContextForNPC(quest.giverNPCName, fact);
     }
     
     public List<JournalQuest> GetActiveQuests()

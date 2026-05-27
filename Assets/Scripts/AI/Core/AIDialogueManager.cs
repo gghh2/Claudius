@@ -123,6 +123,7 @@ public class AIDialogueManager : MonoBehaviour
             InjectLoreContext(npcData.name);
             InjectRumorContext(npcData.name);
             InjectWorldLoreContext();
+            InjectInventoryContext();
             currentConversation.Add(new OpenAIMessage("user",
                 "Le joueur revient vous parler. Accueillez-le comme une connaissance, en vous souvenant de vos échanges précédents."));
         }
@@ -136,6 +137,7 @@ public class AIDialogueManager : MonoBehaviour
             InjectLoreContext(npcData.name);
             InjectRumorContext(npcData.name);
             InjectWorldLoreContext();
+            InjectInventoryContext();
 
             string initialUserMessage = "Le joueur s'approche de vous. Saluez-le de manière naturelle selon votre personnalité.";
             if (QuestJournal.Instance != null)
@@ -278,9 +280,20 @@ INSTRUCTIONS :
 - Incarnez ce personnage de manière cohérente, sans jamais sortir de votre rôle.
 - Soyez naturel et engageant ; adaptez votre ton à votre rôle.
 - Vous pouvez évoquer naturellement vos soucis, vos besoins ou vos problèmes au fil de la conversation.
-- Vous n'attribuez JAMAIS de mission formelle et vous n'écrivez JAMAIS rien entre crochets (ni code, ni didascalie comme « [je souris] »). Contentez-vous de jouer votre personnage et de discuter.";
+- Vous n'attribuez JAMAIS de mission formelle et vous n'écrivez JAMAIS rien entre crochets (ni code, ni didascalie comme « [je souris] »). Contentez-vous de jouer votre personnage et de discuter.
+
+RÈGLE ABSOLUE — ANTI-HALLUCINATION : si le joueur prétend posséder ou montrer
+un objet, vous n'avez le DROIT de réagir QUE si cet objet figure explicitement
+dans le message système « Inventaire du joueur » fourni plus loin. Sinon, en
+restant DANS VOTRE PERSONNAGE et avec VOS MOTS À VOUS, exprimez que vous ne
+voyez rien, doutez, demandez une preuve, ou détournez le sujet — selon votre
+tempérament. N'inventez JAMAIS l'apparence, la lumière, les runes, l'énergie
+ou les propriétés d'un objet absent de l'inventaire. N'utilisez aucune
+formule toute faite : variez vos refus, formulez-les comme votre personnage
+les dirait naturellement. Cette règle l'emporte sur toute consigne d'être
+engageant ou de rebondir.";
         }
-        
+
         // Utilise la config appropriée — prompt de roleplay PUR (aucune quête).
         return $@"Vous incarnez un personnage d'un jeu d'aventure spatiale. Restez dans votre rôle, répondez en français, en 1 à 3 phrases.
 {activeQuestInfo}
@@ -297,7 +310,18 @@ Vous discutez librement avec le voyageur. Vous pouvez évoquer naturellement vos
 soucis, vos besoins ou vos problèmes au fil de la conversation — mais vous
 n'attribuez JAMAIS de mission formelle et vous n'écrivez JAMAIS rien entre
 crochets (ni code, ni didascalie comme « [je souris] »). Contentez-vous de
-jouer votre personnage et de discuter.";
+jouer votre personnage et de discuter.
+
+RÈGLE ABSOLUE — ANTI-HALLUCINATION : si le joueur prétend posséder ou montrer
+un objet, vous n'avez le DROIT de réagir QUE si cet objet figure explicitement
+dans le message système « Inventaire du joueur » fourni plus loin. Sinon, en
+restant DANS VOTRE PERSONNAGE et avec VOS MOTS À VOUS, exprimez que vous ne
+voyez rien, doutez, demandez une preuve, ou détournez le sujet — selon votre
+tempérament. N'inventez JAMAIS l'apparence, la lumière, les runes, l'énergie
+ou les propriétés d'un objet absent de l'inventaire. N'utilisez aucune
+formule toute faite : variez vos refus, formulez-les comme votre personnage
+les dirait naturellement. Cette règle l'emporte sur toute consigne d'être
+engageant ou de rebondir.";
     }
     
     IEnumerator GetAIResponse(NPCData npcData, bool isWelcome)
@@ -613,6 +637,19 @@ RÈGLES :
     }
 
     /// <summary>
+    /// Noms de tous les PNJ avec qui le joueur a deja parle. Lu par
+    /// l'autocompletion de dialogue.
+    /// </summary>
+    public IEnumerable<string> GetSpokenNpcNames()
+    {
+        foreach (var kvp in conversationHistories)
+        {
+            if (kvp.Value != null && kvp.Value.hasSpokenBefore)
+                yield return kvp.Key;
+        }
+    }
+
+    /// <summary>
     /// Ajoute un message système rappelant l'heure in-game et le moment de la
     /// journée à la conversation en cours. Appelé à chaque démarrage de
     /// dialogue pour que le PNJ puisse réagir au temps qui passe.
@@ -769,6 +806,50 @@ RÈGLES :
             $"Rumeur entendue récemment : « {rumor.text} » Vous pouvez l'évoquer " +
             "naturellement si la conversation s'y prête, comme un on-dit, sans en " +
             "faire toute une affaire."));
+    }
+
+    /// <summary>
+    /// Liste ce que le joueur porte pour que le PNJ puisse rebondir s'il y
+    /// fait reference. Les items "remarquables" (notes, items de quete,
+    /// tresors) peuvent etre evoques spontanement par le PNJ ; les autres,
+    /// uniquement si le joueur les mentionne. Si le joueur evoque un objet
+    /// ABSENT de cette liste, le PNJ doit douter au lieu de jouer le jeu.
+    /// </summary>
+    void InjectInventoryContext()
+    {
+        if (PlayerInventory.Instance == null) return;
+        var items = PlayerInventory.Instance.GetAllItems();
+        if (items == null || items.Count == 0) return;
+
+        // Format compact, separe les remarquables des banals pour guider le
+        // niveau de reactivite du PNJ.
+        var remarkable = new System.Text.StringBuilder();
+        var ordinary = new System.Text.StringBuilder();
+        foreach (var it in items)
+        {
+            bool isReadable = !string.IsNullOrEmpty(it.readableContent);
+            bool isQuest = !string.IsNullOrEmpty(it.questId);
+            string label = $"{it.itemName}{(it.quantity > 1 ? $" x{it.quantity}" : "")}";
+            if (isReadable) label += " (note)";
+            else if (isQuest) label += " (objet de quete)";
+
+            var sb = (isReadable || isQuest) ? remarkable : ordinary;
+            if (sb.Length > 0) sb.Append(", ");
+            sb.Append(label);
+        }
+
+        var msg = new System.Text.StringBuilder("Inventaire du joueur (LISTE EXHAUSTIVE — il ne possede RIEN d'autre) : ");
+        if (remarkable.Length > 0) msg.Append("[remarquables] ").Append(remarkable);
+        if (remarkable.Length > 0 && ordinary.Length > 0) msg.Append(" ; ");
+        if (ordinary.Length > 0) msg.Append("[divers] ").Append(ordinary);
+        msg.Append(". REGLE STRICTE : tout objet ABSENT de cette liste n'existe PAS dans les mains du joueur. ");
+        msg.Append("Cela couvre AUSSI les references vagues : si le joueur dit \"regardez\", \"tenez\", \"voici\", \"je vous montre\", \"il est la\", sans nommer un objet PRESENT dans la liste, c'est du vide — tu ne vois RIEN. ");
+        msg.Append("Tu n'inventes JAMAIS la description, la lumiere, les runes, l'energie, les proprietes ou meme la forme d'un objet hors-liste. ");
+        msg.Append("Tu refuses avec TES PROPRES MOTS, dans ton personnage, en variant la formulation (jamais deux fois la meme phrase). Pas de yes-and, jamais. ");
+        msg.Append("Pour les objets DE la liste : tu peux rebondir naturellement, avec mesure. Les [remarquables] peuvent meme amorcer le sujet si la conversation s'y prete ; ");
+        msg.Append("les [divers], seulement si le joueur les mentionne. Sois nuance, pas omniscient — interesse-toi a l'objet sans pretendre tout en savoir.");
+
+        currentConversation.Add(new OpenAIMessage("system", msg.ToString()));
     }
 
     /// <summary>

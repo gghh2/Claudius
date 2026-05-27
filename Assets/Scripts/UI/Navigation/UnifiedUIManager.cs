@@ -256,6 +256,11 @@ public class UnifiedUIManager : MonoBehaviour
             HandleEscapeKey();
         }
 
+        // Si l'utilisateur tape dans un InputField (dialogue IA notamment),
+        // les raccourcis I/J/L ne doivent PAS se declencher en plus de la
+        // frappe. ESC est traite avant pour rester disponible.
+        if (UIInputUtils.IsTypingInInputField()) return;
+
         // Toggle: re-presser la touche du panneau actuellement ouvert le referme
         if (Input.GetKeyDown(KeyCode.J) && currentPanel == UnifiedUIPanelNames.QuestJournal)
         {

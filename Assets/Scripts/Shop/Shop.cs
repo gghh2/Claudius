@@ -47,7 +47,7 @@ public class Shop : MonoBehaviour
 
     void Update()
     {
-        if (playerInRange && Input.GetKeyDown(openKey))
+        if (playerInRange && Input.GetKeyDown(openKey) && !UIInputUtils.IsTypingInInputField())
         {
             if (ShopUI.Instance == null)
             {

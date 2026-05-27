@@ -71,7 +71,12 @@ public class DevConsole : MonoBehaviour
     {
         if (Input.GetKeyDown(toggleKey) || Input.GetKeyDown(altToggleKey))
         {
-            SetVisible(!root.activeSelf);
+            // Si on est en train de taper dans un autre InputField (dialogue
+            // IA, recherche...), on n'ouvre pas la console. Mais on accepte
+            // de FERMER : le focus est alors sur l'input de la console
+            // elle-meme, qui est aussi un InputField.
+            if (IsOpen || !UIInputUtils.IsTypingInInputField())
+                SetVisible(!root.activeSelf);
         }
     }
 

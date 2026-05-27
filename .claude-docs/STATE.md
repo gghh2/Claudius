@@ -3,7 +3,7 @@
 > Où en est le projet **maintenant**. Ce fichier est importé automatiquement par
 > `CLAUDE.md`. À relire en début de session, à mettre à jour en fin de session.
 
-**Dernière mise à jour :** 2026-05-24
+**Dernière mise à jour :** 2026-05-27
 
 ## Statut global
 
@@ -41,6 +41,19 @@
   backend physique non-PhysX après une migration Unity 6.2 → joueur bloqué et
   spam `Move called on inactive controller`. Backend remis sur PhysX dans
   Project Settings ; gardes défensifs ajoutés dans `PlayerControllerCC`.
+- **DevConsole modale + reprise dialogue sans IA + StaminaBar prefab
+  (2026-05-26, commit `b37f8cf`)** : F12/² ouvre une console qui met tout en
+  pause et capte le focus ; reprise de conversation NPC reuse le dernier
+  message si rien n'a change, sinon re-injection contexte. DELIVERY prompt
+  durci (nom propre obligatoire). Validé en jeu.
+- **DevConsole bloque desormais I/J/L/ESC quand ouverte (2026-05-26, commit
+  `e76184e`)** : raccourcis UI globaux passent par
+  `UnifiedUIManager.IsModalDialogOpen()` qui inclut la console.
+- **Flash dialogue corrige + DontDestroyOnLoad clean (2026-05-26, commit
+  `d24a7cb`)** : `dialogueText.text = ""` avant activation du panel
+  (la layout pass montrait le texte precedent). 14 erreurs
+  `DontDestroyOnLoad` confirmees absentes — le pattern
+  `transform.SetParent(null)` est en place partout, BACKLOG marque ✅.
 
 ## En cours / non terminé
 
@@ -69,8 +82,6 @@
   dans le build pour rien — à retirer (cf. BACKLOG).
 - **Emojis en strings UI** rendent des carrés (police TMP sans glyphes). À
   purger ou remplacer par sprites TMP (cf. BACKLOG).
-- **14 erreurs `DontDestroyOnLoad`** au Play : managers non détachés de leur
-  parent `Manager` avant l'appel. Bénin mais bruyant (cf. BACKLOG).
 - **Double tag "Player"** sur le mesh enfant en plus du root — à corriger
   un jour (cf. BACKLOG).
 

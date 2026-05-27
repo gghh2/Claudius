@@ -33,6 +33,14 @@ public class PlayerInventory : MonoBehaviour
 
     [Header("Inventory")]
     public List<InventoryItem> items = new List<InventoryItem>();
+
+    /// <summary>
+    /// Noms de tous les items que le joueur a possede a un moment donne dans
+    /// cette session (incluant ceux deja consommes / livres). Lu par
+    /// l'autocompletion de dialogue pour proposer les references familieres
+    /// au joueur meme apres qu'il s'en soit defait.
+    /// </summary>
+    public HashSet<string> EverPossessedItemNames { get; } = new HashSet<string>();
     
     // Debug est maintenant géré par GlobalDebugManager
     
@@ -76,6 +84,9 @@ public class PlayerInventory : MonoBehaviour
             item.readableContent = readableContent;
             items.Add(item);
         }
+
+        // Historique de possession (utilise par l'autocompletion de dialogue).
+        if (!string.IsNullOrEmpty(itemName)) EverPossessedItemNames.Add(itemName);
 
         if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Player))
         {

@@ -113,6 +113,17 @@ public class QuestZoneManager : MonoBehaviour
     {
         return allZones.Where(z => z.supportedObjects.Contains(objectType)).ToList();
     }
+
+    /// <summary>
+    /// Noms des zones que le joueur a deja decouvertes (entree au moins une
+    /// fois). Lu par l'autocompletion de dialogue.
+    /// </summary>
+    public List<string> GetDiscoveredZoneNames()
+    {
+        return allZones.Where(z => z != null && z.IsDiscovered)
+            .Select(z => z.zoneName)
+            .ToList();
+    }
     
     // Get available quest types for AI generation
     public Dictionary<QuestType, List<QuestZone>> GetAvailableQuestOptions()

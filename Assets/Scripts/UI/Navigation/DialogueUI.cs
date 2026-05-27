@@ -86,6 +86,13 @@ public class DialogueUI : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+            // Auto-attache l'autocompletion si AUCUNE instance n'est deja
+            // wired en scene (designer peut l'avoir mise sur DialoguePanel
+            // ou ailleurs). FindFirstObjectByType inclut les inactifs si on
+            // passe FindObjectsInactive.Include — pertinent car DialoguePanel
+            // demarre inactif.
+            if (FindFirstObjectByType<DialogueAutocomplete>(FindObjectsInactive.Include) == null)
+                gameObject.AddComponent<DialogueAutocomplete>();
         }
         else
         {

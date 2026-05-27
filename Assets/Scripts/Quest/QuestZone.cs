@@ -55,6 +55,12 @@ public class QuestZone : MonoBehaviour
     private bool zoneDiscovered = false;
     private bool playerInside = false;
 
+    /// <summary>
+    /// True une fois que le joueur est entre dans la zone au moins une fois.
+    /// Lu par l'autocompletion de dialogue pour proposer ce nom de zone.
+    /// </summary>
+    public bool IsDiscovered => zoneDiscovered;
+
     void Start()
     {
         GenerateSpawnPoints();

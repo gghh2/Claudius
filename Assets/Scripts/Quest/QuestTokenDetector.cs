@@ -67,6 +67,18 @@ public class QuestTokenDetector : MonoBehaviour
 
     // Quantité maximale plausible pour une quête FETCH (garde-fou anti-absurde).
     private const int MaxFetchQuantity = 10;
+
+    // Mots-placeholders interdits comme nom d'objet de quete FETCH : l'IA
+    // ne doit pas fabriquer une quete "rapporte 1 objet" — il faut un vrai
+    // nom (ex. cristal_energie, colis_urgent). Sinon l'objet a chercher
+    // dans le monde est introuvable / generique.
+    private static readonly HashSet<string> GenericObjectNames = new HashSet<string>
+    {
+        "objet", "objets", "chose", "choses", "truc", "trucs",
+        "item", "items", "thing", "things", "machin", "bidule",
+        "ressource", "ressources", "marchandise", "marchandises",
+        "produit", "produits"
+    };
     
     void Awake()
     {
@@ -424,6 +436,27 @@ public class QuestTokenDetector : MonoBehaviour
             if (debugMode)
                 Debug.LogWarning($"[QuestTokenDetector] Token rejeté — zone inconnue : '{token.zoneName}' ({token.questType})");
             return false;
+        }
+
+        // 1bis. FETCH : refuser les noms d'objet generiques de type "objet",
+        //       "chose"... (l'IA doit nommer un vrai item, sinon la quete
+        //       devient "Trouvez 1 objet dans market" et le joueur ne sait
+        //       pas quoi chercher).
+        if (token.questType == QuestType.FETCH)
+        {
+            string objName = NormalizeName(token.objectName);
+            if (string.IsNullOrEmpty(objName))
+            {
+                if (debugMode)
+                    Debug.LogWarning("[QuestTokenDetector] Token FETCH rejete — objectName vide");
+                return false;
+            }
+            if (GenericObjectNames.Contains(objName))
+            {
+                if (debugMode)
+                    Debug.LogWarning($"[QuestTokenDetector] Token FETCH rejete — objectName generique '{token.objectName}' (placeholder, pas un vrai nom)");
+                return false;
+            }
         }
 
         // 2. Le destinataire d'une DELIVERY / TALK / ESCORT doit être un

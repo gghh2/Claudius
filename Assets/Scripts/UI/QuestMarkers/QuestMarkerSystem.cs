@@ -429,21 +429,33 @@ public class QuestMarkerSystem : MonoBehaviour
     private void UpdateMarkerPositionPerspective(QuestMarker marker, MarkerTarget target, float distance)
     {
         Vector3 screenPos = mainCamera.WorldToViewportPoint(target.position);
-        
+
         if (screenPos.z < 0)
         {
             screenPos.x = 1 - screenPos.x;
             screenPos.y = 1 - screenPos.y;
             screenPos.z = 0;
         }
-        
-        bool isVisible = screenPos.x > 0.1f && screenPos.x < 0.9f && 
-                        screenPos.y > 0.1f && screenPos.y < 0.9f && 
+
+        bool isVisible = screenPos.x > 0.1f && screenPos.x < 0.9f &&
+                        screenPos.y > 0.1f && screenPos.y < 0.9f &&
                         screenPos.z > 0;
-        
+
         if (isVisible)
         {
-            marker.gameObject.SetActive(false);
+            // Cible a l'ecran : on place le marker AU-DESSUS de la cible
+            // (projection 3D -> ecran + offset vertical), fleche pointant
+            // vers le bas. Garde la distance visible et confirme visuellement
+            // la cible — utile depuis que la cam peut s'orienter (un joueur
+            // qui fait face a la destination veut quand meme voir le marker).
+            Vector3 worldAbove = target.position + Vector3.up * 2.5f;
+            Vector3 abovePixel = mainCamera.WorldToScreenPoint(worldAbove);
+            marker.gameObject.transform.position = abovePixel;
+            // Fleche pointee vers le bas (vers la cible).
+            marker.gameObject.transform.rotation = Quaternion.Euler(0, 0, 180);
+            if (marker.distanceText != null)
+                marker.distanceText.text = $"{Mathf.RoundToInt(distance)}m";
+            marker.gameObject.SetActive(true);
             return;
         }
         

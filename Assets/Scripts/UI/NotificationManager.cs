@@ -230,7 +230,10 @@ public class NotificationManager : MonoBehaviour
                     notificationPanel.AddComponent<GraphicRaycaster>();
                 }
                 notifCanvas.overrideSorting = true;
-                notifCanvas.sortingOrder = 100; // Very high to be on top
+                // 9999 = au-dessus de tout (modales gameplay 10-50, DevConsole
+                // 5000, marge pour le futur). Les toasts sont ephemeres et
+                // doivent toujours etre visibles.
+                notifCanvas.sortingOrder = 9999;
             }
         }
         else

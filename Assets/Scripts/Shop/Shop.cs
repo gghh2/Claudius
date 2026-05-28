@@ -27,8 +27,10 @@ public class Shop : MonoBehaviour
     [Tooltip("Rayon du trigger de détection (mètres).")]
     public float triggerRadius = 3.5f;
 
-    [Tooltip("Hauteur du prompt 'B Boutique' au-dessus du PNJ.")]
-    public float promptHeight = 2.2f;
+    [Tooltip("Hauteur du prompt 'B Boutique' au-dessus du PNJ. Volontairement " +
+        "plus haut que le prompt [E] Parler (NPC.ShowInteractionPrompt offset 2.0) " +
+        "pour eviter le chevauchement quand un NPC a une boutique.")]
+    public float promptHeight = 2.8f;
 
     bool playerInRange;
     SphereCollider triggerCol;
@@ -47,7 +49,14 @@ public class Shop : MonoBehaviour
 
     void Update()
     {
-        if (playerInRange && Input.GetKeyDown(openKey) && !UIInputUtils.IsTypingInInputField())
+        // Defenses cumulees pour eviter une ouverture parasite pendant un
+        // dialogue (la frappe B fuyait vers Shop dans des fenetres de focus
+        // transitoires apres Enter).
+        bool isTyping = UIInputUtils.IsTypingInInputField();
+        bool dialogueOpen = DialogueUI.Instance != null && DialogueUI.Instance.IsDialogueOpen();
+        bool blockedByUI = UnifiedUIManager.Instance != null && UnifiedUIManager.Instance.IsBlockingGameplay();
+
+        if (playerInRange && Input.GetKeyDown(openKey) && !isTyping && !dialogueOpen && !blockedByUI)
         {
             if (ShopUI.Instance == null)
             {

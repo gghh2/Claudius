@@ -321,7 +321,16 @@ public class DialogueUI : MonoBehaviour
     void SetAIElementsVisibility(bool visible)
     {
         if (playerInputField != null)
+        {
             playerInputField.gameObject.SetActive(visible);
+            // Garde-fou : un ShowLoadingState(true) ayant ete interrompu
+            // (F9 load pendant une attente IA, fermeture forcee, DevConsole
+            // qui a laisse interactable=false) pouvait laisser l'input
+            // bloque. On le re-active explicitement chaque fois que le
+            // panel s'affiche.
+            if (visible)
+                playerInputField.interactable = true;
+        }
         if (sendButton != null)
         {
             sendButton.gameObject.SetActive(visible);

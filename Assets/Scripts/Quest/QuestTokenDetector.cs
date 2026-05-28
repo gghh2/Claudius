@@ -499,18 +499,11 @@ public class QuestTokenDetector : MonoBehaviour
 
     // Vrai si un PNJ portant ce nom existe déjà dans la scène. Empêche les
     // quêtes TALK/DELIVERY de spawner un doublon d'un PNJ déjà présent.
+    // Delegue a FindExistingNPCByName pour partager le matching fuzzy
+    // (exact + last-name) avec le code de reuse cote QuestManager.
     static bool MatchesExistingNPC(string name)
     {
-        string normalized = NormalizeName(name);
-        if (string.IsNullOrEmpty(normalized))
-            return false;
-
-        foreach (NPC npc in FindObjectsByType<NPC>(FindObjectsSortMode.None))
-        {
-            if (NormalizeName(npc.npcName) == normalized)
-                return true;
-        }
-        return false;
+        return QuestManagerHelper.FindExistingNPCByName(name) != null;
     }
 
     static string NormalizeName(string s)

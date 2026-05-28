@@ -9,18 +9,33 @@ using System.Text.RegularExpressions;
 public static class QuestManagerHelper
 {
     /// <summary>
-    /// Cherche un PNJ existant en scène par nom (normalisé : espaces et casse
-    /// ignorés). Utilisé par TALK/DELIVERY pour réutiliser un PNJ déjà
-    /// présent comme cible plutôt que d'en spawner un doublon.
+    /// Cherche un PNJ existant en scène par nom. Match en 2 passes :
+    ///   1. Comparaison exacte normalisee (casse/espaces ignores).
+    ///   2. Comparaison par DERNIER MOT signifiant — gere "Mme Vasquez"
+    ///      vs "Dr. Elena Vasquez" qui partagent le nom de famille
+    ///      "Vasquez". Stop-words exclus pour ne pas confondre des titres.
+    /// Utilisé par TALK/DELIVERY pour réutiliser un PNJ déjà présent
+    /// comme cible plutôt que d'en spawner un doublon.
     /// </summary>
     public static GameObject FindExistingNPCByName(string name)
     {
         if (string.IsNullOrWhiteSpace(name)) return null;
         string normalized = NormalizeName(name);
 
+        // Passe 1 : match exact normalise.
         foreach (NPC npc in Object.FindObjectsByType<NPC>(FindObjectsSortMode.None))
         {
             if (NormalizeName(npc.npcName) == normalized)
+                return npc.gameObject;
+        }
+
+        // Passe 2 : match par dernier mot signifiant (last name).
+        string targetLast = LastSignificantWord(name);
+        if (string.IsNullOrEmpty(targetLast) || targetLast.Length < 3) return null;
+
+        foreach (NPC npc in Object.FindObjectsByType<NPC>(FindObjectsSortMode.None))
+        {
+            if (LastSignificantWord(npc.npcName) == targetLast)
                 return npc.gameObject;
         }
         return null;
@@ -28,6 +43,41 @@ public static class QuestManagerHelper
 
     static string NormalizeName(string s) =>
         (s ?? string.Empty).Trim().ToLowerInvariant().Replace(" ", "").Replace("_", "");
+
+    /// <summary>
+    /// Titres/honorifiques ecartes du calcul de dernier mot — pour ne pas
+    /// rapprocher deux PNJ qui partagent juste un titre (ex. "Mme Dupont"
+    /// vs "Mme Martin").
+    /// </summary>
+    static readonly System.Collections.Generic.HashSet<string> NameStopWords =
+        new System.Collections.Generic.HashSet<string>
+        {
+            "mme", "mlle", "mr", "m", "monsieur", "madame", "mademoiselle",
+            "dr", "dr.", "docteur", "pr", "professeur",
+            "capitaine", "cap", "commandant", "cmdt", "general", "colonel",
+            "lieutenant", "sergent", "sgt",
+            "frere", "soeur", "pere", "mere",
+            "le", "la", "les", "de", "du", "des", "von", "van", "el", "al"
+        };
+
+    /// <summary>
+    /// Dernier mot signifiant d'un nom de PNJ, normalise. Retourne ""
+    /// si le nom ne contient que des stop-words. Sert au fuzzy-match.
+    /// </summary>
+    static string LastSignificantWord(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return "";
+        var parts = s.ToLowerInvariant()
+            .Replace(".", "")
+            .Replace(",", "")
+            .Replace("_", " ")
+            .Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
+        for (int i = parts.Length - 1; i >= 0; i--)
+        {
+            if (!NameStopWords.Contains(parts[i])) return parts[i];
+        }
+        return "";
+    }
 
     /// <summary>
     /// Zone la plus proche d'une position monde. Utilisé pour assigner la

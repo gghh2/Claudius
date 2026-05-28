@@ -96,10 +96,8 @@ public class ShopCatalogGenerator : MonoBehaviour
         Debug.Log($"[ShopCatalog] Generation terminee : {generated} catalogue(s) sur {npcs.Count} NPC.");
     }
 
-    // Roles qui ONT le droit a un catalogue marchand. Tout role hors de
-    // cette liste -> VIDE direct, pas d'appel IA. Couvre la grande
-    // majorite des cas (~80% des PNJ ne sont pas marchands) et evite que
-    // le modele invente des produits pour un Garde ou un Pilote.
+    // Roles explicitement commerciaux : catalogue garanti, le modele doit
+    // generer. Pour les autres, le modele decide (peut repondre VIDE).
     static readonly System.Collections.Generic.HashSet<string> MerchantRoleKeywords =
         new System.Collections.Generic.HashSet<string>
         {
@@ -108,8 +106,6 @@ public class ShopCatalogGenerator : MonoBehaviour
             "vendeur", "vendeuse",
             "tavernier", "taverniere", "tavernière", "aubergiste",
             "armurier", "armuriere", "armurière",
-            "apothicaire", "alchimiste", "herboriste",
-            "ferrailleur", "ferrailleuse",
             "trader", "merchant"
         };
 
@@ -124,29 +120,37 @@ public class ShopCatalogGenerator : MonoBehaviour
 
     IEnumerator GenerateFor(NPC npc, Shop shop)
     {
-        // Court-circuit : seuls les roles explicitement marchands ont un
-        // catalogue. Evite que le modele invente des produits pour un
-        // garde, un pilote, un archeologue, etc.
-        if (!RoleIsMerchant(npc.npcRole))
-        {
-            Debug.Log($"[ShopCatalog] {npc.npcName} ({npc.npcRole}) : non-marchand, skip.");
-            yield break;
-        }
+        // Distingue 2 modes :
+        //   - Marchand explicite : on FORCE la generation (2-5 articles).
+        //   - Autre role : on laisse l'IA decider, avec des examples de
+        //     'qui vend / qui ne vend pas' pour calibrer son jugement.
+        bool isExplicitMerchant = RoleIsMerchant(npc.npcRole);
+        string modeInstructions = isExplicitMerchant
+            ? "Ce PNJ est un MARCHAND explicite : tu DOIS generer entre 2 et 5 articles. PAS de VIDE."
+            : "Ce PNJ N'EST PAS un marchand explicite. Decide si son metier lui permet de " +
+              "vendre PLAUSIBLEMENT quelque chose en marge de son activite principale.\n" +
+              "  PEUVENT vendre : druide (herbes/talismans), archeologue (trouvailles), " +
+              "mecanicien (pieces de rechange), apothicaire/alchimiste/herboriste (potions), " +
+              "ferrailleur (debris), explorateur retraite (souvenirs), sage (textes), " +
+              "scientifique (echantillons), artisan (objets fabriques).\n" +
+              "  NE VENDENT PAS : garde en service, pilote actif, soldat, capitaine en mission, " +
+              "fonctionnaire, gardien austere, philosophe pur, ermite recluse.\n" +
+              "Si OUI : genere 1 a 3 articles. Si NON : reponds STRICTEMENT par : VIDE";
 
         var messages = new List<OpenAIMessage>
         {
             new OpenAIMessage("system",
-                "Tu generes le catalogue de boutique d'un PNJ MARCHAND d'un jeu " +
-                "d'aventure spatiale. Format STRICT, une ligne par article, " +
-                "separateur '|' :\n" +
+                "Tu generes le catalogue de boutique d'un PNJ d'un jeu d'aventure " +
+                "spatiale. Format STRICT, une ligne par article, separateur '|' :\n" +
                 "nom_item_en_snake_case | prix_credits | description_courte\n\n" +
-                "REGLES :\n" +
-                "- Entre 2 et 5 articles, COHERENTS avec le metier, la personnalite, le " +
-                "lore space-opera. Pas de doublons, pas de mots trop modernes.\n" +
-                "- Noms en snake_case (lasergun_leger, ration_de_combat).\n" +
+                modeInstructions + "\n\n" +
+                "REGLES (si tu generes) :\n" +
+                "- Articles COHERENTS avec le metier, la personnalite, le lore space-opera. " +
+                "Pas de doublons, pas de mots trop modernes.\n" +
+                "- Noms en snake_case (herbe_de_lune, lasergun_leger, fragment_de_relique).\n" +
                 "- Prix entre 10 et 500 credits, proportionnel a la rarete.\n" +
                 "- Description courte (5-15 mots), en francais, sans guillemets.\n" +
-                "- Aucun preambule ni postambule. Juste les lignes."),
+                "- Aucun preambule ni postambule. Juste les lignes (ou VIDE)."),
             new OpenAIMessage("user",
                 $"PNJ :\n- Nom : {npc.npcName}\n- Role : {npc.npcRole}\n- Description : {npc.npcDescription}\n\nGenere son catalogue :")
         };

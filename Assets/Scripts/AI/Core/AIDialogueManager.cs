@@ -108,11 +108,18 @@ public class AIDialogueManager : MonoBehaviour
 
             // Économie de tokens : si le joueur a quitté SANS répondre (dernier
             // message = assistant), on réutilise tel quel ce message au lieu
-            // de re-générer. Exception : si le message faisait référence au
-            // moment de la journée et que ce moment a changé, on re-génère
-            // pour rester cohérent (« bonsoir » à 14h serait bizarre).
+            // de re-générer. Exceptions :
+            //   1. Le message faisait référence au moment de la journée et
+            //      ce moment a changé (« bonsoir » à 14h serait bizarre).
+            //   2. Un fait a ete injecte dans le contexte depuis ce dernier
+            //      assistant (typiquement InjectGiverCompletionMemory au
+            //      turn-in d'une quete) — la cache est STALE, le PNJ redirait
+            //      sa demande alors qu'elle est accomplie.
             var last = existing[existing.Count - 1];
-            if (last.role == "assistant" && !TimeOfDayChangedSinceCachedWelcome(npcData.name, last.content))
+            bool canReuse = last.role == "assistant"
+                && !TimeOfDayChangedSinceCachedWelcome(npcData.name, last.content)
+                && !HasInjectionsSinceLastAssistant(existing);
+            if (canReuse)
             {
                 if (DialogueUI.Instance != null)
                     DialogueUI.Instance.StartAIDialogue(npcData, $"{npcData.name}: {last.content}");
@@ -749,6 +756,27 @@ RÈGLES :
 
         // Obsolète si le message évoque un autre moment de la journée que celui en cours.
         return mentionsAnyOther && !mentionsCurrent;
+    }
+
+    /// <summary>
+    /// True si une injection (system message) a ete ajoutee dans la cache
+    /// APRES le dernier message assistant. Sert a invalider la reprise sans
+    /// IA quand un fait nouveau a ete injecte (typiquement
+    /// InjectGiverCompletionMemory au turn-in de quete) — sinon le PNJ
+    /// redirait verbatim sa demande de quete alors qu'elle est accomplie.
+    /// </summary>
+    bool HasInjectionsSinceLastAssistant(List<OpenAIMessage> conversation)
+    {
+        // On scanne depuis la fin et on note s'il y a au moins un system
+        // AVANT de rencontrer le dernier assistant.
+        bool sawSystem = false;
+        for (int i = conversation.Count - 1; i >= 0; i--)
+        {
+            var msg = conversation[i];
+            if (msg.role == "assistant") return sawSystem;
+            if (msg.role == "system") sawSystem = true;
+        }
+        return sawSystem;
     }
 
     void InjectWorldLoreContext()

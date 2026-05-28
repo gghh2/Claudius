@@ -443,21 +443,24 @@ public class QuestMarkerSystem : MonoBehaviour
 
         if (isVisible)
         {
-            // Cible a l'ecran : on place le marker AU-DESSUS de la cible
-            // (projection 3D -> ecran + offset vertical), fleche pointant
-            // vers le bas. Garde la distance visible et confirme visuellement
-            // la cible — utile depuis que la cam peut s'orienter (un joueur
-            // qui fait face a la destination veut quand meme voir le marker).
+            // Cible a l'ecran : on place le label au-dessus de la cible
+            // (projection 3D -> ecran + offset vertical). On masque la
+            // fleche (inutile quand la cible est visible) et on affiche
+            // juste le nom de la quete + la distance. Sans rotation.
             Vector3 worldAbove = target.position + Vector3.up * 2.5f;
             Vector3 abovePixel = mainCamera.WorldToScreenPoint(worldAbove);
             marker.gameObject.transform.position = abovePixel;
-            // Fleche pointee vers le bas (vers la cible).
-            marker.gameObject.transform.rotation = Quaternion.Euler(0, 0, 180);
+            marker.gameObject.transform.rotation = Quaternion.identity;
+            if (marker.image != null) marker.image.enabled = false;
             if (marker.distanceText != null)
-                marker.distanceText.text = $"{Mathf.RoundToInt(distance)}m";
+                marker.distanceText.text = $"{target.displayName}\n{Mathf.RoundToInt(distance)}m";
             marker.gameObject.SetActive(true);
             return;
         }
+
+        // Cible hors-ecran : on reactive la fleche au cas ou elle aurait
+        // ete masquee a la frame precedente.
+        if (marker.image != null) marker.image.enabled = true;
         
         Vector2 screenCenter = new Vector2(0.5f, 0.5f);
         Vector2 direction = new Vector2(screenPos.x - 0.5f, screenPos.y - 0.5f).normalized;

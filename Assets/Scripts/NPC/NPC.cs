@@ -82,22 +82,27 @@ public class NPC : MonoBehaviour
     void ShowInteractionPrompt(bool show)
     {
         NPCNameDisplay nameDisplay = GetComponent<NPCNameDisplay>();
-        
+
         if (show)
         {
             if (GlobalDebugManager.IsDebugEnabled(DebugSystem.NPC))
                 Debug.Log($"Appuyez sur E pour parler à {npcName} ({npcRole})");
-            
+
+            // Si ce NPC a aussi une boutique, on fusionne les deux prompts
+            // dans un seul billboard (Shop.ShowPrompt n'affiche plus le sien).
+            bool hasShop = GetComponent<Shop>() != null;
+            string suffix = hasShop ? "\n[B] Boutique" : "";
+
             if (nameDisplay != null)
             {
                 string formattedName = TextFormatter.FormatName(npcName);
-                nameDisplay.SetDisplayName($"{formattedName}\n[E] Parler");
+                nameDisplay.SetDisplayName($"{formattedName}\n[E] Parler{suffix}");
                 nameDisplay.SetNameColor(Color.white);
             }
             else
             {
                 string formattedName = TextFormatter.FormatName(npcName);
-                InteractionPrompt.Show($"Appuyez sur E pour parler à {formattedName}", transform, new Vector3(0, 2f, 0));
+                InteractionPrompt.Show($"Appuyez sur E pour parler à {formattedName}{suffix}", transform, new Vector3(0, 2f, 0));
             }
         }
         else
@@ -208,9 +213,13 @@ public class NPC : MonoBehaviour
         {
             if (GlobalDebugManager.IsDebugEnabled(DebugSystem.NPC))
                 Debug.Log($"[FETCH] Quête FETCH trouvée: {fetchQuest.questTitle}");
-            
-            // Extrait le nom de l'objet depuis la description
-            string objectName = ExtractObjectNameFromDescription(fetchQuest.description);
+
+            // Source de verite : objectName est conserve sur la quete depuis
+            // sa creation. Le fallback parse la description pour les saves
+            // anterieures (champ vide).
+            string objectName = !string.IsNullOrEmpty(fetchQuest.objectName)
+                ? fetchQuest.objectName
+                : ExtractObjectNameFromDescription(fetchQuest.description);
             
             if (GlobalDebugManager.IsDebugEnabled(DebugSystem.NPC))
                 Debug.Log($"[FETCH] Objet recherché: {objectName} x{fetchQuest.maxProgress}");

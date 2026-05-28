@@ -103,30 +103,34 @@ public class NPCQuestTurnIn : MonoBehaviour
                     
                     if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
                     {
-                        string objectName = ExtractObjectNameFromDescription(npcQuest.description);
+                        string objectName = !string.IsNullOrEmpty(npcQuest.objectName)
+                            ? npcQuest.objectName
+                            : ExtractObjectNameFromDescription(npcQuest.description);
                         int currentCount = PlayerInventory.Instance.GetItemQuantity(objectName, npcQuest.questId);
                         Debug.Log($"📦 Quête FETCH détectée - Gérée par dialogue: {currentCount}/{npcQuest.maxProgress} {objectName}");
                     }
                     break;
-                    
+
                 case QuestType.EXPLORE:
                 case QuestType.TALK:
                 case QuestType.INTERACT:
                     // Ces quêtes sont complétées automatiquement lors de l'action
                     // Vérifier la progression
                     canTurnIn = npcQuest.currentProgress >= npcQuest.maxProgress;
-                    
+
                     if (GlobalDebugManager.IsDebugEnabled(DebugSystem.Quest))
                         Debug.Log($"📍 Progression: {npcQuest.currentProgress}/{npcQuest.maxProgress}");
                     break;
-                    
+
                 case QuestType.DELIVERY:
                 case QuestType.ESCORT:
                     // Pour l'instant, traiter comme FETCH
-                    string deliveryItem = ExtractObjectNameFromDescription(npcQuest.description);
+                    string deliveryItem = !string.IsNullOrEmpty(npcQuest.objectName)
+                        ? npcQuest.objectName
+                        : ExtractObjectNameFromDescription(npcQuest.description);
                     canTurnIn = PlayerInventory.Instance.HasItemsForQuest(
-                        deliveryItem, 
-                        1, 
+                        deliveryItem,
+                        1,
                         npcQuest.questId
                     );
                     break;

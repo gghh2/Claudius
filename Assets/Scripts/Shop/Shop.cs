@@ -27,15 +27,8 @@ public class Shop : MonoBehaviour
     [Tooltip("Rayon du trigger de détection (mètres).")]
     public float triggerRadius = 3.5f;
 
-    [Tooltip("Hauteur du prompt 'B Boutique' au-dessus du PNJ. Volontairement " +
-        "plus haut que le prompt [E] Parler (NPC.ShowInteractionPrompt offset 2.0) " +
-        "pour eviter le chevauchement quand un NPC a une boutique.")]
-    public float promptHeight = 2.8f;
-
     bool playerInRange;
     SphereCollider triggerCol;
-    GameObject promptObj;
-    TMPro.TextMeshPro promptText;
 
     void Awake()
     {
@@ -65,15 +58,6 @@ public class Shop : MonoBehaviour
             }
             ShopUI.Instance.OpenFor(this);
         }
-
-        // Billboard du prompt vers la caméra (non-parenté pour éviter
-        // l'héritage de scale d'un éventuel NPC mal échelonné).
-        if (promptObj != null && promptObj.activeSelf)
-        {
-            promptObj.transform.position = transform.position + Vector3.up * promptHeight;
-            if (Camera.main != null)
-                promptObj.transform.rotation = Quaternion.LookRotation(Camera.main.transform.forward);
-        }
     }
 
     void OnTriggerEnter(Collider other)
@@ -81,7 +65,9 @@ public class Shop : MonoBehaviour
         if (other.transform.root.CompareTag("Player"))
         {
             playerInRange = true;
-            ShowPrompt(true);
+            // L'affichage "[B] Boutique" est desormais fusionne dans
+            // NPCNameDisplay (cf. NPC.ShowInteractionPrompt) — pas de
+            // billboard separe pour eviter le chevauchement.
         }
     }
 
@@ -90,29 +76,7 @@ public class Shop : MonoBehaviour
         if (other.transform.root.CompareTag("Player"))
         {
             playerInRange = false;
-            ShowPrompt(false);
         }
-    }
-
-    void ShowPrompt(bool show)
-    {
-        if (show && promptObj == null)
-        {
-            promptObj = new GameObject($"ShopPrompt_{gameObject.name}");
-            promptObj.transform.position = transform.position + Vector3.up * promptHeight;
-            promptObj.transform.localScale = Vector3.one;
-            promptText = promptObj.AddComponent<TMPro.TextMeshPro>();
-            promptText.fontSize = 3;
-            promptText.alignment = TMPro.TextAlignmentOptions.Center;
-            promptText.color = new Color(0.95f, 0.75f, 0.3f);
-            promptText.text = "[B] Boutique";
-        }
-        if (promptObj != null) promptObj.SetActive(show);
-    }
-
-    void OnDestroy()
-    {
-        if (promptObj != null) Destroy(promptObj);
     }
 
     public string GetShopName()

@@ -5,7 +5,12 @@ public class NPCNameDisplay : MonoBehaviour
 {
     [Header("Name Display Settings")]
     public GameObject nameDisplayPrefab; // Optionnel : préfab personnalisé
-    public Vector3 nameOffset = new Vector3(0, 2.5f, 0); // Position au-dessus de la tête
+    // Stack vertical clair au-dessus du NPC :
+    //   3.8 : Shop prompt [B] Boutique         (Shop.promptHeight)
+    //   2.8 : Nom du NPC + role               (NPCNameDisplay.nameOffset, ici)
+    //   2.0 : Interaction [E] Parler          (NPC.cs InteractionPrompt.Show offset)
+    // Espacement 0.8 → 1.0 = pas de chevauchement de texte TMP 3D.
+    public Vector3 nameOffset = new Vector3(0, 2.8f, 0); // Position au-dessus de la tête
     public float maxDisplayDistance = 15f; // Distance max pour afficher le nom
     public bool alwaysShow = false; // Toujours visible ou seulement à distance raisonnable
     

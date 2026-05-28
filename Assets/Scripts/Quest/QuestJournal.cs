@@ -21,9 +21,17 @@ public class JournalQuest
     public QuestStatus status;
     public QuestType questType;
     public string zoneName;
+    /// <summary>
+    /// Nom interne (non formate) de l'objet de quete — source de verite
+    /// pour le check d'inventaire (HasItemsForQuest). Avant cette
+    /// addition, NPC.CheckForFetchQuestCompletion parsait la description
+    /// pour retrouver le nom, ce qui cassait des que la description
+    /// contenait un mot generique ou un format inattendu.
+    /// </summary>
+    public string objectName;
     public int currentProgress;
     public int maxProgress;
-    
+
     public JournalQuest(QuestToken token, string npcName)
     {
         questId = token.questId;
@@ -34,6 +42,7 @@ public class JournalQuest
         status = QuestStatus.InProgress;
         questType = token.questType;
         zoneName = TextFormatter.FormatName(token.zoneName);
+        objectName = token.objectName; // brut, sert au matching d'inventaire
         currentProgress = 0;
         maxProgress = token.quantity;
     }

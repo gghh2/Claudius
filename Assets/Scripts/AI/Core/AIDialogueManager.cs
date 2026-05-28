@@ -298,7 +298,8 @@ tempérament. N'inventez JAMAIS l'apparence, la lumière, les runes, l'énergie
 ou les propriétés d'un objet absent de l'inventaire. N'utilisez aucune
 formule toute faite : variez vos refus, formulez-les comme votre personnage
 les dirait naturellement. Cette règle l'emporte sur toute consigne d'être
-engageant ou de rebondir.";
+engageant ou de rebondir.
+{BuildShopInstructions(npcData)}";
         }
 
         // Utilise la config appropriée — prompt de roleplay PUR (aucune quête).
@@ -328,7 +329,52 @@ tempérament. N'inventez JAMAIS l'apparence, la lumière, les runes, l'énergie
 ou les propriétés d'un objet absent de l'inventaire. N'utilisez aucune
 formule toute faite : variez vos refus, formulez-les comme votre personnage
 les dirait naturellement. Cette règle l'emporte sur toute consigne d'être
-engageant ou de rebondir.";
+engageant ou de rebondir.
+{BuildShopInstructions(npcData)}";
+    }
+
+    /// <summary>
+    /// Cherche le Shop du PNJ par nom dans la scene et l'ouvre. Differe
+    /// pour laisser le temps au joueur de lire la phrase d'invite avant que
+    /// le panneau de boutique se superpose au dialogue.
+    /// </summary>
+    IEnumerator OpenShopForDelayed(string npcName, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        foreach (var npc in FindObjectsByType<NPC>(FindObjectsSortMode.None))
+        {
+            if (npc.npcName != npcName) continue;
+            var shop = npc.GetComponent<Shop>();
+            if (shop == null) yield break;
+            if (ShopUI.Instance == null)
+            {
+                var go = new GameObject("ShopUI");
+                go.AddComponent<ShopUI>();
+            }
+            ShopUI.Instance.OpenFor(shop);
+            yield break;
+        }
+    }
+
+    /// <summary>
+    /// Instructions specifiques pour les marchands : autorise l'emission
+    /// d'un token [SHOP] quand le joueur demande EXPLICITEMENT a voir la
+    /// boutique. Vide si le NPC n'a pas de Shop component (sinon le modele
+    /// serait tente d'emettre le token sans rien derriere).
+    /// </summary>
+    string BuildShopInstructions(NPCData npcData)
+    {
+        if (!npcData.hasShop) return string.Empty;
+        return @"
+
+OUVERTURE DE LA BOUTIQUE — TOKEN [SHOP] :
+Si le voyageur exprime CLAIREMENT vouloir consulter ta marchandise, voir ton
+stock, acheter, fouiller tes étals, etc., emets le token [SHOP] a la fin de
+ta reponse (apres une courte phrase qui invite a regarder). UN seul [SHOP] par
+reponse, jamais SPONTANÉMENT, jamais si le joueur fait juste mention en
+passant. Si tu doutes, n'emets PAS le token et propose plutot a voix de
+montrer (le joueur clarifiera). Le token est silencieux pour le joueur
+(retire avant affichage), il declenche l'ouverture du panneau de boutique.";
     }
     
     IEnumerator GetAIResponse(NPCData npcData, bool isWelcome)
@@ -385,9 +431,23 @@ engageant ou de rebondir.";
         {
             string aiResponse = aiContent.Trim();
 
-            // Sécurité : le chat ne doit pas produire de token. Si le modèle en
-            // glisse un malgré tout, on le retire de l'affichage — il ne crée
-            // aucune quête (la détection est faite par l'appel d'analyse séparé).
+            // Detection du token [SHOP] : un marchand peut le placer si le
+            // joueur a demande EXPLICITEMENT de voir la boutique. On le
+            // retire de l'affichage et on programme l'ouverture differee.
+            bool wantsOpenShop = npcData.hasShop &&
+                System.Text.RegularExpressions.Regex.IsMatch(
+                    aiResponse, @"\[SHOP\]", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            if (wantsOpenShop)
+            {
+                aiResponse = System.Text.RegularExpressions.Regex.Replace(
+                    aiResponse, @"\[SHOP\]", "",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase).Trim();
+            }
+
+            // Sécurité : le chat ne doit pas produire de token QUEST. Si le
+            // modèle en glisse un malgré tout, on le retire de l'affichage —
+            // il ne crée aucune quête (la détection est faite par l'appel
+            // d'analyse séparé).
             if (QuestTokenDetector.Instance != null)
                 aiResponse = QuestTokenDetector.Instance.CleanMessageFromTokens(aiResponse);
 
@@ -407,6 +467,12 @@ engageant ou de rebondir.";
                 DialogueUI.Instance.StartAIDialogue(npcData, formattedResponse);
             else
                 DialogueUI.Instance.ShowText(formattedResponse);
+
+            // Ouverture differee de la boutique : on attend ~1.2s que le
+            // joueur ait pu lire la phrase d'invite avant de superposer le
+            // shop par-dessus le dialogue.
+            if (wantsOpenShop)
+                StartCoroutine(OpenShopForDelayed(npcData.name, 1.2f));
 
             // Appel 2 — analyse de quête séparée. Jamais sur le simple accueil :
             // le joueur n'a encore rien demandé.

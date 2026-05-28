@@ -309,7 +309,8 @@ public class NPC : MonoBehaviour
         {
             name = npcName,
             role = npcRole,
-            description = npcDescription
+            description = npcDescription,
+            hasShop = GetComponent<Shop>() != null
         };
     }
     
@@ -333,4 +334,10 @@ public class NPCData
     public string name;
     public string role;
     public string description;
+    /// <summary>
+    /// True si ce PNJ possede aussi un composant Shop. Permet au prompt
+    /// systeme d'autoriser l'emission du token [SHOP] (ouverture de la
+    /// boutique sur demande explicite du joueur).
+    /// </summary>
+    public bool hasShop;
 }

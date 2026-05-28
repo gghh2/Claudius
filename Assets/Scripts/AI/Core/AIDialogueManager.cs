@@ -131,6 +131,7 @@ public class AIDialogueManager : MonoBehaviour
             InjectRumorContext(npcData.name);
             InjectWorldLoreContext();
             InjectInventoryContext();
+            InjectShopCatalogContext(npcData);
             currentConversation.Add(new OpenAIMessage("user",
                 "Le joueur revient vous parler. Accueillez-le comme une connaissance, en vous souvenant de vos échanges précédents."));
         }
@@ -145,6 +146,7 @@ public class AIDialogueManager : MonoBehaviour
             InjectRumorContext(npcData.name);
             InjectWorldLoreContext();
             InjectInventoryContext();
+            InjectShopCatalogContext(npcData);
 
             string initialUserMessage = "Le joueur s'approche de vous. Saluez-le de manière naturelle selon votre personnalité.";
             if (QuestJournal.Instance != null)
@@ -274,7 +276,12 @@ Demandez-lui où il en est et encouragez-le. Ne proposez pas de nouvelle quête.
             Debug.LogError($"❌ Aucune config trouvée pour le rôle: {npcData.role}");
             
             // Fallback avec l'ancien système
-            return $@"Vous incarnez un personnage d'un jeu d'aventure spatiale. Restez dans votre rôle, répondez en français, en 1 à 3 phrases.
+            return $@"REGLE LANGUE — ABSOLUE : tu reponds EXCLUSIVEMENT en francais.
+JAMAIS un mot, une phrase, un caractere ou un commentaire dans une autre
+langue (pas de chinois, anglais, espagnol). JAMAIS de meta-commentaire sur
+ce que tu fais. Tu ECRIS DIRECTEMENT la replique du personnage, point.
+
+Vous incarnez un personnage d'un jeu d'aventure spatiale. Restez dans votre rôle, répondez en français, en 1 à 3 phrases.
 {activeQuestInfo}
 {gameContext}
 
@@ -303,7 +310,13 @@ engageant ou de rebondir.
         }
 
         // Utilise la config appropriée — prompt de roleplay PUR (aucune quête).
-        return $@"Vous incarnez un personnage d'un jeu d'aventure spatiale. Restez dans votre rôle, répondez en français, en 1 à 3 phrases.
+        return $@"REGLE LANGUE — ABSOLUE : tu reponds EXCLUSIVEMENT en francais.
+JAMAIS un mot, une phrase, un caractere ou un commentaire dans une autre
+langue (pas de chinois, anglais, espagnol). JAMAIS de meta-commentaire sur
+ce que tu fais (pas de 'I'll switch back to character', pas de 'OK, je
+reponds maintenant'). Tu ECRIS DIRECTEMENT la replique du personnage, point.
+
+Vous incarnez un personnage d'un jeu d'aventure spatiale. Restez dans votre rôle, répondez en français, en 1 à 3 phrases.
 {activeQuestInfo}
 {configToUse.npcPersonality}
 
@@ -368,13 +381,66 @@ engageant ou de rebondir.
         return @"
 
 OUVERTURE DE LA BOUTIQUE — TOKEN [SHOP] :
-Si le voyageur exprime CLAIREMENT vouloir consulter ta marchandise, voir ton
-stock, acheter, fouiller tes étals, etc., emets le token [SHOP] a la fin de
-ta reponse (apres une courte phrase qui invite a regarder). UN seul [SHOP] par
-reponse, jamais SPONTANÉMENT, jamais si le joueur fait juste mention en
-passant. Si tu doutes, n'emets PAS le token et propose plutot a voix de
-montrer (le joueur clarifiera). Le token est silencieux pour le joueur
-(retire avant affichage), il declenche l'ouverture du panneau de boutique.";
+Tu es marchand : tu DOIS emettre le token [SHOP] des que le joueur
+formule une demande de type voir / consulter / acheter / qu'as-tu / ton
+stock / ton catalogue / tes marchandises / ouvrir boutique. Le token est
+OBLIGATOIRE dans ces cas — sans lui, le panneau de boutique ne s'ouvre
+pas et le joueur est bloque. Format : [SHOP] colle a la fin de ta reponse
+(apres une courte phrase d'invite genre 'Voici mon etalage'). Strictement
+silencieux pour le joueur (retire avant affichage). UN SEUL [SHOP] par
+reponse. Ne l'emets PAS si le joueur evoque la boutique en passant sans
+demander a la voir.";
+    }
+
+    /// <summary>
+    /// Injecte le CATALOGUE REEL du marchand dans le contexte IA. Sans
+    /// cela le PNJ marchand hallucine ses propres produits (ex. invente
+    /// 'reliques antiques, gemmes du Createur, armes legendaires' alors
+    /// qu'il a juste 1 fusil et 1 gourde). Vide si pas de Shop.
+    /// </summary>
+    void InjectShopCatalogContext(NPCData npcData)
+    {
+        if (!npcData.hasShop) return;
+
+        // Cherche le Shop component dans la scene par nom.
+        Shop shop = null;
+        foreach (var npc in FindObjectsByType<NPC>(FindObjectsSortMode.None))
+        {
+            if (npc.npcName != npcData.name) continue;
+            shop = npc.GetComponent<Shop>();
+            break;
+        }
+        if (shop == null || shop.catalog == null) return;
+
+        if (shop.catalog.Count == 0)
+        {
+            currentConversation.Add(new OpenAIMessage("system",
+                "Catalogue de TA boutique (LISTE EXHAUSTIVE) : VIDE. Tu n'as " +
+                "RIEN a vendre actuellement. Si le joueur demande, dis-le " +
+                "honnetement (rupture de stock, en attente de cargaison, etc) " +
+                "et n'invente AUCUN produit."));
+            return;
+        }
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append("Catalogue de TA boutique (LISTE EXHAUSTIVE — tu n'as RIEN d'AUTRE) : ");
+        for (int i = 0; i < shop.catalog.Count; i++)
+        {
+            var it = shop.catalog[i];
+            if (i > 0) sb.Append(", ");
+            sb.Append(it.itemName).Append(" (").Append(it.price).Append(" credits");
+            if (!string.IsNullOrWhiteSpace(it.description))
+                sb.Append(" — ").Append(it.description);
+            sb.Append(")");
+        }
+        sb.Append(". REGLE STRICTE : si on te demande ce que tu vends, ");
+        sb.Append("enumere UNIQUEMENT ces produits. N'invente JAMAIS d'autres ");
+        sb.Append("articles (pas de 'reliques antiques', 'armes legendaires', ");
+        sb.Append("'cristaux mystiques' improvises). Tu peux les decrire avec ");
+        sb.Append("ton ton de marchand, mais le contenu doit etre exactement ");
+        sb.Append("cette liste.");
+
+        currentConversation.Add(new OpenAIMessage("system", sb.ToString()));
     }
     
     IEnumerator GetAIResponse(NPCData npcData, bool isWelcome)

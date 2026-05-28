@@ -451,9 +451,10 @@ montrer (le joueur clarifiera). Le token est silencieux pour le joueur
             if (QuestTokenDetector.Instance != null)
                 aiResponse = QuestTokenDetector.Instance.CleanMessageFromTokens(aiResponse);
 
-            // Si la planète n'a pas encore de nom et que le PNJ en propose un,
-            // on l'extrait et on le fixe pour le reste de la partie.
-            ExtractPlanetNameIfAny(aiResponse);
+            // Token [PLANET:Nom] : si le PNJ a invente un nom de planete,
+            // il l'inclut via ce token. On le capture et on le retire avant
+            // affichage. La regex tolere tout token mal forme.
+            aiResponse = ExtractAndStripPlanetToken(aiResponse);
 
 
             if (GlobalDebugManager.IsDebugEnabled(DebugSystem.AI)) Debug.Log($"[AI] 🤖 Réponse de chat ({npcData.name}) en {responseSeconds:N1} s : {aiResponse}");
@@ -746,48 +747,29 @@ RÈGLES :
     /// extraira le nom (premier mot capitalisé proche du mot "planète").
     /// </summary>
     /// <summary>
-    /// Cherche dans la réponse IA un nom de planète proposé ("sur Khael-Tor",
-    /// "notre Sevra-Mun", "planète Vorn", etc.) et le fixe dans WorldLore.
-    /// No-op si le nom est déjà fixé.
+    /// Detecte le token [PLANET:Nom] dans la reponse IA et fixe le nom dans
+    /// WorldLore. Retourne la reponse SANS le token (a afficher au joueur).
+    /// No-op si le nom est deja fixe (le token est tout de meme strippe).
     /// </summary>
-    void ExtractPlanetNameIfAny(string aiResponse)
+    string ExtractAndStripPlanetToken(string aiResponse)
     {
-        if (WorldLore.Instance == null || WorldLore.Instance.HasPlanetName) return;
-        if (string.IsNullOrEmpty(aiResponse)) return;
+        if (string.IsNullOrEmpty(aiResponse)) return aiResponse;
 
-        // Pattern : un mot Capitalisé (+ option [-/']suite), proche d'un mot clé.
-        // Ex: "Bienvenue sur Khael-Tor", "Notre vieille Sevra-Mun", "Planète Vorn".
         var rx = new System.Text.RegularExpressions.Regex(
-            @"\b(?:sur|planète|monde|notre|cette|ce|de)\s+(?:vieille\s+|vieux\s+|petite\s+|grand\s+)?([A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+(?:[-'][A-ZÀ-ÖØ-Ý]?[a-zà-öø-ÿ]+)?)",
+            @"\[PLANET:([^\]]+)\]",
             System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        // Mais on veut que le NOM extrait soit Capitalisé. On re-vérifie après.
         var m = rx.Match(aiResponse);
-        if (m.Success)
+        if (m.Success && WorldLore.Instance != null && !WorldLore.Instance.HasPlanetName)
         {
-            string candidate = m.Groups[1].Value;
-            // Filtre simple : pas un mot français courant.
-            string lower = candidate.ToLowerInvariant();
-            if (candidate.Length >= 4
-                && char.IsUpper(candidate[0])
-                && !IsCommonFrenchWord(lower))
+            string candidate = m.Groups[1].Value.Trim();
+            if (!string.IsNullOrEmpty(candidate) && candidate.Length >= 3 && candidate.Length <= 30)
             {
                 WorldLore.Instance.SetPlanetName(candidate);
             }
         }
-    }
-
-    static bool IsCommonFrenchWord(string lower)
-    {
-        switch (lower)
-        {
-            case "monde": case "planète": case "planete": case "voyageur":
-            case "vieille": case "vieux": case "petite": case "grand":
-            case "notre": case "votre": case "cette": case "celui":
-            case "marchand": case "garde": case "soldat": case "voyage":
-            case "soleils": case "soleil": case "étoile": case "étoiles":
-                return true;
-            default: return false;
-        }
+        // Strip toujours, meme si on n'a rien capture (cache un eventuel
+        // token mal forme et evite que le joueur le voie).
+        return rx.Replace(aiResponse, "").Trim();
     }
 
     /// <summary>
@@ -853,18 +835,21 @@ RÈGLES :
         {
             currentConversation.Add(new OpenAIMessage("system",
                 $"Lore monde : nous sommes sur la planète {WorldLore.Instance.PlanetName}. " +
-                "Si vous évoquez ce monde, utilisez ce nom — ne réinventez surtout pas."));
+                "Si vous évoquez ce monde, utilisez ce nom — ne réinventez surtout pas. " +
+                "N'utilisez PAS le token [PLANET:...] : le nom est deja fixe."));
         }
         else
         {
             currentConversation.Add(new OpenAIMessage("system",
                 "Lore monde : la planète sur laquelle vous vivez n'a pas encore été " +
-                "nommée dans la conversation. À l'occasion d'une remarque naturelle, " +
-                "donnez-lui un nom évocateur dans une phrase courte (« Bienvenue sur ___ », " +
-                "« Notre vieille ___ ne se laisse pas dompter »). INVENTE TOI-MÊME le nom : " +
-                "1-3 syllabes, consonance space-opera, ÉVITE toute formule familière des jeux " +
-                "vidéo. N'utilise PAS les exemples ci-dessus, c'est un PIÈGE pour vérifier que " +
-                "tu sais inventer."));
+                "nommée. Quand vous l'evoquez pour la PREMIERE fois (entree en matiere, " +
+                "remarque naturelle), inventez un nom court (1-3 syllabes, consonance " +
+                "space-opera) et collez UN SEUL token [PLANET:NomChoisi] a la fin de votre " +
+                "phrase — le token est SILENCIEUX pour le joueur (retire avant affichage) " +
+                "mais verrouille le nom pour TOUS les futurs dialogues. Sans ce token, le " +
+                "nom inventé sera perdu et un autre PNJ en proposera un different. " +
+                "EVITE les exemples de jeux video connus (Krynn, Tatooine, Arrakis...) — " +
+                "invente VRAIMENT."));
         }
     }
 

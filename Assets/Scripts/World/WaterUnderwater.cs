@@ -51,10 +51,26 @@ public class WaterUnderwater : MonoBehaviour
 
     void Awake()
     {
+        EnsureWired();
+    }
+
+    void OnEnable()
+    {
+        // OnEnable plus robuste qu'Awake face au hot-reload de script en
+        // Play mode (Awake peut ne pas se rejouer apres re-compile).
+        EnsureWired();
+    }
+
+    /// <summary>
+    /// Recablage paresseux : refs en cas d'auto-trouve si null, build de
+    /// l'overlay, capture fog initial. Idempotent.
+    /// </summary>
+    void EnsureWired()
+    {
         if (waterRenderer == null) AutoFindWater();
         if (trackedCamera == null) trackedCamera = Camera.main;
-        BuildOverlay();
-        CaptureFogState();
+        if (overlayCanvas == null) BuildOverlay();
+        if (!fogStateCaptured) CaptureFogState();
         ComputeSurfaceY();
     }
 
@@ -114,7 +130,10 @@ public class WaterUnderwater : MonoBehaviour
 
     void Update()
     {
-        if (trackedCamera == null) trackedCamera = Camera.main;
+        // Filet de secours : si quelque chose a invalide les refs (hot
+        // reload, destruction de scene, etc.), on re-cable.
+        if (trackedCamera == null || waterRenderer == null || overlayCanvas == null)
+            EnsureWired();
         if (trackedCamera == null || waterRenderer == null) return;
 
         // Recalcule la surface chaque frame si la mer bouge (vagues, level

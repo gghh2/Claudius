@@ -29,7 +29,18 @@ public class NPC : MonoBehaviour
     private Transform player;
     private bool playerInRange = false;
     private Renderer npcRenderer;
-    
+
+    void Awake()
+    {
+        // Tout NPC peut potentiellement avoir une boutique : un composant
+        // Shop vide est ajoute par defaut. Le ShopCatalogGenerator le
+        // remplira au lancement (en arriere-plan, trie par distance). Tant
+        // que le catalogue est vide, [B] n'est pas propose au joueur (cf.
+        // ShowInteractionPrompt) et l'IA ne croit pas etre un marchand.
+        if (GetComponent<Shop>() == null)
+            gameObject.AddComponent<Shop>();
+    }
+
     void Start()
     {
         player = FindFirstObjectByType<PlayerControllerCC>().transform;
@@ -88,9 +99,12 @@ public class NPC : MonoBehaviour
             if (GlobalDebugManager.IsDebugEnabled(DebugSystem.NPC))
                 Debug.Log($"Appuyez sur E pour parler à {npcName} ({npcRole})");
 
-            // Si ce NPC a aussi une boutique, on fusionne les deux prompts
-            // dans un seul billboard (Shop.ShowPrompt n'affiche plus le sien).
-            bool hasShop = GetComponent<Shop>() != null;
+            // Si ce NPC a une boutique AVEC au moins un article, on ajoute
+            // le suffixe [B]. Un Shop component sans catalogue (en attente
+            // de generation, ou intentionnellement vide) ne propose pas
+            // d'interaction.
+            var shopComp = GetComponent<Shop>();
+            bool hasShop = shopComp != null && shopComp.catalog != null && shopComp.catalog.Count > 0;
             string suffix = hasShop ? "\n[B] Boutique" : "";
 
             // Si ce NPC est destinataire d'une livraison (QuestObject avec
@@ -312,12 +326,16 @@ public class NPC : MonoBehaviour
     
     public NPCData GetNPCData()
     {
+        var shopComp = GetComponent<Shop>();
         return new NPCData
         {
             name = npcName,
             role = npcRole,
             description = npcDescription,
-            hasShop = GetComponent<Shop>() != null
+            // hasShop = true uniquement si le catalogue est NON VIDE.
+            // Sinon le prompt IA et l'analyse d'intention SHOP n'ont pas
+            // de sens (rien a vendre).
+            hasShop = shopComp != null && shopComp.catalog != null && shopComp.catalog.Count > 0
         };
     }
     

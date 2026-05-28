@@ -49,7 +49,11 @@ public class Shop : MonoBehaviour
         bool dialogueOpen = DialogueUI.Instance != null && DialogueUI.Instance.IsDialogueOpen();
         bool blockedByUI = UnifiedUIManager.Instance != null && UnifiedUIManager.Instance.IsBlockingGameplay();
 
-        if (playerInRange && Input.GetKeyDown(openKey) && !isTyping && !dialogueOpen && !blockedByUI)
+        // Boutique vide (catalogue pas encore genere ou intentionnellement
+        // vide pour ce role) -> pas d'interaction possible.
+        bool hasCatalog = catalog != null && catalog.Count > 0;
+
+        if (playerInRange && Input.GetKeyDown(openKey) && hasCatalog && !isTyping && !dialogueOpen && !blockedByUI)
         {
             if (ShopUI.Instance == null)
             {

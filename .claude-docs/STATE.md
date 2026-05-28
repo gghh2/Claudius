@@ -3,7 +3,7 @@
 > Où en est le projet **maintenant**. Ce fichier est importé automatiquement par
 > `CLAUDE.md`. À relire en début de session, à mettre à jour en fin de session.
 
-**Dernière mise à jour :** 2026-05-27
+**Dernière mise à jour :** 2026-05-28
 
 ## Statut global
 
@@ -54,6 +54,23 @@
   (la layout pass montrait le texte precedent). 14 erreurs
   `DontDestroyOnLoad` confirmees absentes — le pattern
   `transform.SetParent(null)` est en place partout, BACKLOG marque ✅.
+- **Peuplement procedural IA du monde (2026-05-28)** : `WorldNPCPopulator`
+  spawn 1-3 PNJs par QuestZone (coherents avec le type de zone) au
+  lancement. `ShopCatalogGenerator` enchaine pour les catalogues. NPCs
+  procéduraux persistes en save/load (NPCSaveData étend avec role,
+  description, color, shopCatalog ; au load, instancie NPC_Template depuis
+  Resources/ si absent). Architecture en place ; calibrage du critere
+  "qui a un shop" en cours (cf. BACKLOG section Peuplement).
+- **Shop architecture C (2026-05-28)** : ouverture de la boutique decidee
+  par un appel IA d'analyse separe `AnalyzeForShopIntent` (OUI/NON), pas
+  par token inline qui marchait mal sur Ollama. Marchand prompt
+  distingue 3 cas : voir/acheter, travail/credits, bavardage. Catalogue
+  reel injecte (`InjectShopCatalogContext`) → plus d'hallucination
+  d'articles.
+- **Anti-hallucination v3 + token [PLANET:Nom] (2026-05-28)** : verrou
+  explicite du nom de planete (regex `sur X` ratait trop de phrasings,
+  chaque PNJ inventait un nom different). Premiere ligne du system prompt
+  durcie contre les fuites de langue (qwen2.5 laissait passer du chinois).
 
 ## En cours / non terminé
 

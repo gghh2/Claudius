@@ -47,6 +47,20 @@
   TMP, soit (c) remplacer par des sprites/icônes via TMP `<sprite=...>`.
   Les `Debug.Log` console ne sont pas concernés (rendu OS, pas TMP).
 
+## Peuplement / Shop IA
+
+- 🟡 **Trop de NPC ont un shop (30/31 observe 2026-05-28)**. Le prompt
+  ShopCatalogGenerator.GenerateFor (mode non-marchand) liste des examples
+  de qui peut vendre (druide herbes, archeologue trouvailles...) mais le
+  modele genere quand meme pour la plupart. Pistes :
+  - Renforcer les exemples NEGATIFS et durcir le critere ("uniquement si
+    OBVIOUS, dans le doute VIDE").
+  - Probabilite mecanique : pour les non-marchands, tirer un coin flip
+    (~30% accept) AVANT l'appel IA — si fail, VIDE direct sans appel.
+  - Variante hybride : seuls les roles dans une liste "peut vendre"
+    (druide, alchimiste, archeologue, mecanicien, herboriste, ferrailleur,
+    artisan...) sont consultes ; les autres -> VIDE direct.
+
 ## Quêtes
 
 - ✅ *(2026-05-21 — refonte B2)* La génération de quête ne dépend plus du

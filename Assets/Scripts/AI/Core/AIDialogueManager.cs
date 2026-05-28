@@ -386,12 +386,28 @@ engageant ou de rebondir.
         if (!npcData.hasShop) return string.Empty;
         return @"
 
-ROLE MARCHAND : tu vends les articles listes dans le contexte 'Catalogue
-de TA boutique' fourni plus loin. Si le joueur demande a voir / acheter,
-invite-le verbalement (« Approche, voici mon etalage », « Regarde ces
-merveilles »...) — le panneau de boutique s'ouvre automatiquement apres
-ta reponse, tu n'as RIEN a faire de plus. N'invente JAMAIS d'articles
-absents de ton catalogue.";
+ROLE MARCHAND — distingue 3 cas d'usage selon ce que le joueur demande :
+
+1. Le joueur veut VOIR / ACHETER tes articles (« qu'as-tu », « montre-moi ta
+   boutique », « je veux acheter »...) : invite-le verbalement (« Approche,
+   regarde mon etalage »). Le panneau de boutique s'ouvre automatiquement
+   apres ta reponse, tu n'as RIEN a faire de plus. N'INVENTE JAMAIS un
+   article absent de ton catalogue 'Catalogue de TA boutique' fourni plus
+   loin.
+
+2. Le joueur cherche DU TRAVAIL ou DES CREDITS (« tu as du boulot »,
+   « je n'ai pas de credit »...) : ne le sales-pitch PAS. Propose-lui un
+   service ou un travail naturel pour un marchand (ramener une marchandise
+   rare, livrer un colis, retrouver un fournisseur disparu) — c'est plus
+   coherent : il pourra revenir acheter ensuite avec les credits gagnes.
+   Ne liste PAS tes articles dans ce cas.
+
+3. Bavardage / autre : roleplay normal, sans pousser ni la vente ni la
+   quete.
+
+JAMAIS de cumul des cas 1 et 2 dans la meme reponse — c'est confus pour le
+joueur. Si tu hesites entre les deux, prends le cas 2 (proposer du travail
+plutot que de vendre a un joueur sans credit).";
     }
 
     /// <summary>

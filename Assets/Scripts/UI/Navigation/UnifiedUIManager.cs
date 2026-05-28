@@ -108,7 +108,16 @@ public class UnifiedUIManager : MonoBehaviour
         }
         else if (instance != this)
         {
-            Destroy(gameObject);
+            // Cas save/load : l'ancienne instance persiste (DontDestroyOnLoad)
+            // mais ses refs panels (scene-locaux) sont detruites. La nouvelle
+            // instance vient de la scene fraichement chargee → on la promeut
+            // et on detruit l'ancienne. Sinon UnifiedUIManager.NavigateTo
+            // echoue avec "Panel GameObject is null for: Dialogue/PauseMenu".
+            Destroy(instance.gameObject);
+            instance = this;
+            if (transform.parent != null) transform.SetParent(null);
+            DontDestroyOnLoad(gameObject);
+            InitializePanels();
         }
     }
 

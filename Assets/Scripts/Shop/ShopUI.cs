@@ -132,6 +132,9 @@ public class ShopUI : MonoBehaviour
         FindFirstObjectByType<PlayerControllerCC>()?.EnableControls(true);
     }
 
+    bool savedDialogueInputInteractable;
+    bool savedDialogueState;
+
     void SetVisible(bool v)
     {
         root.SetActive(v);
@@ -141,6 +144,34 @@ public class ShopUI : MonoBehaviour
             // pas dans le flow ici, on doit forcer la visibilité manuellement).
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
+
+            // Si la boutique s'ouvre par-dessus un dialogue, on capture le
+            // focus : sinon les frappes vont dans l'input field du dialogue
+            // derriere. On desactive son interactable et on deselectionne.
+            savedDialogueState = false;
+            if (DialogueUI.Instance != null
+                && DialogueUI.Instance.IsDialogueOpen()
+                && DialogueUI.Instance.playerInputField != null)
+            {
+                savedDialogueState = true;
+                savedDialogueInputInteractable = DialogueUI.Instance.playerInputField.interactable;
+                DialogueUI.Instance.playerInputField.interactable = false;
+                DialogueUI.Instance.playerInputField.DeactivateInputField();
+            }
+            var es = UnityEngine.EventSystems.EventSystem.current;
+            if (es != null) es.SetSelectedGameObject(null);
+        }
+        else
+        {
+            // Restore : le dialogue derriere peut a nouveau capter le focus.
+            if (savedDialogueState
+                && DialogueUI.Instance != null
+                && DialogueUI.Instance.playerInputField != null)
+            {
+                DialogueUI.Instance.playerInputField.interactable = savedDialogueInputInteractable;
+                DialogueUI.Instance.playerInputField.ActivateInputField();
+            }
+            savedDialogueState = false;
         }
     }
 

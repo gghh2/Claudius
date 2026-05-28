@@ -1014,7 +1014,6 @@ MonoBehaviour:
     description: "Une gourde d'un brevage sacr\xE9"
   openKey: 98
   triggerRadius: 3.5
-  promptHeight: 3.8
 --- !u!4 &17898744 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5718677893221934858, guid: 5abcda3154061c54e819166bbf804dd1, type: 3}
@@ -46147,6 +46146,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1777231199}
+  - component: {fileID: 1777231200}
   m_Layer: 0
   m_Name: Manager
   m_TagString: Untagged
@@ -46185,6 +46185,70 @@ Transform:
   - {fileID: 975251257}
   - {fileID: 380562053}
   - {fileID: 1355708154}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1777231200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1777231198}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8515574848c0cdd4f9e5e2366640c601, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WaterUnderwater
+  waterRenderer: {fileID: 0}
+  surfaceOffset: -0.05
+  trackedCamera: {fileID: 0}
+  underwaterTint: {r: 0.1, g: 0.35, b: 0.45, a: 0.55}
+  overlayCanvasSortingOrder: 4000
+  overrideFog: 1
+  underwaterFogColor: {r: 0.08, g: 0.25, b: 0.32, a: 1}
+  underwaterFogDensity: 0.12
+--- !u!1 &1783773017
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1783773019}
+  - component: {fileID: 1783773018}
+  m_Layer: 0
+  m_Name: SmartCursorManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1783773018
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1783773017}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac9a0a057fbdfa74b8ccb7b2d88ca7d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SmartCursorManager
+--- !u!4 &1783773019
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1783773017}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1785159037
@@ -55386,3 +55450,4 @@ SceneRoots:
   - {fileID: 770854288}
   - {fileID: 1597489017}
   - {fileID: 376289868}
+  - {fileID: 1783773019}

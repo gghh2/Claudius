@@ -96,23 +96,57 @@ public class ShopCatalogGenerator : MonoBehaviour
         Debug.Log($"[ShopCatalog] Generation terminee : {generated} catalogue(s) sur {npcs.Count} NPC.");
     }
 
+    // Roles qui ONT le droit a un catalogue marchand. Tout role hors de
+    // cette liste -> VIDE direct, pas d'appel IA. Couvre la grande
+    // majorite des cas (~80% des PNJ ne sont pas marchands) et evite que
+    // le modele invente des produits pour un Garde ou un Pilote.
+    static readonly System.Collections.Generic.HashSet<string> MerchantRoleKeywords =
+        new System.Collections.Generic.HashSet<string>
+        {
+            "marchand", "marchande", "negociant", "negociante", "négociant", "négociante",
+            "commercant", "commerçant", "commercante", "commerçante",
+            "vendeur", "vendeuse",
+            "tavernier", "taverniere", "tavernière", "aubergiste",
+            "armurier", "armuriere", "armurière",
+            "apothicaire", "alchimiste", "herboriste",
+            "ferrailleur", "ferrailleuse",
+            "trader", "merchant"
+        };
+
+    static bool RoleIsMerchant(string role)
+    {
+        if (string.IsNullOrWhiteSpace(role)) return false;
+        string lo = role.ToLowerInvariant();
+        foreach (var kw in MerchantRoleKeywords)
+            if (lo.Contains(kw)) return true;
+        return false;
+    }
+
     IEnumerator GenerateFor(NPC npc, Shop shop)
     {
+        // Court-circuit : seuls les roles explicitement marchands ont un
+        // catalogue. Evite que le modele invente des produits pour un
+        // garde, un pilote, un archeologue, etc.
+        if (!RoleIsMerchant(npc.npcRole))
+        {
+            Debug.Log($"[ShopCatalog] {npc.npcName} ({npc.npcRole}) : non-marchand, skip.");
+            yield break;
+        }
+
         var messages = new List<OpenAIMessage>
         {
             new OpenAIMessage("system",
-                "Tu generes le catalogue de boutique d'un PNJ d'un jeu d'aventure spatiale. " +
-                "Format STRICT, une ligne par article, separateur '|' :\n" +
+                "Tu generes le catalogue de boutique d'un PNJ MARCHAND d'un jeu " +
+                "d'aventure spatiale. Format STRICT, une ligne par article, " +
+                "separateur '|' :\n" +
                 "nom_item_en_snake_case | prix_credits | description_courte\n\n" +
                 "REGLES :\n" +
-                "- Genere entre 0 et 5 articles, COHERENTS avec le metier, la personnalite et le " +
-                "lore space-opera. Pas de doublons, pas de mots trop modernes (smartphone, etc).\n" +
-                "- Si le role ne suggere AUCUNE marchandise plausible (ermite, philosophe pur, " +
-                "promeneur), reponds STRICTEMENT par : VIDE\n" +
-                "- Noms en snake_case (lasergun_leger, ration_de_combat, herbe_de_lune).\n" +
+                "- Entre 2 et 5 articles, COHERENTS avec le metier, la personnalite, le " +
+                "lore space-opera. Pas de doublons, pas de mots trop modernes.\n" +
+                "- Noms en snake_case (lasergun_leger, ration_de_combat).\n" +
                 "- Prix entre 10 et 500 credits, proportionnel a la rarete.\n" +
                 "- Description courte (5-15 mots), en francais, sans guillemets.\n" +
-                "- Aucun preambule ni postambule. Juste les lignes (ou VIDE)."),
+                "- Aucun preambule ni postambule. Juste les lignes."),
             new OpenAIMessage("user",
                 $"PNJ :\n- Nom : {npc.npcName}\n- Role : {npc.npcRole}\n- Description : {npc.npcDescription}\n\nGenere son catalogue :")
         };

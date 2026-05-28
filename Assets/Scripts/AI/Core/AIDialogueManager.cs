@@ -370,26 +370,22 @@ engageant ou de rebondir.
     }
 
     /// <summary>
-    /// Instructions specifiques pour les marchands : autorise l'emission
-    /// d'un token [SHOP] quand le joueur demande EXPLICITEMENT a voir la
-    /// boutique. Vide si le NPC n'a pas de Shop component (sinon le modele
-    /// serait tente d'emettre le token sans rien derriere).
+    /// Instructions specifiques pour les marchands. L'OUVERTURE de la
+    /// boutique est decidee par un appel d'analyse separe
+    /// (AnalyzeForShopIntent), pas par un token dans le chat. Le chat
+    /// doit juste preparer l'invite si le joueur demande a voir.
     /// </summary>
     string BuildShopInstructions(NPCData npcData)
     {
         if (!npcData.hasShop) return string.Empty;
         return @"
 
-OUVERTURE DE LA BOUTIQUE — TOKEN [SHOP] :
-Tu es marchand : tu DOIS emettre le token [SHOP] des que le joueur
-formule une demande de type voir / consulter / acheter / qu'as-tu / ton
-stock / ton catalogue / tes marchandises / ouvrir boutique. Le token est
-OBLIGATOIRE dans ces cas — sans lui, le panneau de boutique ne s'ouvre
-pas et le joueur est bloque. Format : [SHOP] colle a la fin de ta reponse
-(apres une courte phrase d'invite genre 'Voici mon etalage'). Strictement
-silencieux pour le joueur (retire avant affichage). UN SEUL [SHOP] par
-reponse. Ne l'emets PAS si le joueur evoque la boutique en passant sans
-demander a la voir.";
+ROLE MARCHAND : tu vends les articles listes dans le contexte 'Catalogue
+de TA boutique' fourni plus loin. Si le joueur demande a voir / acheter,
+invite-le verbalement (« Approche, voici mon etalage », « Regarde ces
+merveilles »...) — le panneau de boutique s'ouvre automatiquement apres
+ta reponse, tu n'as RIEN a faire de plus. N'invente JAMAIS d'articles
+absents de ton catalogue.";
     }
 
     /// <summary>
@@ -497,13 +493,10 @@ demander a la voir.";
         {
             string aiResponse = aiContent.Trim();
 
-            // Detection du token [SHOP] : un marchand peut le placer si le
-            // joueur a demande EXPLICITEMENT de voir la boutique. On le
-            // retire de l'affichage et on programme l'ouverture differee.
-            bool wantsOpenShop = npcData.hasShop &&
-                System.Text.RegularExpressions.Regex.IsMatch(
-                    aiResponse, @"\[SHOP\]", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-            if (wantsOpenShop)
+            // Strip de tout token [SHOP] eventuel : le chat ne devrait pas
+            // l'emettre, l'analyse separee (AnalyzeForShopIntent) decide.
+            // Si Ollama le laisse fuir on ne veut pas l'afficher au joueur.
+            if (npcData.hasShop)
             {
                 aiResponse = System.Text.RegularExpressions.Regex.Replace(
                     aiResponse, @"\[SHOP\]", "",
@@ -535,18 +528,18 @@ demander a la voir.";
             else
                 DialogueUI.Instance.ShowText(formattedResponse);
 
-            // Ouverture differee de la boutique : on attend ~1.2s que le
-            // joueur ait pu lire la phrase d'invite avant de superposer le
-            // shop par-dessus le dialogue.
-            if (wantsOpenShop)
-                StartCoroutine(OpenShopForDelayed(npcData.name, 1.2f));
-
             // Appel 2 — analyse de quête séparée. Jamais sur le simple accueil :
             // le joueur n'a encore rien demandé.
             if (!isWelcome)
             {
                 string playerMessage = currentConversation.LastOrDefault(m => m.role == "user")?.content ?? "(inconnu)";
                 StartCoroutine(AnalyzeForQuest(npcData, playerMessage, aiResponse));
+
+                // Appel 3 — analyse d'intention SHOP, parallele a l'analyse
+                // de quete. Plus fiable que de compter sur Ollama pour
+                // emettre [SHOP] dans le chat.
+                if (npcData.hasShop)
+                    StartCoroutine(AnalyzeForShopIntent(npcData, playerMessage));
             }
             else
             {
@@ -655,6 +648,46 @@ RÈGLES :
                 ProcessQuestAnalysis(response.text, npcData, playerMessage, chatReply, stopwatch.Elapsed.TotalSeconds);
             else
                 Debug.LogWarning($"[QuestAnalysis] Échec de l'appel : {response.error}");
+        }));
+    }
+
+    // Appel 3 — analyse SHOP : decide si le joueur demande explicitement a
+    // voir la boutique du marchand. Plus fiable que d'attendre que le chat
+    // emette [SHOP] (qwen2.5 / Ollama suivent mal cette instruction).
+    IEnumerator AnalyzeForShopIntent(NPCData npcData, string playerMessage)
+    {
+        if (string.IsNullOrWhiteSpace(playerMessage)) yield break;
+        if (ShopUI.Instance != null && ShopUI.Instance.IsOpen) yield break; // deja ouverte
+
+        var messages = new List<OpenAIMessage>
+        {
+            new OpenAIMessage("system",
+                "Tu es un analyseur d'intention pour un jeu d'aventure. Le PNJ a une " +
+                "boutique. Le joueur vient d'envoyer un message. Determine si le joueur " +
+                "demande EXPLICITEMENT a voir / consulter / ouvrir la boutique, le " +
+                "catalogue, le stock, les marchandises, ou s'il veut acheter. " +
+                "Reponds STRICTEMENT par OUI ou NON. Aucun autre texte. " +
+                "Bavardage = NON. Mention en passant = NON. Question vague = NON. " +
+                "Demande directe = OUI."),
+            new OpenAIMessage("user", $"Message du joueur : « {playerMessage} »\nReponse : OUI ou NON ?")
+        };
+        var request = new AIRequest(messages, 0.1f, 4);
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        yield return StartCoroutine(AIService.Provider.Complete(request, response =>
+        {
+            stopwatch.Stop();
+            if (!response.success)
+            {
+                Debug.LogWarning($"[ShopIntent] Echec : {response.error}");
+                return;
+            }
+            string raw = (response.text ?? string.Empty).Trim().ToUpperInvariant();
+            bool yes = raw.StartsWith("OUI") || raw.StartsWith("YES");
+            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.AI))
+                Debug.Log($"[ShopIntent] ({stopwatch.Elapsed.TotalSeconds:N1}s) {raw} -> open={yes}");
+            if (yes)
+                StartCoroutine(OpenShopForDelayed(npcData.name, 0.8f));
         }));
     }
 

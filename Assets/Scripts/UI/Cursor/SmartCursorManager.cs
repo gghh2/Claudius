@@ -72,9 +72,15 @@ public class SmartCursorManager : MonoBehaviour
 
     void Apply()
     {
-        // Pas de UnifiedUIManager dans la scène (ex. MainMenu) → on n'est pas
-        // en jeu : curseur libre. En jeu, l'état suit l'ouverture des panels.
-        bool cursorFree = uiManager == null || uiManager.IsShowingPanel;
+        // Hors de la scene "Game", on n'est pas en jeu : curseur libre. Test
+        // par nom de scene actif car UnifiedUIManager est DontDestroyOnLoad
+        // et persiste depuis Game vers MainMenu — son existence seule ne
+        // suffit pas a determiner si on est en jeu.
+        bool inGameScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Game";
+
+        bool cursorFree = !inGameScene
+            || uiManager == null
+            || uiManager.IsShowingPanel;
 
         // Cas spécial : UIs hors UnifiedUIManager (boutique, panneau de lecture,
         // console dev) doivent aussi libérer le curseur. On consulte leurs

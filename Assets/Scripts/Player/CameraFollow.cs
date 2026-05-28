@@ -100,6 +100,21 @@ public class CameraFollow : MonoBehaviour
             targetSize = Mathf.Clamp(fixedDistance, minSize, maxSize);
             fixedDistance = targetSize;
         }
+
+        // Snap initial : on place la cam directement a sa position cible
+        // pour eviter le 'glissement' du premier frame (sinon le Lerp avec
+        // smoothSpeed=0.125 met plusieurs secondes a rejoindre le joueur
+        // depuis la position serialisee de la scene).
+        if (target != null)
+        {
+            Vector3 dir = maintainConstantDistance ? offset.normalized : Vector3.zero;
+            Vector3 startPos = maintainConstantDistance
+                ? target.position + dir * fixedDistance
+                : target.position + offset;
+            transform.position = startPos;
+            if (enableMouseLook)
+                transform.LookAt(target.position + Vector3.up * 1f);
+        }
     }
     
     void Update()

@@ -268,6 +268,11 @@ public class QuestObject : MonoBehaviour
     
     void CreateNameDisplay()
     {
+        // Si ce GO est un NPC destinataire de livraison, on laisse
+        // NPCNameDisplay gerer l'affichage (NPC.ShowInteractionPrompt
+        // prefixera "[DELIVER TO]"). Evite le double prompt empile.
+        if (isDeliveryTarget && GetComponent<NPC>() != null) return;
+
         // PAS de SetParent : les prefabs de quest object peuvent avoir un scale
         // non uniforme (terminal, marker...), et l'héritage écraserait le texte.
         // On suit la position du parent chaque frame dans Update à la place.

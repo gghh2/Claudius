@@ -93,16 +93,23 @@ public class NPC : MonoBehaviour
             bool hasShop = GetComponent<Shop>() != null;
             string suffix = hasShop ? "\n[B] Boutique" : "";
 
+            // Si ce NPC est destinataire d'une livraison (QuestObject avec
+            // isDeliveryTarget), on prefixe le tag pour fusionner avec ce
+            // que QuestObject afficherait sinon — evite le double prompt.
+            var qo = GetComponent<QuestObject>();
+            bool isDeliveryTarget = qo != null && qo.isDeliveryTarget;
+            string prefix = isDeliveryTarget ? "[DELIVER TO] " : "";
+
             if (nameDisplay != null)
             {
                 string formattedName = TextFormatter.FormatName(npcName);
-                nameDisplay.SetDisplayName($"{formattedName}\n[E] Parler{suffix}");
+                nameDisplay.SetDisplayName($"{prefix}{formattedName}\n[E] Parler{suffix}");
                 nameDisplay.SetNameColor(Color.white);
             }
             else
             {
                 string formattedName = TextFormatter.FormatName(npcName);
-                InteractionPrompt.Show($"Appuyez sur E pour parler à {formattedName}{suffix}", transform, new Vector3(0, 2f, 0));
+                InteractionPrompt.Show($"Appuyez sur E pour parler à {prefix}{formattedName}{suffix}", transform, new Vector3(0, 2f, 0));
             }
         }
         else

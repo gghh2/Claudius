@@ -119,18 +119,26 @@ public class WorldNPCPopulator : MonoBehaviour
         {
             new OpenAIMessage("system",
                 "Tu peuples une zone d'un jeu d'aventure spatiale avec des PNJ. " +
-                "Format STRICT, une ligne par PNJ, separateur '|' :\n" +
-                "nom_complet | role | description_courte\n\n" +
-                "REGLES :\n" +
+                "Format STRICT : une ligne par PNJ, trois champs separes par ' | '\n" +
+                "  Champ 1 : nom complet (INVENTE)\n" +
+                "  Champ 2 : role concret (1-3 mots)\n" +
+                "  Champ 3 : description courte (10-25 mots)\n\n" +
+                "REGLES IMPERATIVES :\n" +
+                "- N'ECRIS JAMAIS la ligne de format / d'entete (ex. 'nom | role | description'). " +
+                "Commence DIRECTEMENT par la premiere fiche du premier PNJ.\n" +
                 "- Genere entre 1 et 3 PNJ COHERENTS avec le TYPE de zone " +
-                "(marche -> marchand/negociant, laboratoire -> scientifique, " +
-                "security -> garde, hangar -> pilote/mecanicien, etc.).\n" +
-                "- Nom complet francais avec consonance space-opera (ex. 'Velka des Etoiles', 'Korvyn le Cendreux').\n" +
-                "- Role concret en 1-3 mots (ex. 'Marchand', 'Scientifique', 'Garde Imperial').\n" +
-                "- Description courte (10-25 mots) en francais, personnalite + petit detail.\n" +
-                "- Aucun preambule ni postambule. Juste les lignes."),
+                "(market -> marchand/negociant, laboratory -> scientifique, " +
+                "security -> garde, hangar -> pilote/mecanicien, medical -> medecin, " +
+                "etc.).\n" +
+                "- Noms en francais avec consonance space-opera. INVENTE — n'utilise " +
+                "AUCUN exemple de jeu existant ni de personnage celebre. Varie les " +
+                "phonemes, les initiales, les structures (prenom seul, prenom+epithete, " +
+                "nom propre seul).\n" +
+                "- Role concret en 1-3 mots.\n" +
+                "- Description francais sans guillemets, personnalite + petit detail unique.\n" +
+                "- Aucun preambule, aucun postambule, aucune numerotation, aucun bullet."),
             new OpenAIMessage("user",
-                $"Zone :\n- Nom : {zone.zoneName}\n- Type : {zone.zoneType}\n\nGenere ses habitants :")
+                $"Zone :\n- Nom : {zone.zoneName}\n- Type : {zone.zoneType}\n\nGenere ses habitants. Commence directement par la premiere fiche :")
         };
         var request = new AIRequest(messages, temperature: 0.9f, maxTokens: 300);
         var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -174,6 +182,10 @@ public class WorldNPCPopulator : MonoBehaviour
             string desc = parts[2].Trim().Trim('"');
             if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(role)) continue;
 
+            // Filtre : la ligne de format/header s'est glissee dans la
+            // reponse (ex. 'nom_complet | role | description_courte').
+            if (IsTemplatePlaceholder(name, role, desc)) continue;
+
             Vector3 pos = PickSpawnPosition(zone);
             var go = Instantiate(prefab, pos, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
             if (parent != null) go.transform.SetParent(parent, true);
@@ -185,12 +197,44 @@ public class WorldNPCPopulator : MonoBehaviour
                 npc.npcName = name;
                 npc.npcRole = role;
                 npc.npcDescription = desc;
+                // Couleur aleatoire vive : appliquee au material par
+                // NPC.Start (via npcRenderer.material.color = npcColor).
+                npc.npcColor = RandomNpcColor();
             }
 
             spawned++;
             if (spawned >= 3) break; // garde-fou
         }
         return spawned;
+    }
+
+    /// <summary>
+    /// True si la ligne ressemble a un re-echo de la ligne de format que
+    /// j'ai donnee dans le prompt (le modele la recopie parfois en tete).
+    /// </summary>
+    bool IsTemplatePlaceholder(string name, string role, string desc)
+    {
+        string nLo = name.ToLowerInvariant();
+        string rLo = role.ToLowerInvariant();
+        string dLo = desc.ToLowerInvariant();
+        if (nLo.Contains("nom_complet") || nLo.Contains("nom complet")) return true;
+        if (rLo == "role" || rLo == "rôle") return true;
+        if (dLo.Contains("description_courte") || dLo.Contains("description courte")) return true;
+        // Garde-fou supplementaire : nom ou role qui contient le mot "champ".
+        if (nLo.StartsWith("champ ") || rLo.StartsWith("champ ")) return true;
+        return false;
+    }
+
+    /// <summary>
+    /// Couleur HSL aleatoire vive (saturation et luminosite controlees)
+    /// pour distinguer les NPC visuellement.
+    /// </summary>
+    Color RandomNpcColor()
+    {
+        float h = Random.value; // teinte uniformement repartie
+        float s = Random.Range(0.55f, 0.85f);
+        float v = Random.Range(0.75f, 1.0f);
+        return Color.HSVToRGB(h, s, v);
     }
 
     Vector3 PickSpawnPosition(QuestZone zone)

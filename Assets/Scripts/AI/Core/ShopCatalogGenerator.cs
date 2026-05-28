@@ -20,7 +20,7 @@ using UnityEngine;
 /// </summary>
 public class ShopCatalogGenerator : MonoBehaviour
 {
-    static ShopCatalogGenerator Instance;
+    public static ShopCatalogGenerator Instance { get; private set; }
 
     [Tooltip("Delai avant de demarrer la generation (le temps que la scene se stabilise).")]
     public float startDelay = 2f;
@@ -46,12 +46,26 @@ public class ShopCatalogGenerator : MonoBehaviour
 
     void Start()
     {
-        StartCoroutine(GenerateAllCatalogs());
+        // Si WorldNPCPopulator est present, c'est LUI qui declenchera la
+        // generation a la fin de son peuplement (sinon on tournerait avant
+        // que les NPC ne soient spawnes). Sinon (pas de populator, NPC
+        // manuels ou save deja chargee), on demarre solo apres startDelay.
+        if (FindFirstObjectByType<WorldNPCPopulator>() == null)
+            StartCoroutine(GenerateAllCatalogs(initialDelay: startDelay));
     }
 
-    IEnumerator GenerateAllCatalogs()
+    /// <summary>
+    /// Lance la generation des catalogues. Public pour permettre a
+    /// WorldNPCPopulator de l'enchainer apres son propre peuplement.
+    /// </summary>
+    public void TriggerNow()
     {
-        yield return new WaitForSecondsRealtime(startDelay);
+        StartCoroutine(GenerateAllCatalogs(initialDelay: 0f));
+    }
+
+    IEnumerator GenerateAllCatalogs(float initialDelay)
+    {
+        if (initialDelay > 0f) yield return new WaitForSecondsRealtime(initialDelay);
 
         var provider = AIService.Provider;
         if (provider == null || !provider.IsConfigured)

@@ -60,10 +60,14 @@ public class WorldNPCPopulator : MonoBehaviour
         yield return new WaitForSecondsRealtime(startDelay);
 
         // Si des NPC existent deja (loading de save, ou generation precedente
-        // preservee), on ne touche a rien.
+        // preservee, ou Play apres avoir ajoute des NPC manuellement), on
+        // ne re-genere pas — mais on declenche tout de meme le generateur de
+        // catalogues pour combler les Shop vides.
         if (FindObjectsByType<NPC>(FindObjectsSortMode.None).Length > 0)
         {
-            Debug.Log("[WorldNPCPopulator] NPC deja presents, generation skippee.");
+            Debug.Log("[WorldNPCPopulator] NPC deja presents, generation skippee. Declenchement ShopCatalogGenerator.");
+            if (ShopCatalogGenerator.Instance != null)
+                ShopCatalogGenerator.Instance.TriggerNow();
             yield break;
         }
 
@@ -111,6 +115,15 @@ public class WorldNPCPopulator : MonoBehaviour
         }
 
         Debug.Log($"[WorldNPCPopulator] Generation terminee : {totalSpawned} NPC sur {zones.Length} zone(s).");
+
+        // Maintenant que les NPCs sont en scene, on declenche le generateur
+        // de catalogues qui les attendait. Il enchaine sequentiellement, tri
+        // par distance au joueur.
+        if (totalSpawned > 0 && ShopCatalogGenerator.Instance != null)
+        {
+            Debug.Log("[WorldNPCPopulator] Declenchement de ShopCatalogGenerator.");
+            ShopCatalogGenerator.Instance.TriggerNow();
+        }
     }
 
     IEnumerator PopulateZone(QuestZone zone, GameObject prefab, Transform parent, System.Action<int> onDone)

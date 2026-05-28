@@ -404,17 +404,37 @@ public class SaveGameManager : MonoBehaviour
             Debug.LogError("[SaveGame] QuestJournal.Instance is NULL during save!");
         }
         
-        // NPC data
+        // NPC data — incluant identite IA (role, description, couleur) et
+        // catalogue Shop, pour recreer les NPC proceduraux au load sans
+        // dependre du WorldNPCPopulator (qui regenererait des noms differents).
         data.npcData = new List<NPCSaveData>();
         NPC[] allNPCs = FindObjectsByType<NPC>(FindObjectsSortMode.None);
         foreach (NPC npc in allNPCs)
         {
+            var shop = npc.GetComponent<Shop>();
+            var catalog = new List<NPCShopItemSaveData>();
+            if (shop != null && shop.catalog != null)
+            {
+                foreach (var it in shop.catalog)
+                {
+                    catalog.Add(new NPCShopItemSaveData
+                    {
+                        itemName = it.itemName,
+                        price = it.price,
+                        description = it.description
+                    });
+                }
+            }
             data.npcData.Add(new NPCSaveData
             {
                 npcName = npc.npcName,
                 position = npc.transform.position,
                 rotation = npc.transform.rotation.eulerAngles,
-                isActive = npc.gameObject.activeSelf
+                isActive = npc.gameObject.activeSelf,
+                npcRole = npc.npcRole,
+                npcDescription = npc.npcDescription,
+                npcColorRGB = new Vector3(npc.npcColor.r, npc.npcColor.g, npc.npcColor.b),
+                shopCatalog = catalog
             });
         }
         
@@ -667,18 +687,62 @@ public class SaveGameManager : MonoBehaviour
             Debug.LogWarning("[SaveGame] No quest data in save file");
         }
         
-        // NPCs
+        // NPCs — restaure ceux qui existent en scene ET recree les autres
+        // depuis le prefab NPC_Template (cas des NPC proceduraux).
         if (data.npcData != null)
         {
             NPC[] allNPCs = FindObjectsByType<NPC>(FindObjectsSortMode.None);
+            GameObject npcPrefab = Resources.Load<GameObject>("NPC_Template");
+            Transform npcParent = GameObject.Find("NPC")?.transform;
+
             foreach (var npcData in data.npcData)
             {
                 NPC npc = System.Array.Find(allNPCs, n => n.npcName == npcData.npcName);
-                if (npc != null)
+
+                // PNJ introuvable : recree via le prefab Resources.
+                if (npc == null)
                 {
-                    npc.transform.position = npcData.position;
-                    npc.transform.rotation = Quaternion.Euler(npcData.rotation);
-                    npc.gameObject.SetActive(npcData.isActive);
+                    if (npcPrefab == null)
+                    {
+                        Debug.LogWarning($"[SaveGame] NPC '{npcData.npcName}' absent et prefab NPC_Template introuvable — skip.");
+                        continue;
+                    }
+                    var go = Instantiate(npcPrefab, npcData.position, Quaternion.Euler(npcData.rotation));
+                    if (npcParent != null) go.transform.SetParent(npcParent, true);
+                    go.name = npcData.npcName;
+                    npc = go.GetComponent<NPC>();
+                }
+
+                npc.transform.position = npcData.position;
+                npc.transform.rotation = Quaternion.Euler(npcData.rotation);
+                npc.gameObject.SetActive(npcData.isActive);
+
+                // Champs IA (compatibles avec les anciennes saves : on
+                // n'ecrase pas si les champs serialises sont vides).
+                if (!string.IsNullOrEmpty(npcData.npcName)) npc.npcName = npcData.npcName;
+                if (!string.IsNullOrEmpty(npcData.npcRole)) npc.npcRole = npcData.npcRole;
+                if (!string.IsNullOrEmpty(npcData.npcDescription)) npc.npcDescription = npcData.npcDescription;
+                if (npcData.npcColorRGB != Vector3.zero)
+                    npc.npcColor = new Color(npcData.npcColorRGB.x, npcData.npcColorRGB.y, npcData.npcColorRGB.z);
+
+                // Catalogue Shop : restaure les items pour eviter la
+                // regeneration IA au prochain Play.
+                if (npcData.shopCatalog != null && npcData.shopCatalog.Count > 0)
+                {
+                    var shop = npc.GetComponent<Shop>();
+                    if (shop != null)
+                    {
+                        shop.catalog.Clear();
+                        foreach (var it in npcData.shopCatalog)
+                        {
+                            shop.catalog.Add(new ShopItem
+                            {
+                                itemName = it.itemName,
+                                price = it.price,
+                                description = it.description
+                            });
+                        }
+                    }
                 }
             }
         }
@@ -1119,6 +1183,20 @@ public class NPCSaveData
     public Vector3 position;
     public Vector3 rotation;
     public bool isActive;
+    // Persisters l'identite IA pour recreer les NPC proceduraux au load
+    // (sinon WorldNPCPopulator les regenererait differemment a chaque save).
+    public string npcRole;
+    public string npcDescription;
+    public Vector3 npcColorRGB; // Color RGB
+    public List<NPCShopItemSaveData> shopCatalog;
+}
+
+[System.Serializable]
+public class NPCShopItemSaveData
+{
+    public string itemName;
+    public int price;
+    public string description;
 }
 
 [System.Serializable]

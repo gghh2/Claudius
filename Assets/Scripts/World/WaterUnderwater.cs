@@ -15,9 +15,11 @@ public class WaterUnderwater : MonoBehaviour
     [Tooltip("Le bloc d'eau dont on surveille la surface (auto-trouve si null par le nom 'WaterBlock').")]
     public Renderer waterRenderer;
 
-    [Tooltip("Offset Y additionnel par rapport a bounds.max.y. " +
-        "Positif si tu veux que l'effet se declenche un peu avant l'immersion (vagues).")]
-    public float surfaceOffset = -0.05f;
+    [Tooltip("Offset Y additionnel par rapport a bounds.max.y.\n" +
+        "Positif = l'effet se declenche AVANT d'etre completement immerge " +
+        "(le seuil descend sous la surface du joueur, donc avant qu'il y plonge totalement).\n" +
+        "Default 0.3 → effet visible des qu'on commence a plonger.")]
+    public float surfaceOffset = 0.3f;
 
     [Header("Camera")]
     [Tooltip("Camera a surveiller (auto-trouve via Camera.main si null).")]

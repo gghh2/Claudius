@@ -128,6 +128,13 @@ public class WorldNPCPopulator : MonoBehaviour
 
     IEnumerator PopulateZone(QuestZone zone, GameObject prefab, Transform parent, System.Action<int> onDone)
     {
+        // Tirage du nombre EN AMONT : sinon l'IA tire toujours 3 (effet
+        // ancrage du upper bound). On lui demande N exact.
+        int targetCount = Random.Range(1, 4); // 1..3 inclus
+        string targetWord = targetCount == 1 ? "UN seul PNJ"
+                          : targetCount == 2 ? "DEUX PNJ"
+                          : "TROIS PNJ";
+
         var messages = new List<OpenAIMessage>
         {
             new OpenAIMessage("system",
@@ -137,9 +144,11 @@ public class WorldNPCPopulator : MonoBehaviour
                 "  Champ 2 : role concret (1-3 mots)\n" +
                 "  Champ 3 : description courte (10-25 mots)\n\n" +
                 "REGLES IMPERATIVES :\n" +
+                $"- TU DOIS PRODUIRE EXACTEMENT {targetCount} ligne(s), soit {targetWord}. " +
+                "Pas plus, pas moins. Ce nombre est decide par le jeu.\n" +
                 "- N'ECRIS JAMAIS la ligne de format / d'entete (ex. 'nom | role | description'). " +
                 "Commence DIRECTEMENT par la premiere fiche du premier PNJ.\n" +
-                "- Genere entre 1 et 3 PNJ COHERENTS avec le TYPE de zone " +
+                "- PNJ COHERENT avec le TYPE de zone " +
                 "(market -> marchand/negociant, laboratory -> scientifique, " +
                 "security -> garde, hangar -> pilote/mecanicien, medical -> medecin, " +
                 "etc.).\n" +
@@ -151,9 +160,12 @@ public class WorldNPCPopulator : MonoBehaviour
                 "- Description francais sans guillemets, personnalite + petit detail unique.\n" +
                 "- Aucun preambule, aucun postambule, aucune numerotation, aucun bullet."),
             new OpenAIMessage("user",
-                $"Zone :\n- Nom : {zone.zoneName}\n- Type : {zone.zoneType}\n\nGenere ses habitants. Commence directement par la premiere fiche :")
+                $"Zone :\n- Nom : {zone.zoneName}\n- Type : {zone.zoneType}\n\n" +
+                $"Genere EXACTEMENT {targetCount} fiche(s) de PNJ ({targetWord}). Commence directement :")
         };
-        var request = new AIRequest(messages, temperature: 0.9f, maxTokens: 300);
+        // maxTokens scale avec targetCount pour ne pas tronquer si 3, ni
+        // gaspiller si 1.
+        var request = new AIRequest(messages, temperature: 0.9f, maxTokens: 100 + 100 * targetCount);
         var sw = System.Diagnostics.Stopwatch.StartNew();
 
         int count = 0;
@@ -166,14 +178,14 @@ public class WorldNPCPopulator : MonoBehaviour
                 return;
             }
             string raw = (response.text ?? "").Trim();
-            count = ParseAndSpawn(zone, raw, prefab, parent);
-            Debug.Log($"[WorldNPCPopulator] {zone.zoneName} ({sw.Elapsed.TotalSeconds:N1}s) -> {count} NPC");
+            count = ParseAndSpawn(zone, raw, prefab, parent, targetCount);
+            Debug.Log($"[WorldNPCPopulator] {zone.zoneName} ({sw.Elapsed.TotalSeconds:N1}s, target={targetCount}) -> {count} NPC");
         }));
 
         onDone?.Invoke(count);
     }
 
-    int ParseAndSpawn(QuestZone zone, string raw, GameObject prefab, Transform parent)
+    int ParseAndSpawn(QuestZone zone, string raw, GameObject prefab, Transform parent, int maxCount)
     {
         if (string.IsNullOrWhiteSpace(raw)) return 0;
         var lines = raw.Split(new[] { '\n', '\r' }, System.StringSplitOptions.RemoveEmptyEntries);
@@ -216,7 +228,7 @@ public class WorldNPCPopulator : MonoBehaviour
             }
 
             spawned++;
-            if (spawned >= 3) break; // garde-fou
+            if (spawned >= maxCount) break; // borne par le N decide en amont
         }
         return spawned;
     }

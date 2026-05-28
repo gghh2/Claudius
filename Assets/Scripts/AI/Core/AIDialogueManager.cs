@@ -353,20 +353,26 @@ engageant ou de rebondir.
     /// </summary>
     IEnumerator OpenShopForDelayed(string npcName, float delay)
     {
-        yield return new WaitForSeconds(delay);
+        Debug.Log($"[ShopOpen] Scheduled in {delay}s for '{npcName}'");
+        // Realtime obligatoire : pendant un dialogue, Time.timeScale=0
+        // (UnifiedUIManager pause le jeu) — un WaitForSeconds normal
+        // ne s'ecoule jamais et la coroutine reste bloquee.
+        yield return new WaitForSecondsRealtime(delay);
         foreach (var npc in FindObjectsByType<NPC>(FindObjectsSortMode.None))
         {
             if (npc.npcName != npcName) continue;
             var shop = npc.GetComponent<Shop>();
-            if (shop == null) yield break;
+            if (shop == null) { Debug.LogWarning($"[ShopOpen] NPC '{npcName}' trouve mais pas de Shop component"); yield break; }
             if (ShopUI.Instance == null)
             {
                 var go = new GameObject("ShopUI");
                 go.AddComponent<ShopUI>();
             }
+            Debug.Log($"[ShopOpen] Opening shop for '{npcName}'");
             ShopUI.Instance.OpenFor(shop);
             yield break;
         }
+        Debug.LogWarning($"[ShopOpen] NPC '{npcName}' introuvable en scene");
     }
 
     /// <summary>
@@ -538,6 +544,7 @@ absents de ton catalogue.";
                 // Appel 3 — analyse d'intention SHOP, parallele a l'analyse
                 // de quete. Plus fiable que de compter sur Ollama pour
                 // emettre [SHOP] dans le chat.
+                Debug.Log($"[ShopIntent] dispatch check — npc={npcData.name} hasShop={npcData.hasShop}");
                 if (npcData.hasShop)
                     StartCoroutine(AnalyzeForShopIntent(npcData, playerMessage));
             }
@@ -656,8 +663,9 @@ RÈGLES :
     // emette [SHOP] (qwen2.5 / Ollama suivent mal cette instruction).
     IEnumerator AnalyzeForShopIntent(NPCData npcData, string playerMessage)
     {
-        if (string.IsNullOrWhiteSpace(playerMessage)) yield break;
-        if (ShopUI.Instance != null && ShopUI.Instance.IsOpen) yield break; // deja ouverte
+        Debug.Log($"[ShopIntent] START — npc={npcData.name} message='{playerMessage}'");
+        if (string.IsNullOrWhiteSpace(playerMessage)) { Debug.Log("[ShopIntent] message vide, skip"); yield break; }
+        if (ShopUI.Instance != null && ShopUI.Instance.IsOpen) { Debug.Log("[ShopIntent] deja ouverte, skip"); yield break; }
 
         var messages = new List<OpenAIMessage>
         {
@@ -684,8 +692,9 @@ RÈGLES :
             }
             string raw = (response.text ?? string.Empty).Trim().ToUpperInvariant();
             bool yes = raw.StartsWith("OUI") || raw.StartsWith("YES");
-            if (GlobalDebugManager.IsDebugEnabled(DebugSystem.AI))
-                Debug.Log($"[ShopIntent] ({stopwatch.Elapsed.TotalSeconds:N1}s) {raw} -> open={yes}");
+            // Log inconditionnel : critique pour diagnostiquer pourquoi
+            // la boutique ne s'ouvre pas malgre une demande claire.
+            Debug.Log($"[ShopIntent] ({stopwatch.Elapsed.TotalSeconds:N1}s) raw='{raw}' -> open={yes}");
             if (yes)
                 StartCoroutine(OpenShopForDelayed(npcData.name, 0.8f));
         }));
